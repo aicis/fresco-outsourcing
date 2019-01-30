@@ -18,4 +18,4 @@ The protocol of [Jakobsen et al](https://eprint.iacr.org/2016/037), which we wil
 
 ## Current State
 
-Currently, the repo only holds an implementation of the input protocol for DDNNT. But the goal would be to implement both protocols and experiment with the trade-offs.
+Currently, the repo only holds an implementation of the input protocol for DDNNT. But the goal would be to implement both protocols and experiment with the trade-offs in some realistic deployment (such as the Federated Learning setting explored in [fresco-ml](https://github.com/aicis/fresco-ml).
