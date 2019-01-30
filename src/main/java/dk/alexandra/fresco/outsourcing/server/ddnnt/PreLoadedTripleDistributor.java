@@ -1,8 +1,5 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import dk.alexandra.fresco.framework.util.Pair;
-import dk.alexandra.fresco.framework.value.SInt;
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -11,7 +8,7 @@ import java.util.List;
  */
 class PreLoadedTripleDistributor implements TripleDistributor {
 
-  private final List<Pair<SInt, Triple<BigInteger>>> preloaded;
+  private final List<DdnntInputTuple> preloaded;
   private int cursor = 0;
 
   /**
@@ -19,7 +16,7 @@ class PreLoadedTripleDistributor implements TripleDistributor {
    *
    * @param preloaded a list of preloaded triples.
    */
-  public PreLoadedTripleDistributor(List<Pair<SInt, Triple<BigInteger>>> preloaded) {
+  public PreLoadedTripleDistributor(List<DdnntInputTuple> preloaded) {
     this.preloaded = preloaded;
   }
 
@@ -30,7 +27,7 @@ class PreLoadedTripleDistributor implements TripleDistributor {
    *         constructor, or if a negative amount is requested.
    */
   @Override
-  public List<Pair<SInt, Triple<BigInteger>>> getTriples(int amount) {
+  public List<DdnntInputTuple> getTriples(int amount) {
     this.cursor += amount;
     if (amount < 0 || this.cursor > preloaded.size()) {
       throw new IndexOutOfBoundsException("Can not get " + amount + " triples.");

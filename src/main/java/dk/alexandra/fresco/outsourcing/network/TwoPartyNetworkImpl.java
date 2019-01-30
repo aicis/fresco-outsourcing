@@ -7,25 +7,10 @@ import java.util.Objects;
 /**
  * An implementation of a two party network that simply wraps a {@link CloseableNetwork}.
  */
-public class TwoPartyNetworkImpl implements TwoPartyNetwork {
+class TwoPartyNetworkImpl implements TwoPartyNetwork {
 
   private final CloseableNetwork network;
   private final int myId;
-
-  public static enum Parties {
-    SERVER(1), CLIENT(2);
-
-    private final int id;
-
-    Parties(int id) {
-      this.id = id;
-    }
-
-    public int id() {
-      return id;
-    }
-
-  }
 
   /**
    * Creates a TwoPartyNetwork from a regular network with just two parties.

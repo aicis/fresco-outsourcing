@@ -4,55 +4,48 @@ import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
 
-public class DdnntClientInputSession implements ClientInputSession {
-
-  private int clientId;
-  private int inputAmount;
-  private TwoPartyNetwork network;
-  private TripleDistributor distributor;
-  private ByteSerializer<BigInteger> serializer;
+/**
+ * Represents a session between a client and the server where the client provides an MPC input to
+ * the servers.
+ */
+public interface DdnntClientInputSession {
 
   /**
-   * Construct a new session.
+   * Gives the id of the client giving id.
    *
-   * @param clientId the id of the client
-   * @param inputAmount an amount of input to be given by the client
-   * @param network a network to communicate with the client over
-   * @param distributor a distributor serving the triples needed for the protocol
-   * @param serializer a serializer for BigInteger's
+   * @return the client id
    */
-  public DdnntClientInputSession(int clientId, int inputAmount, TwoPartyNetwork network,
-      TripleDistributor distributor, ByteSerializer<BigInteger> serializer) {
-    this.clientId = clientId;
-    this.inputAmount = inputAmount;
-    this.network = network;
-    this.distributor = distributor;
-    this.serializer = serializer;
-  }
+  public int getClientId();
 
-  @Override
-  public int getClientId() {
-    return clientId;
-  }
+  /**
+   * Gives the number of inputs to be given by the client.
+   *
+   * @return the number of input elements
+   */
+  public int getAmountOfInputs();
 
-  @Override
-  public int getAmountOfInputs() {
-    return inputAmount;
-  }
+  /**
+   * Gives the network connected to the client.
+   *
+   * @return a network connected to the client
+   */
+  public TwoPartyNetwork getNetwork();
 
-  @Override
-  public TwoPartyNetwork getNetwork() {
-    return network;
-  }
 
-  @Override
-  public TripleDistributor getTripledistributor() {
-    return distributor;
-  }
+  /**
+   * Gives the triple distributor distributing triples for the given client and session.
+   *
+   * @return a triple distributor
+   */
+  public TripleDistributor getTripledistributor();
 
-  @Override
-  public ByteSerializer<BigInteger> getSerializer() {
-    return serializer;
-  }
+  /**
+   * Gets the serializer used to serialize messages to the client.
+   *
+   * @return a byte serializer
+   */
+  public ByteSerializer<BigInteger> getSerializer();
+
+
 
 }

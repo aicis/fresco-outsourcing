@@ -12,9 +12,7 @@ import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -33,6 +31,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Input server using the DDNNT input protocol to provide input.
@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  */
 public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> implements InputServer {
 
+  private static final Logger logger = LoggerFactory.getLogger(DdnntInputServer.class);
   private static final String HASH_ALGO = "SHA-256";
   private final Future<Map<Integer, List<SInt>>> clientInputs;
   private final ClientSessionProducer clientSessionProducer;
@@ -61,10 +62,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    */
   public DdnntInputServer(ClientSessionProducer clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
-    Objects.requireNonNull(clientSessionProducer);
-    Objects.requireNonNull(serverSessionProducer);
-    this.clientSessionProducer = clientSessionProducer;
-    this.serverSessionProducer = serverSessionProducer;
+    this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
+    this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputSession);
     this.clientInputs = ft;
     Thread t = new Thread(ft);
@@ -83,6 +82,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @throws Exception if exceptions a thrown
    */
   private Map<Integer, List<SInt>> runInputSession() throws Exception {
+    logger.info("Running input session");
     SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs = getMaskPairs();
     ServerInputSession<ResourcePoolT> serverInputSession = serverSessionProducer.next();
     Network network = serverInputSession.getNetwork();
@@ -116,15 +116,16 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     ExecutorService es = Executors.newCachedThreadPool();
     HashMap<Integer, Future<Pair<List<SInt>, byte[]>>> maskPairsFuture = new HashMap<>();
     while (clientSessionProducer.hasNext()) {
-      ClientInputSession clientSession = clientSessionProducer.next();
+      DdnntClientInputSession clientSession = clientSessionProducer.next();
+      logger.info("Running client input session for C{}", clientSession.getClientId());
       Future<Pair<List<SInt>, byte[]>> f = es.submit(new ClientCommunication(clientSession));
       maskPairsFuture.put(clientSession.getClientId(), f);
     }
     SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs = new TreeMap<>();
     for (Entry<Integer, Future<Pair<List<SInt>, byte[]>>> e : maskPairsFuture.entrySet()) {
-      Pair<List<SInt>, byte[]> p = null;
-      p = e.getValue().get();
+      Pair<List<SInt>, byte[]> p = e.getValue().get();
       maskPairs.put(e.getKey(), p);
+      logger.info("Finished client input session for C{}", e.getKey());
     }
     es.shutdown();
     return maskPairs;
@@ -191,32 +192,35 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     }
   }
 
-
-
   private static class ClientCommunication implements Callable<Pair<List<SInt>, byte[]>> {
 
-    private final ClientInputSession session;
+    private final DdnntClientInputSession session;
 
-    public ClientCommunication(ClientInputSession session) {
+    public ClientCommunication(DdnntClientInputSession session) {
       this.session = session;
     }
 
     @Override
     public Pair<List<SInt>, byte[]> call() throws Exception {
       TwoPartyNetwork net = session.getNetwork();
-      byte[] msg = null;
-      List<Pair<SInt, Triple<BigInteger>>> triples =
+      List<DdnntInputTuple> inputTuples =
           session.getTripledistributor().getTriples(session.getAmountOfInputs());
-      List<BigInteger> flatTriples = new ArrayList<>(triples.size() * 3);
-      for (Pair<SInt, Triple<BigInteger>> pair : triples) {
-        Triple<BigInteger> t = pair.getSecond();
-        flatTriples.add(t.getFirst());
-        flatTriples.add(t.getSecond());
-        flatTriples.add(t.getThird());
-      }
-      net.send(session.getSerializer().serialize(flatTriples));
-      msg = net.receive();
-      return new Pair<>(triples.stream().map(Pair::getFirst).collect(Collectors.toList()), msg);
+      List<BigInteger> listA = inputTuples.stream()
+          .map(DdnntInputTuple::getShareA).collect(Collectors.toList());
+      List<BigInteger> listB = inputTuples.stream()
+          .map(DdnntInputTuple::getShareB).collect(Collectors.toList());
+      List<BigInteger> listC = inputTuples.stream()
+          .map(DdnntInputTuple::getShareC).collect(Collectors.toList());
+      net.send(session.getSerializer().serialize(listA));
+      net.send(session.getSerializer().serialize(listB));
+      net.send(session.getSerializer().serialize(listC));
+      logger.info("Sent shares to C{}", session.getClientId());
+      byte[] msg = net.receive();
+      logger.info("Received masked inputs from C{}", session.getClientId());
+      List<SInt> masks = inputTuples.stream()
+            .map(DdnntInputTuple::getA)
+            .collect(Collectors.toList());
+      return new Pair<>(masks, msg);
     }
 
   }

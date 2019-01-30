@@ -1,55 +1,65 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
-import dk.alexandra.fresco.framework.configuration.NetworkConfigurationImpl;
-import dk.alexandra.fresco.framework.network.socket.Connector;
-import dk.alexandra.fresco.framework.network.socket.NetworkConnector;
-import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
-import dk.alexandra.fresco.framework.util.Pair;
-import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
+import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
+import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.network.TwoPartyNetworkImpl;
-import dk.alexandra.fresco.outsourcing.network.TwoPartyNetworkImpl.Parties;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
-import java.math.BigInteger;
-import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import javax.net.ServerSocketFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A demo client session producer based on SPDZ.
  *
  * <p>
- *
+ * Defines the following protocol for clients to start the sessions:
+ * <ol>
+ * <li>The client must first connect to server 1.
+ * <li>The client sends an introduction message to server 1 consisting of three integers: a zero,
+ * the clients unique id, and the number of inputs the client will make.
+ * <li>Server 1 assigns a priority to the client and sends this back to the client.
+ * <li>The client can now connect to the other servers, and sends an introduction message of three
+ * integers: priority, unique client id, and the number of inputs the client will make.
+ * </ol>
+ * The priority is used by the servers to be able to coordinate which triples to use for each
+ * clients input.
  * </p>
  *
  */
 public class DemoClientSessionProducer implements ClientSessionProducer {
 
-  private SpdzResourcePool resourcePool;
-  private PriorityQueue<QueuedClient> orderingQueue;
-  private BlockingQueue<QueuedClient> processingQueue;
+  private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
+  private final SpdzResourcePool resourcePool;
+  private final PriorityQueue<QueuedClient> orderingQueue;
+  private final BlockingQueue<QueuedClient> processingQueue;
+  private final int port;
   private int clientsReady;
-  private String host;
-  private int port;
   private int expectedClients;
+  private int sessionsProduced;
 
-  public DemoClientSessionProducer(SpdzResourcePool resourcePool, String host, int port,
-      int expectedClients) {
-    this.resourcePool = resourcePool;
-    this.host = host;
+  public DemoClientSessionProducer(SpdzResourcePool resourcePool, int port, int expectedClients) {
+    if (port < 0) {
+      throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
+    }
+    if (expectedClients < 0) {
+      throw new IllegalArgumentException(
+          "Expected clients cannot be negative, but was: " + expectedClients);
+    }
+    this.resourcePool = Objects.requireNonNull(resourcePool);
     this.port = port;
     this.expectedClients = expectedClients;
     this.processingQueue = new ArrayBlockingQueue<>(expectedClients);
-    this.orderingQueue = new PriorityQueue<>(expectedClients);
+    this.orderingQueue = new PriorityQueue<>(expectedClients,
+        (QueuedClient a, QueuedClient b) -> Integer.compare(a.getPriority(), b.getPriority()));
     this.clientsReady = 0;
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
@@ -58,18 +68,16 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
   }
 
   void listenForClients() {
+    logger.info("Started Listening for " + expectedClients + " client connections.");
+    ServerSideNetworkFactory networkFactory =
+        new ServerSideNetworkFactory(port, ServerSocketFactory.getDefault());
     for (int i = 0; i < expectedClients; i++) {
-      Party client = new Party(Parties.CLIENT.id(), null, -1); // Note port and host irrelevant
-      Party server = new Party(Parties.SERVER.id(), host, port);
-      Map<Integer, Party> parties = new HashMap<>(2);
-      parties.put(Parties.CLIENT.id(), client);
-      parties.put(Parties.SERVER.id(), server);
-      NetworkConfiguration conf = new NetworkConfigurationImpl(resourcePool.getMyId(), parties);
-      NetworkConnector connector = new Connector(conf, Duration.ofDays(1));
-      SocketNetwork network = new SocketNetwork(conf, connector.getSocketMap());
-      TwoPartyNetwork networkWrapper = new TwoPartyNetworkImpl(network, resourcePool.getMyId());
-      handshake(networkWrapper);
+      logger.info("S{}: Waiting for next client.", resourcePool.getMyId());
+      TwoPartyNetwork network = networkFactory.getNetwork();
+      logger.info("S{}: Client connected. Starting handshake ... ", resourcePool.getMyId());
+      handshake(network);
     }
+    networkFactory.stopListening();
   }
 
   void handshake(TwoPartyNetwork network) {
@@ -77,25 +85,43 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     // Bytes 0-3: client priority, assigned by server 1 (big endian int)
     // Bytes 4-7: unique id for client (big endian int)
     // Bytes 8-11: number of inputs
-    int[] introduction = intsFromBytes(network.receive());
+    byte[] introBytes = network.receive();
+    int priority = intFromBytes(Arrays.copyOfRange(introBytes, 0, Integer.BYTES * 1));
+    int clientId =
+        intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
+    int inputAmount =
+        intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 2, Integer.BYTES * 3));
     if (resourcePool.getMyId() == 1) {
-      int priority = clientsReady++;
-      byte[] priorityBytes = new byte[Integer.BYTES];
-      priorityBytes[0] = (byte) ((priority >> (Integer.SIZE - Byte.SIZE * 1)) & 0xFF);
-      priorityBytes[1] = (byte) ((priority >> (Integer.SIZE - Byte.SIZE * 2)) & 0xFF);
-      priorityBytes[2] = (byte) ((priority >> (Integer.SIZE - Byte.SIZE * 3)) & 0xFF);
-      priorityBytes[3] = (byte) ((priority >> (Integer.SIZE - Byte.SIZE * 4)) & 0xFF);
+      priority = clientsReady++;
+      byte[] priorityBytes = ByteAndBitConverter.toByteArray(priority);
       network.send(priorityBytes);
-      QueuedClient q = new QueuedClient(priority, introduction[1], introduction[2], network);
+      network.send(resourcePool.getModulus().toByteArray());
+      QueuedClient q = new QueuedClient(priority, clientId, inputAmount, network);
       processingQueue.add(q);
+      logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
+          resourcePool.getMyId(), q.clientId, q.priority, q.inputAmount);
     } else {
-      QueuedClient q = new QueuedClient(introduction[0], introduction[1], introduction[2], network);
+      QueuedClient q = new QueuedClient(priority, clientId, inputAmount, network);
       orderingQueue.add(q);
       while (!orderingQueue.isEmpty() && orderingQueue.peek().getPriority() == clientsReady) {
         clientsReady++;
-        processingQueue.add(orderingQueue.element());
+        processingQueue.add(orderingQueue.remove());
       }
+      logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
+          resourcePool.getMyId(), q.clientId, q.priority, q.inputAmount);
     }
+  }
+
+  /**
+   * Converts big-endian byte array to int.
+   */
+  private static int intFromBytes(byte[] bytes) {
+    int res = 0;
+    int topByteIndex = Byte.SIZE * (Integer.BYTES - 1);
+    for (int i = 3; i >= 0; i--) {
+      res ^= (bytes[i] & 0xFF) << (topByteIndex - i * Byte.SIZE);
+    }
+    return res;
   }
 
   private static class QueuedClient {
@@ -124,7 +150,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
       return network;
     }
 
-    private int getPriority() {
+    int getPriority() {
       return priority;
     }
   }
@@ -140,20 +166,18 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
   }
 
   @Override
-  public ClientInputSession next() {
+  public DdnntClientInputSession next() {
     try {
       QueuedClient client = processingQueue.take();
-      List<Pair<SInt, Triple<BigInteger>>> tripList = new ArrayList<>(client.getInputAmount());
+      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
       for (int i = 0; i < client.getInputAmount(); i++) {
         SpdzTriple trip = resourcePool.getDataSupplier().getNextTriple();
-        Triple<BigInteger> shareTrip = new Triple<>(trip.getA().getShare(),
-            trip.getB().getShare(), trip.getC().getShare());
-        tripList.add(new Pair<>(trip.getA(), shareTrip));
+        tripList.add(new SpdzDdnntTuple(trip));
       }
       TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
-      ClientInputSession session = new DdnntClientInputSession(client.getClientId(),
+      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
           client.getInputAmount(), client.getNetwork(), distributor, resourcePool.getSerializer());
-      expectedClients--;
+      sessionsProduced++;
       return session;
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
@@ -162,7 +186,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
 
   @Override
   public boolean hasNext() {
-    return expectedClients > 0;
+    return expectedClients - sessionsProduced > 0;
   }
 
 }

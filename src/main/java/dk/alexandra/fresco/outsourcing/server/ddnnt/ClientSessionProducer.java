@@ -1,9 +1,7 @@
-package dk.alexandra.fresco.outsourcing.server;
-
-import dk.alexandra.fresco.outsourcing.server.ddnnt.ClientInputSession;
+package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
 /**
- * Produces new input sessions (e.g., by listen for new connections from from clients)
+ * Produces new client session (e.g., by listening for new connections from from clients)
  */
 public interface ClientSessionProducer {
 
@@ -14,9 +12,9 @@ public interface ClientSessionProducer {
    * This should block until a new session is available.
    * </p>
    *
-   * @return a new input session
+   * @return a new session
    */
-  public ClientInputSession next();
+  public DdnntClientInputSession next();
 
   /**
    * Tells if there producers will produce mere sessions or if all expected sessions have handed

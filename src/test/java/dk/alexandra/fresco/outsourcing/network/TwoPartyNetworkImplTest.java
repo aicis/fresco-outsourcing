@@ -6,7 +6,7 @@ import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkTestUtils;
 import dk.alexandra.fresco.framework.network.AsyncNetwork;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
-import dk.alexandra.fresco.outsourcing.network.TwoPartyNetworkImpl.Parties;
+import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory.Parties;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +21,10 @@ public class TwoPartyNetworkImplTest {
   private TwoPartyNetwork serverNetwork;
   private TwoPartyNetwork clientNetwork;
 
+  /**
+   * Sets up a network for a client and a server.
+   * @throws Exception if connecting the network fails.
+   */
   @Before
   public void setUp() throws Exception {
     Map<Integer, NetworkConfiguration> conf = NetworkTestUtils.getNetworkConfigurations(2);
