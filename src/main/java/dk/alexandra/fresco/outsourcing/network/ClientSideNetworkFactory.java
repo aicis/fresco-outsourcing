@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A factory for clients (providing in/output) to open connections towards the mpc servers.
+ * A factory for clients (providing in/output) to actively make connections to the mpc servers.
  */
 public class ClientSideNetworkFactory {
 
@@ -28,6 +28,13 @@ public class ClientSideNetworkFactory {
     }
   }
 
+  /**
+   * Connects to a specified server and returns a network using the connection.
+   *
+   * @param serverHost hostname of the server
+   * @param serverPort the port number used by the server
+   * @return a network connected to the given server
+   */
   public static TwoPartyNetwork getNetwork(String serverHost, int serverPort) {
     return getNetwork(serverHost, serverPort, Parties.CLIENT.id());
   }
