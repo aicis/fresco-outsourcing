@@ -4,7 +4,6 @@ import dk.alexandra.fresco.framework.builder.ProtocolBuilder;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.resources.ResourcePool;
-import java.io.IOException;
 
 /**
  * Interface for conveniently handling MPC test setups that holds all the elements needed to run an

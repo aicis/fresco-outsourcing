@@ -25,6 +25,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Test;
 
+/**
+ * A full functional test, that will set up a number of servers to accept inputs from some number of
+ * clients.
+ */
 public class DdnntInputServerTest {
 
   private static final int INPUTS_PER_CLIENT = 1000;

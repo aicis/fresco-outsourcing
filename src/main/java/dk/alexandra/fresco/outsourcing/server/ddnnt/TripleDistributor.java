@@ -1,8 +1,5 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import dk.alexandra.fresco.framework.util.Pair;
-import dk.alexandra.fresco.framework.value.SInt;
-import java.math.BigInteger;
 import java.util.List;
 
 /**

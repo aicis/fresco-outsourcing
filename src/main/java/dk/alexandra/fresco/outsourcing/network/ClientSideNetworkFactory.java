@@ -3,13 +3,15 @@ package dk.alexandra.fresco.outsourcing.network;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkConfigurationImpl;
-import dk.alexandra.fresco.framework.network.socket.Connector;
 import dk.alexandra.fresco.framework.network.socket.NetworkConnector;
 import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A factory for clients (providing in/output) to open connections towards the mpc servers.
+ */
 public class ClientSideNetworkFactory {
 
   public static enum Parties {

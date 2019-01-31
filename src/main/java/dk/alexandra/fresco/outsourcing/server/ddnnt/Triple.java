@@ -1,5 +1,10 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+/**
+ * A tuple of three values of some type.
+ *
+ * @param <T> the type of triple
+ */
 public class Triple<T> {
 
   private final T first;

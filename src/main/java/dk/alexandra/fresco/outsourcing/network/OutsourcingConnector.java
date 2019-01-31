@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * THIS CLASS IS A DIRTY HACK SINCE THE CONNECTOR CLASS IN CORE DOES NOT HAVE PUBLIC CONSTRUCTORS
+ * THIS CLASS IS A DIRTY HACK SINCE THE CONNECTOR CLASS IN CORE DOES NOT HAVE PUBLIC CONSTRUCTORS.
  */
 public class OutsourcingConnector implements NetworkConnector {
 

@@ -5,6 +5,12 @@ import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 
+/**
+ * Represents a session between the servers where the servers process input delivered by a client
+ * using the DDNNT protocol.
+ *
+ * @param <ResourcePoolT> the resource pool to use.
+ */
 public class ServerInputSessionImpl<ResourcePoolT extends NumericResourcePool>
     implements ServerInputSession<ResourcePoolT> {
 
@@ -12,6 +18,13 @@ public class ServerInputSessionImpl<ResourcePoolT extends NumericResourcePool>
   private final ResourcePoolT resourcePool;
   private final SecureComputationEngine<ResourcePoolT, ProtocolBuilderNumeric> sce;
 
+  /**
+   * Constructs a server session.
+   *
+   * @param network a network
+   * @param resourcePool the resource pool
+   * @param sce an SCE
+   */
   public ServerInputSessionImpl(CloseableNetwork network, ResourcePoolT resourcePool,
       SecureComputationEngine<ResourcePoolT, ProtocolBuilderNumeric> sce) {
     this.network = network;

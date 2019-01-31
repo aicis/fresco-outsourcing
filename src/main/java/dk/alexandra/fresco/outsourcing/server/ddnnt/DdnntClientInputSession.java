@@ -6,7 +6,7 @@ import java.math.BigInteger;
 
 /**
  * Represents a session between a client and the server where the client provides an MPC input to
- * the servers.
+ * the servers using the DDNNT protocol.
  */
 public interface DdnntClientInputSession {
 
@@ -45,7 +45,5 @@ public interface DdnntClientInputSession {
    * @return a byte serializer
    */
   public ByteSerializer<BigInteger> getSerializer();
-
-
 
 }

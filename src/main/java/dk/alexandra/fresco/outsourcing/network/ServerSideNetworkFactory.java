@@ -17,6 +17,14 @@ import javax.net.ServerSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A factory for mpc servers to get network connections made from clients.
+ *
+ * <p>
+ * The factory will listen for new connections from clients until the factory is explicitly told to
+ * stop. All connections made will be queued and returned in FIFO order.
+ * </p>
+ */
 public class ServerSideNetworkFactory {
 
   private static final int PARTY_ID_BYTES = 1;
@@ -27,6 +35,12 @@ public class ServerSideNetworkFactory {
   private final BlockingQueue<TwoPartyNetwork> processingQueue;
   private final Thread thread;
 
+  /**
+   * Constructs a new network factory.
+   *
+   * @param port the port number to listen for connection on
+   * @param serverFactory a factory for server sockets
+   */
   public ServerSideNetworkFactory(int port, ServerSocketFactory serverFactory) {
     this.port = port;
     this.serverFactory = serverFactory;
@@ -36,11 +50,20 @@ public class ServerSideNetworkFactory {
     this.thread.start();
   }
 
+  /**
+   * Gives the next network connection to a client if any were made (in FIFO order). Otherwise
+   * blocks waiting for the next client make a connection.
+   *
+   * @return a network connected to a client.
+   */
   public TwoPartyNetwork getNetwork() {
     return ExceptionConverter.safe(() -> this.processingQueue.take(),
         "Interrupted waiting for the next client connection.");
   }
 
+  /**
+   * Stops this factory from listening for new connections.
+   */
   public void stopListening() {
     if (!this.thread.isInterrupted()) {
       this.thread.interrupt();
@@ -48,7 +71,7 @@ public class ServerSideNetworkFactory {
   }
 
   /**
-   * Listens for connections from the opposing parties with lower id's.
+   * Listens for connections from clients.
    *
    * @throws IOException thrown if an {@link IOException} occurs while listening.
    * @throws InterruptedException thrown if exception occurs adding a new network to the processing
@@ -65,7 +88,7 @@ public class ServerSideNetworkFactory {
         }
         if (id != Parties.CLIENT.id()) {
           throw new RuntimeException(
-              "Expexted connection from id " + Parties.CLIENT.id() + " but was " + id);
+              "Expected connection from client id " + Parties.CLIENT.id() + " but was " + id);
         }
         Party client = new Party(Parties.CLIENT.id(), "", 0); // Note port and host irrelevant
         Map<Integer, Socket> socketMap = new HashMap<>(1);

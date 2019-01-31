@@ -25,16 +25,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A simple demo client for the Ddnnt input protocol.
+ * A simple demo client for the DDNNT input protocol.
  *
  * <p>
- * The ddnnt client will proceed as follows to provide input:
+ * The DDNNT client will proceed as follows to provide input:
  * <ol>
  * <li>Connect to server 1 and send an introductory message including the unique id of the client,
  * and the number of inputs the client will give.
- * <li>Receive a response from server 1 giving the client a priority.
+ * <li>Receive a response from server 1 giving the client a priority. This priority will define the
+ * order in which servers should handle client inputs to make it possible for the servers to
+ * coordinate on the preprocessed material to use for each client.
  * <li>The client will then connect to all other servers and send an introductory message including
- * the unique id of the priority, the unique id and the number of inputs of the client.
+ * it's priority, the unique id and the number of inputs of the client.
  * <li>From the servers the client receives shares of a triple for each input.
  * <li>The client checks if the shares reconstructs to a correct triple.
  * <li>If so, the client uses the reconstructed first value of the triple to mask the input and
@@ -52,6 +54,19 @@ public class DemoDdnntInputClient implements InputClient {
   private List<Party> servers;
   private Map<Integer, TwoPartyNetwork> serverNetworks;
 
+  /**
+   * Constructs a new input client delivering a given number of values to a given set of servers.
+   *
+   * <p>
+   * Note, that on construction the client will start the protocol by connecting to the servers as
+   * described above and perform the handshake, the servers may then start transferring the
+   * preprocessed material to the client, even before input is received from the client application.
+   * </p>
+   *
+   * @param numInputs number of input values to deliver
+   * @param clientId the unique id of the client (should be unique among all clients)
+   * @param servers a list of servers to deliver input to
+   */
   public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
     this.numInputs = numInputs;
     this.clientId = clientId;

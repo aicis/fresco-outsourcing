@@ -3,7 +3,7 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 import java.util.List;
 
 /**
- * A simple implementation of the triple distributor, which is simply allocated some amount of
+ * A simple implementation of the triple distributor, which is allocated some amount of
  * triples at construction, and will not be able to serve additional triples beyond this amount.
  */
 class PreLoadedTripleDistributor implements TripleDistributor {

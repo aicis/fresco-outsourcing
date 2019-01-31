@@ -4,6 +4,9 @@ import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
 
+/**
+ * Simple implementation of the DDNNT client session.
+ */
 public class DdnntClientInputSessionImpl implements DdnntClientInputSession {
 
   private int clientId;

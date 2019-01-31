@@ -1,7 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
-import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
@@ -19,6 +18,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A demo client session producer based on SPDZ.
+ *
+ * <p>
+ * This producer will accept given number of expected sessions. It assumes that each client only
+ * connects for a single input session and it will prioritize the sessions in the order the clients
+ * connect to the server with id 1.
+ *
+ * Note, this producer will not attempt to authenticate the clients connecting for at session.
+ * </p>
  *
  * <p>
  * Defines the following protocol for clients to start the sessions:
@@ -46,6 +53,18 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
   private int expectedClients;
   private int sessionsProduced;
 
+  /**
+   * Constructs a new client session producer.
+   *
+   * <p>
+   * At construction this will start a thread that starts listening a specified number for client
+   * connections and perform the handshake protocol described above with the clients.
+   * </p>
+   *
+   * @param resourcePool a spdz resource pool to use for the input protocol
+   * @param port a port to listen for incomming sessions on
+   * @param expectedClients the expected number of client sessions to produce
+   */
   public DemoClientSessionProducer(SpdzResourcePool resourcePool, int port, int expectedClients) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
@@ -153,16 +172,6 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     int getPriority() {
       return priority;
     }
-  }
-
-
-  private int[] intsFromBytes(byte[] bytes) {
-    int[] ints = new int[bytes.length / Integer.BYTES];
-    for (int i = 0; i < bytes.length; i++) {
-      ints[i / Integer.BYTES] <<= Byte.SIZE;
-      ints[i / Integer.BYTES] ^= bytes[i];
-    }
-    return ints;
   }
 
   @Override
