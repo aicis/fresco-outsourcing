@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
  * The priority is used by the servers to be able to coordinate which triples to use for each
  * clients input.
  * </p>
- *
  */
 public class DemoClientSessionProducer implements ClientSessionProducer {
 

@@ -60,7 +60,8 @@ public class DemoDdnntInputClient implements InputClient {
    * <p>
    * Note, that on construction the client will start the protocol by connecting to the servers as
    * described above and perform the handshake, the servers may then start transferring the
-   * preprocessed material to the client, even before input is received from the client application.
+   * preprocessed material to the client, even before input is received from the client
+   * application.
    * </p>
    *
    * @param numInputs number of input values to deliver
@@ -195,14 +196,12 @@ public class DemoDdnntInputClient implements InputClient {
 
   @Override
   public void putLongInputs(List<Long> inputs) {
-    // TODO Auto-generated method stub
-
+    putBigIntegerInputs(inputs.stream().map(BigInteger::valueOf).collect(Collectors.toList()));
   }
 
   @Override
   public void putIntInputs(List<Integer> inputs) {
-    // TODO Auto-generated method stub
-
+    putBigIntegerInputs(inputs.stream().map(BigInteger::valueOf).collect(Collectors.toList()));
   }
 
 }

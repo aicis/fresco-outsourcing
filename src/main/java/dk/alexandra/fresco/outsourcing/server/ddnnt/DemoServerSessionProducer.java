@@ -50,7 +50,7 @@ public class DemoServerSessionProducer implements ServerSessionProducer<SpdzReso
 
   /**
    * Convenience constructor for
-   * {@link #DemoServerSessionProducerImpl(int, SpdzResourcePool, NetworkConfiguration)} with the
+   * {@link #DemoServerSessionProducer(int, SpdzResourcePool, NetworkConfiguration)} with the
    * batch size set to {@value #DEFAULT_BATCH_SIZE}.
    *
    * @param resourcePool the resource pool
