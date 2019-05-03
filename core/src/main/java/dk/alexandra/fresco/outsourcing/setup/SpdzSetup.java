@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing;
+package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
@@ -24,10 +24,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * A TestSetup using the SPDZ protocol suite to run MPC computations. This will use dummy
+ * A {@link SuiteSetup} using the SPDZ protocol suite to run MPC computations. This will use dummy
  * preprocessing.
  */
-public class SpdzTestSetup implements TestSetup<SpdzResourcePool, ProtocolBuilderNumeric> {
+public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNumeric> {
 
   private final NetworkConfiguration netConf;
   private final SpdzResourcePool resourcePool;
@@ -40,7 +40,7 @@ public class SpdzTestSetup implements TestSetup<SpdzResourcePool, ProtocolBuilde
    * @param resourcePool a SpdzResourcePool
    * @param sce an sce
    */
-  public SpdzTestSetup(NetworkConfiguration netConf, SpdzResourcePool resourcePool,
+  public SpdzSetup(NetworkConfiguration netConf, SpdzResourcePool resourcePool,
       SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce) {
     this.netConf = netConf;
     this.resourcePool = resourcePool;
@@ -104,9 +104,9 @@ public class SpdzTestSetup implements TestSetup<SpdzResourcePool, ProtocolBuilde
      *
      * @return a Map from party id to test setup
      */
-    public Map<Integer, SpdzTestSetup> build() {
+    public Map<Integer, SpdzSetup> build() {
       Map<Integer, NetworkConfiguration> netConfMap = getNetConfs(parties);
-      Map<Integer, SpdzTestSetup> setups = new HashMap<>(parties);
+      Map<Integer, SpdzSetup> setups = new HashMap<>(parties);
       for (int i = 1; i < parties + 1; i++) {
         SpdzDummyDataSupplier supplier =
             new SpdzDummyDataSupplier(i, parties, ModulusFinder.findSuitableModulus(modLength));
@@ -116,7 +116,8 @@ public class SpdzTestSetup implements TestSetup<SpdzResourcePool, ProtocolBuilde
         SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
             new SecureComputationEngineImpl<>(suite,
                 new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
-        setups.put(i, new SpdzTestSetup(netConfMap.get(i), rp, sce));
+//        setups.clear();
+        setups.put(i, new SpdzSetup(netConfMap.get(i), rp, sce));
       }
       return setups;
     }

@@ -6,7 +6,7 @@ import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.network.AsyncNetwork;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.outsourcing.SpdzTestSetup;
+import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
@@ -39,7 +39,7 @@ public class DdnntInputServerTest {
   public void test() throws InterruptedException, ExecutionException {
     int numClients = NUMBER_OF_CLIENTS;
     int numServers = NUMBER_OF_SERVERS;
-    List<Integer> clientFacingPorts = SpdzTestSetup.Builder.getFreePorts(numServers);
+    List<Integer> clientFacingPorts = SpdzSetup.Builder.getFreePorts(numServers);
     System.out.println("Run servers");
     List<Future<Object>> assertFutures = runServers(numClients, clientFacingPorts);
     System.out.println("Run clients");
@@ -71,7 +71,7 @@ public class DdnntInputServerTest {
 
   private List<Future<Object>> runServers(int numClients, List<Integer> clientFacingPorts)
       throws InterruptedException, ExecutionException {
-    Map<Integer, SpdzTestSetup> setup = SpdzTestSetup.builder(clientFacingPorts.size()).build();
+    Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
     Map<Integer, Future<ClientSessionProducer>> clientSessionProducers =
         getClientSessionProducers(numClients, clientFacingPorts, setup, es);
@@ -84,10 +84,10 @@ public class DdnntInputServerTest {
     return assertFutures;
   }
 
-  private List<Future<Object>> getFutureAsserts(Map<Integer, SpdzTestSetup> setup,
+  private List<Future<Object>> getFutureAsserts(Map<Integer, SpdzSetup> setup,
       ExecutorService es, Map<Integer, Future<InputServer>> inputServers) {
     List<Future<Object>> assertFutures = new ArrayList<>(setup.size());
-    for (SpdzTestSetup s : setup.values()) {
+    for (SpdzSetup s : setup.values()) {
       Future<InputServer> futureServer = inputServers.get(s.getRp().getMyId());
       Future<Object> assertFuture = es.submit(() -> {
         Map<Integer, List<BigInteger>> result = openInputs(futureServer, s);
@@ -104,11 +104,11 @@ public class DdnntInputServerTest {
     return assertFutures;
   }
 
-  private Map<Integer, Future<InputServer>> getInputServers(Map<Integer, SpdzTestSetup> setup,
+  private Map<Integer, Future<InputServer>> getInputServers(Map<Integer, SpdzSetup> setup,
       ExecutorService es, Map<Integer, Future<ClientSessionProducer>> clientSessionProducers,
       Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers) {
     Map<Integer, Future<InputServer>> inputServers = new HashMap<>(setup.size());
-    for (SpdzTestSetup s : setup.values()) {
+    for (SpdzSetup s : setup.values()) {
       int id = s.getRp().getMyId();
       Future<InputServer> server = es.submit(() -> {
         return new DdnntInputServer<>(clientSessionProducers.get(id).get(),
@@ -120,10 +120,10 @@ public class DdnntInputServerTest {
   }
 
   private Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> getServerSessionProducers(
-      Map<Integer, SpdzTestSetup> setup, ExecutorService es) {
+      Map<Integer, SpdzSetup> setup, ExecutorService es) {
     Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
         new HashMap<>(setup.size());
-    for (SpdzTestSetup s : setup.values()) {
+    for (SpdzSetup s : setup.values()) {
       Future<ServerSessionProducer<SpdzResourcePool>> producer = es.submit(() -> {
         return new DemoServerSessionProducer(s.getRp(), s.getNetConf());
       });
@@ -133,10 +133,10 @@ public class DdnntInputServerTest {
   }
 
   private Map<Integer, Future<ClientSessionProducer>> getClientSessionProducers(int numClients,
-      List<Integer> clientFacingPorts, Map<Integer, SpdzTestSetup> setup, ExecutorService es) {
+      List<Integer> clientFacingPorts, Map<Integer, SpdzSetup> setup, ExecutorService es) {
     Map<Integer, Future<ClientSessionProducer>> clientSessionProducers =
         new HashMap<>(clientFacingPorts.size());
-    for (SpdzTestSetup s : setup.values()) {
+    for (SpdzSetup s : setup.values()) {
       Future<ClientSessionProducer> producer = es.submit(() -> {
         int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
         return new DemoClientSessionProducer(s.getRp(), port, numClients);
@@ -147,7 +147,7 @@ public class DdnntInputServerTest {
   }
 
   private Map<Integer, List<BigInteger>> openInputs(Future<InputServer> futureServer,
-      SpdzTestSetup setup) {
+      SpdzSetup setup) {
     Map<Integer, List<SInt>> inputs;
     try {
       InputServer server = futureServer.get();

@@ -1,46 +1,49 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>dk.alexandra.fresco.outsourcing</groupId>
   <artifactId>outsourcing</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
+
   <version>0.0.1-SNAPSHOT</version>
   <name>Fresco Outsourcing</name>
-	<description>
-    A module for FRESCO that deals with oursoucing MPC computation from a group of clients to a
+  <description>
+    A module for FRESCO that deals with outsourcing MPC computation from a group of clients to a
     group of MPC servers.
   </description>
 
   <developers>
-		<developer>
-			<name>FRESCO team</name>
-			<email>fresco@alexandra.dk</email>
-			<organization>The Alexandra Institute</organization>
-			<organizationUrl>https://alexandra.dk</organizationUrl>
-		</developer>
-	</developers>
+    <developer>
+      <name>FRESCO team</name>
+      <email>fresco@alexandra.dk</email>
+      <organization>The Alexandra Institute</organization>
+      <organizationUrl>https://alexandra.dk</organizationUrl>
+    </developer>
+  </developers>
 
   <dependencies>
 
     <dependency>
-			<groupId>dk.alexandra.fresco</groupId>
-			<artifactId>core</artifactId>
-			<version>1.1.2</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-    
-		<dependency>
-			<groupId>dk.alexandra.fresco</groupId>
-			<artifactId>core</artifactId>
-			<version>1.1.2</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>dk.alexandra.fresco</groupId>
-			<artifactId>spdz</artifactId>
-			<version>1.1.2</version>
-		</dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>core</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>core</artifactId>
+      <version>1.1.2</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>spdz</artifactId>
+      <version>1.1.2</version>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -51,24 +54,46 @@
 
     <!--  logging -->
     <dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.25</version>
-		</dependency>
-		<!-- logging in tests are done via logback -->
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
-			<scope>test</scope>
-		</dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.25</version>
+    </dependency>
+    <!-- logging in tests are done via logback -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
+  <build>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.0.2</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <modules>
+    <module>core</module>
+    <module>demo</module>
+  </modules>
+
   <properties>
-  	<maven.compiler.source>1.8</maven.compiler.source>
-  	<maven.compiler.target>1.8</maven.compiler.target>
-  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 </project>

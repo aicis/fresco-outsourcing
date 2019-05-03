@@ -11,13 +11,13 @@ import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
-import dk.alexandra.fresco.outsourcing.SpdzTestSetup;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
@@ -49,7 +49,7 @@ public class SpdzSetupUtils {
     return servers;
   }
 
-  static SpdzTestSetup getSetup(int serverId, int numServers, int basePort) {
+  static SpdzSetup getSetup(int serverId, int numServers, int basePort) {
     NetworkConfiguration netConf = getNetConf(serverId, numServers, basePort);
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
@@ -63,10 +63,10 @@ public class SpdzSetupUtils {
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,
             new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
-    return new SpdzTestSetup(netConf, rp, sce);
+    return new SpdzSetup(netConf, rp, sce);
   }
 
-  static InputServer initInputServer(SpdzTestSetup spdzSetup, List<Integer> clientIds,
+  static InputServer initInputServer(SpdzSetup spdzSetup, List<Integer> clientIds,
       int basePort) {
     final ClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
         spdzSetup.getRp(),

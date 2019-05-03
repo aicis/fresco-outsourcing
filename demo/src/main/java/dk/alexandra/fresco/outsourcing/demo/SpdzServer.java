@@ -5,8 +5,8 @@ import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.network.AsyncNetwork;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.outsourcing.SpdzTestSetup;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
+import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +23,7 @@ public class SpdzServer {
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   private final int basePort;
-  private final SpdzTestSetup spdzSetup;
+  private final SpdzSetup spdzSetup;
 
   /**
    * Construct new SPDZ server.

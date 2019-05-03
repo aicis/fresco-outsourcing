@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing;
+package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.builder.ProtocolBuilder;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
@@ -6,15 +6,13 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.resources.ResourcePool;
 
 /**
- * Interface for conveniently handling MPC test setups that holds all the elements needed to run an
+ * Interface for conveniently handling MPC suite setups that holds all the elements needed to run an
  * MPC application.
  *
- * @param <ResourcePoolT>
- *          the resource pool type to use in the MPC computation
- * @param <BuilderT>
- *          the builder type used
+ * @param <ResourcePoolT> the resource pool type to use in the MPC computation
+ * @param <BuilderT> the builder type used
  */
-public interface TestSetup<ResourcePoolT extends ResourcePool, BuilderT extends ProtocolBuilder> {
+public interface SuiteSetup<ResourcePoolT extends ResourcePool, BuilderT extends ProtocolBuilder> {
 
   /**
    * Returns a network configuration used in MPC computations.
