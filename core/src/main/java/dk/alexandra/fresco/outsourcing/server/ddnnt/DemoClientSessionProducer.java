@@ -1,5 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
@@ -7,6 +8,7 @@ import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
@@ -45,6 +47,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
 
   private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
   private final SpdzResourcePool resourcePool;
+  private final FieldDefinition definition;
   private final PriorityQueue<QueuedClient> orderingQueue;
   private final BlockingQueue<QueuedClient> processingQueue;
   private final int port;
@@ -64,7 +67,8 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
    * @param port a port to listen for incomming sessions on
    * @param expectedClients the expected number of client sessions to produce
    */
-  public DemoClientSessionProducer(SpdzResourcePool resourcePool, int port, int expectedClients) {
+  public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
+      int port, int expectedClients) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
     }
@@ -73,11 +77,12 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
           "Expected clients cannot be negative, but was: " + expectedClients);
     }
     this.resourcePool = Objects.requireNonNull(resourcePool);
+    this.definition = definition;
     this.port = port;
     this.expectedClients = expectedClients;
     this.processingQueue = new ArrayBlockingQueue<>(expectedClients);
     this.orderingQueue = new PriorityQueue<>(expectedClients,
-        (QueuedClient a, QueuedClient b) -> Integer.compare(a.getPriority(), b.getPriority()));
+        Comparator.comparingInt(QueuedClient::getPriority));
     this.clientsReady = 0;
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
@@ -179,12 +184,14 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
       QueuedClient client = processingQueue.take();
       List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
       for (int i = 0; i < client.getInputAmount(); i++) {
-        SpdzTriple trip = resourcePool.getDataSupplier().getNextTriple();
+        SpdzTriple trip = resourcePool
+            .getDataSupplier()
+            .getNextTriple();
         tripList.add(new SpdzDdnntTuple(trip));
       }
       TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
       DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
-          client.getInputAmount(), client.getNetwork(), distributor, resourcePool.getSerializer());
+          client.getInputAmount(), client.getNetwork(), distributor, definition);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {

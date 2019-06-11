@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,7 +1,9 @@
-package dk.alexandra.fresco.outsourcing.demo;
+package dk.alexandra.fresco.outsourcing.utils;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkConfigurationImpl;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
@@ -23,17 +25,28 @@ import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class SpdzSetupUtils {
 
   private SpdzSetupUtils() {
   }
 
-  static NetworkConfiguration getNetConf(int serverId, int numServers, int basePort) {
+  public static FieldDefinition getDefaultFieldDefinition() {
+    return new BigIntegerFieldDefinition(
+        ModulusFinder.findSuitableModulus(64));
+  }
+
+  public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {
+    return new BigInteger(modulus.bitLength(), new Random(partyId)).mod(modulus);
+  }
+
+  public static NetworkConfiguration getNetConf(int serverId, int numServers, int basePort) {
     Map<Integer, Party> partyMap = new HashMap<>();
     for (int i = 1; i <= numServers; i++) {
       partyMap.put(i, new Party(i, "localhost", basePort + i));
@@ -41,7 +54,7 @@ public class SpdzSetupUtils {
     return new NetworkConfigurationImpl(serverId, partyMap);
   }
 
-  static List<Party> getServerParties(int basePort, int numServers) {
+  public static List<Party> getServerParties(int basePort, int numServers) {
     List<Party> servers = new ArrayList<>(numServers);
     for (int i = 1; i <= numServers; i++) {
       servers.add(new Party(i, "localhost", basePort + i));
@@ -49,13 +62,16 @@ public class SpdzSetupUtils {
     return servers;
   }
 
-  static SpdzSetup getSetup(int serverId, int numServers, int basePort) {
+  public static SpdzSetup getSetup(int serverId, int numServers, int basePort) {
     NetworkConfiguration netConf = getNetConf(serverId, numServers, basePort);
+    FieldDefinition definition = getDefaultFieldDefinition();
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,
             numServers,
-            ModulusFinder.findSuitableModulus(64));
+            definition,
+            definition.getModulus()
+        );
     SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, numServers,
         new OpenedValueStoreImpl<>(),
         supplier, new AesCtrDrbg(new byte[32]));
@@ -66,10 +82,11 @@ public class SpdzSetupUtils {
     return new SpdzSetup(netConf, rp, sce);
   }
 
-  static InputServer initInputServer(SpdzSetup spdzSetup, List<Integer> clientIds,
+  public static InputServer initInputServer(SpdzSetup spdzSetup, List<Integer> clientIds,
       int basePort) {
     final ClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
         spdzSetup.getRp(),
+        getDefaultFieldDefinition(),
         spdzSetup
             .getNetConf()
             .getMe()

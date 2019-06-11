@@ -2,7 +2,9 @@ package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.network.serializers.BigIntegerWithFixedLengthSerializer;
+import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
@@ -15,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -50,7 +52,7 @@ public class DemoDdnntInputClient implements InputClient {
 
   private int numInputs;
   private int clientId;
-  private BigInteger modulus;
+  private FieldDefinition definition;
   private List<Party> servers;
   private Map<Integer, TwoPartyNetwork> serverNetworks;
 
@@ -68,17 +70,26 @@ public class DemoDdnntInputClient implements InputClient {
    * @param clientId the unique id of the client (should be unique among all clients)
    * @param servers a list of servers to deliver input to
    */
-  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
+  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers,
+      Function<BigInteger, FieldDefinition> definitionSupplier) {
     this.numInputs = numInputs;
     this.clientId = clientId;
     this.servers = servers;
     ExceptionConverter.safe(() -> {
-      this.handshake();
+      this.handshake(definitionSupplier);
       return null;
     }, "Failed client handshake");
   }
 
-  private void handshake() throws InterruptedException, ExecutionException {
+  /**
+   * Default constructor that uses {@link BigIntegerFieldDefinition} for the default field
+   * definition.
+   */
+  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
+    this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
+  }
+
+  private void handshake(Function<BigInteger, FieldDefinition> definitionSupplier) {
     logger.info("C{}: Starting handshake", clientId);
     try {
       ExecutorService es = Executors.newFixedThreadPool(servers.size() - 1);
@@ -102,7 +113,8 @@ public class DemoDdnntInputClient implements InputClient {
       }
       es.shutdown();
       byte[] modResponse = masterNetwork.receive();
-      this.modulus = new BigInteger(modResponse);
+      BigInteger modulus = new BigInteger(modResponse);
+      this.definition = definitionSupplier.apply(modulus);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -142,21 +154,22 @@ public class DemoDdnntInputClient implements InputClient {
     if (inputs.size() != numInputs) {
       throw new IllegalArgumentException("Number of inputs does match");
     }
-    List<BigInteger> accA =
-        IntStream.range(0, numInputs).mapToObj(i -> BigInteger.ZERO).collect(Collectors.toList());
-    List<BigInteger> accB =
-        IntStream.range(0, numInputs).mapToObj(i -> BigInteger.ZERO).collect(Collectors.toList());
-    List<BigInteger> accC =
-        IntStream.range(0, numInputs).mapToObj(i -> BigInteger.ZERO).collect(Collectors.toList());
-    BigIntegerWithFixedLengthSerializer serializer =
-        new BigIntegerWithFixedLengthSerializer(modulus.toByteArray().length);
+    List<FieldElement> accA =
+        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+            .collect(Collectors.toList());
+    List<FieldElement> accB =
+        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+            .collect(Collectors.toList());
+    List<FieldElement> accC =
+        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+            .collect(Collectors.toList());
     for (Party s : servers) {
       TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
-      List<BigInteger> tmpA = serializer.deserializeList(network.receive());
+      List<FieldElement> tmpA = definition.deserializeList(network.receive());
       accA = sumLists(accA, tmpA);
-      List<BigInteger> tmpB = serializer.deserializeList(network.receive());
+      List<FieldElement> tmpB = definition.deserializeList(network.receive());
       accB = sumLists(accB, tmpB);
-      List<BigInteger> tmpC = serializer.deserializeList(network.receive());
+      List<FieldElement> tmpC = definition.deserializeList(network.receive());
       accC = sumLists(accC, tmpC);
       if (!(tmpA.size() == numInputs && tmpB.size() == numInputs && tmpC.size() == numInputs)) {
         throw new MaliciousException(
@@ -164,31 +177,29 @@ public class DemoDdnntInputClient implements InputClient {
       }
       logger.info("C{}: Received input tuples from server {}", clientId, s);
     }
-    accA = accA.stream().map(i -> i.mod(modulus)).collect(Collectors.toList());
-    accB = accB.stream().map(i -> i.mod(modulus)).collect(Collectors.toList());
-    accC = accC.stream().map(i -> i.mod(modulus)).collect(Collectors.toList());
     for (int i = 0; i < accA.size(); i++) {
-      if (!accA.get(i).multiply(accB.get(i)).mod(modulus).equals(accC.get(i))) {
-        logger.debug("Product was {} but shoudl be {}",
-            accA.get(i).multiply(accB.get(i)).mod(modulus), accC.get(i));
+      // TODO FieldElement does not define equals
+      if (!accA.get(i).multiply(accB.get(i)).equals(accC.get(i))) {
+        logger.debug("Product was {} but should be {}",
+            accA.get(i).multiply(accB.get(i)), accC.get(i));
         throw new MaliciousException("Mac for input " + i + " did not pass check");
       }
     }
-    List<BigInteger> maskedInputs = new ArrayList<>(numInputs);
+    List<FieldElement> maskedInputs = new ArrayList<>(numInputs);
     for (int i = 0; i < inputs.size(); i++) {
-      maskedInputs.add(inputs.get(i).subtract(accA.get(i)).mod(modulus));
+      maskedInputs.add(definition.createElement(inputs.get(i)).subtract(accA.get(i)));
     }
     for (Party s : servers) {
       TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
-      network.send(serializer.serialize(maskedInputs));
+      network.send(definition.serialize(maskedInputs));
       logger.info("C{}: Send masked input to {}", clientId, s);
     }
   }
 
-  private List<BigInteger> sumLists(List<BigInteger> left, List<BigInteger> right) {
-    List<BigInteger> res = new ArrayList<>(left.size());
+  private List<FieldElement> sumLists(List<FieldElement> left, List<FieldElement> right) {
+    List<FieldElement> res = new ArrayList<>(left.size());
     for (int i = 0; i < left.size(); i++) {
-      BigInteger b = left.get(i).add(right.get(i));
+      FieldElement b = left.get(i).add(right.get(i));
       res.add(b);
     }
     return res;

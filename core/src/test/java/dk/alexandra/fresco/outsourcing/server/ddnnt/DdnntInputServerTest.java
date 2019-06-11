@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.network.AsyncNetwork;
+import dk.alexandra.fresco.framework.network.Network;
+import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -139,7 +141,8 @@ public class DdnntInputServerTest {
     for (SpdzSetup s : setup.values()) {
       Future<ClientSessionProducer> producer = es.submit(() -> {
         int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
-        return new DemoClientSessionProducer(s.getRp(), port, numClients);
+        return new DemoClientSessionProducer(s.getRp(), SpdzSetupUtils.getDefaultFieldDefinition(),
+            port, numClients);
       });
       clientSessionProducers.put(s.getRp().getMyId(), producer);
     }
@@ -156,7 +159,7 @@ public class DdnntInputServerTest {
       e.printStackTrace();
       return null;
     }
-    AsyncNetwork net = new AsyncNetwork(setup.getNetConf());
+    Network net = new SocketNetwork(setup.getNetConf());
     Map<Integer, DRes<List<DRes<BigInteger>>>> wrapped =
         setup.getSce().runApplication((builder) -> {
           Map<Integer, DRes<List<DRes<BigInteger>>>> openInputs =

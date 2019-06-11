@@ -1,5 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
@@ -13,7 +14,7 @@ public class DdnntClientInputSessionImpl implements DdnntClientInputSession {
   private int inputAmount;
   private TwoPartyNetwork network;
   private TripleDistributor distributor;
-  private ByteSerializer<BigInteger> serializer;
+  private ByteSerializer<FieldElement> serializer;
 
   /**
    * Construct a new session.
@@ -25,7 +26,7 @@ public class DdnntClientInputSessionImpl implements DdnntClientInputSession {
    * @param serializer a serializer for BigInteger's
    */
   public DdnntClientInputSessionImpl(int clientId, int inputAmount, TwoPartyNetwork network,
-      TripleDistributor distributor, ByteSerializer<BigInteger> serializer) {
+      TripleDistributor distributor, ByteSerializer<FieldElement> serializer) {
     this.clientId = clientId;
     this.inputAmount = inputAmount;
     this.network = network;
@@ -49,12 +50,12 @@ public class DdnntClientInputSessionImpl implements DdnntClientInputSession {
   }
 
   @Override
-  public TripleDistributor getTripledistributor() {
+  public TripleDistributor getTripleDistributor() {
     return distributor;
   }
 
   @Override
-  public ByteSerializer<BigInteger> getSerializer() {
+  public ByteSerializer<FieldElement> getSerializer() {
     return serializer;
   }
 

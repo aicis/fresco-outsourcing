@@ -6,14 +6,14 @@ import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.builder.ComputationParallel;
 import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
-import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,10 +88,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     Network network = serverInputSession.getNetwork();
     broadcastMaskedInput(maskPairs, network);
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
-    UnMaskingApp app = new UnMaskingApp(maskPairs, resourcePool.getSerializer());
-    Map<Integer, List<SInt>> result =
-        serverInputSession.getSce().runApplication(app, resourcePool, network);
-    return result;
+    UnMaskingApp app = new UnMaskingApp(maskPairs, resourcePool.getFieldDefinition());
+    return serverInputSession.getSce().runApplication(app, resourcePool, network);
   }
 
   /**
@@ -152,12 +150,12 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
       implements Application<Map<Integer, List<SInt>>, ProtocolBuilderNumeric> {
 
     private final SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs;
-    private final ByteSerializer<BigInteger> serializer;
+    private final FieldDefinition definition;
 
     public UnMaskingApp(SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs,
-        ByteSerializer<BigInteger> serializer) {
+        FieldDefinition definition) {
       this.maskPairs = maskPairs;
-      this.serializer = serializer;
+      this.definition = definition;
     }
 
     @Override
@@ -170,7 +168,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
       for (Entry<Integer, Pair<List<SInt>, byte[]>> e : maskPairs.entrySet()) {
         Pair<List<SInt>, byte[]> maskPair = e.getValue();
         List<SInt> masks = maskPair.getFirst();
-        List<BigInteger> masked = serializer.deserializeList(maskPair.getSecond());
+        List<FieldElement> masked = definition.deserializeList(maskPair.getSecond());
         DRes<List<SInt>> unMasked = par.par(unMaskClientInputs(masks, masked));
         inputMap.put(e.getKey(), unMasked);
       }
@@ -179,13 +177,13 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     }
 
     private ComputationParallel<List<SInt>, ProtocolBuilderNumeric> unMaskClientInputs(
-        List<SInt> masks, List<BigInteger> masked) {
+        List<SInt> masks, List<FieldElement> masked) {
       return (builder) -> {
         Iterator<SInt> maskIt = masks.iterator();
-        Iterator<BigInteger> maskedIt = masked.iterator();
+        Iterator<FieldElement> maskedIt = masked.iterator();
         List<DRes<SInt>> unMaskedInputs = new ArrayList<>(masks.size());
         while (maskedIt.hasNext() && maskIt.hasNext()) {
-          unMaskedInputs.add(builder.numeric().add(maskedIt.next(), maskIt.next()));
+          unMaskedInputs.add(builder.numeric().add(definition.convertToUnsigned(maskedIt.next()), maskIt.next()));
         }
         return () -> unMaskedInputs.stream().map(DRes::out).collect(Collectors.toList());
       };
@@ -201,15 +199,15 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     }
 
     @Override
-    public Pair<List<SInt>, byte[]> call() throws Exception {
+    public Pair<List<SInt>, byte[]> call() {
       TwoPartyNetwork net = session.getNetwork();
       List<DdnntInputTuple> inputTuples =
-          session.getTripledistributor().getTriples(session.getAmountOfInputs());
-      List<BigInteger> listA = inputTuples.stream()
+          session.getTripleDistributor().getTriples(session.getAmountOfInputs());
+      List<FieldElement> listA = inputTuples.stream()
           .map(DdnntInputTuple::getShareA).collect(Collectors.toList());
-      List<BigInteger> listB = inputTuples.stream()
+      List<FieldElement> listB = inputTuples.stream()
           .map(DdnntInputTuple::getShareB).collect(Collectors.toList());
-      List<BigInteger> listC = inputTuples.stream()
+      List<FieldElement> listC = inputTuples.stream()
           .map(DdnntInputTuple::getShareC).collect(Collectors.toList());
       net.send(session.getSerializer().serialize(listA));
       net.send(session.getSerializer().serialize(listB));
@@ -218,8 +216,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
       byte[] msg = net.receive();
       logger.info("Received masked inputs from C{}", session.getClientId());
       List<SInt> masks = inputTuples.stream()
-            .map(DdnntInputTuple::getA)
-            .collect(Collectors.toList());
+          .map(DdnntInputTuple::getA)
+          .collect(Collectors.toList());
       return new Pair<>(masks, msg);
     }
 

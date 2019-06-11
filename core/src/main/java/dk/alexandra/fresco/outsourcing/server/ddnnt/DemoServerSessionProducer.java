@@ -2,8 +2,8 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
-import dk.alexandra.fresco.framework.network.AsyncNetwork;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
+import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
@@ -62,7 +62,7 @@ public class DemoServerSessionProducer implements ServerSessionProducer<SpdzReso
 
   @Override
   public ServerInputSession<SpdzResourcePool> next() {
-    CloseableNetwork net = new AsyncNetwork(conf);
+    CloseableNetwork net = new SocketNetwork(conf);
     SpdzProtocolSuite suite = new SpdzProtocolSuite(resourcePool.getModulus().bitLength());
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,

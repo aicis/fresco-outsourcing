@@ -2,6 +2,8 @@ package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkConfigurationImpl;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
@@ -11,11 +13,14 @@ import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
+import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,16 +112,18 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
     public Map<Integer, SpdzSetup> build() {
       Map<Integer, NetworkConfiguration> netConfMap = getNetConfs(parties);
       Map<Integer, SpdzSetup> setups = new HashMap<>(parties);
+      FieldDefinition definition = new BigIntegerFieldDefinition(
+          ModulusFinder.findSuitableModulus(modLength));
       for (int i = 1; i < parties + 1; i++) {
-        SpdzDummyDataSupplier supplier =
-            new SpdzDummyDataSupplier(i, parties, ModulusFinder.findSuitableModulus(modLength));
+        BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(i, definition.getModulus());
+        SpdzDataSupplier supplier =
+            new SpdzDummyDataSupplier(i, parties, definition, ssk);
         SpdzResourcePool rp = new SpdzResourcePoolImpl(i, parties, new OpenedValueStoreImpl<>(),
             supplier, new AesCtrDrbg(new byte[32]));
         SpdzProtocolSuite suite = new SpdzProtocolSuite(maxLength);
         SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
             new SecureComputationEngineImpl<>(suite,
                 new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
-//        setups.clear();
         setups.put(i, new SpdzSetup(netConfMap.get(i), rp, sce));
       }
       return setups;

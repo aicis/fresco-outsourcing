@@ -2,11 +2,12 @@ package dk.alexandra.fresco.outsourcing.demo;
 
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
-import dk.alexandra.fresco.framework.network.AsyncNetwork;
+import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +75,7 @@ public class SpdzServer {
         .runApplication(
             app,
             spdzSetup.getRp(),
-            new AsyncNetwork(
+            new SocketNetwork(
                 SpdzSetupUtils
                     .getNetConf(getServerId(), getNumServers(), applicationBasePort)));
   }
