@@ -178,10 +178,12 @@ public class DemoDdnntInputClient implements InputClient {
       logger.info("C{}: Received input tuples from server {}", clientId, s);
     }
     for (int i = 0; i < accA.size(); i++) {
-      // TODO FieldElement does not define equals
-      if (!accA.get(i).multiply(accB.get(i)).equals(accC.get(i))) {
+      FieldElement aTimesB = accA.get(i).multiply(accB.get(i));
+      BigInteger aTimesBConverted = definition.convertToUnsigned(aTimesB);
+      BigInteger cConverted = definition.convertToUnsigned(accC.get(i));
+      if (!aTimesBConverted.equals(cConverted)) {
         logger.debug("Product was {} but should be {}",
-            accA.get(i).multiply(accB.get(i)), accC.get(i));
+            aTimesB, accC.get(i));
         throw new MaliciousException("Mac for input " + i + " did not pass check");
       }
     }
