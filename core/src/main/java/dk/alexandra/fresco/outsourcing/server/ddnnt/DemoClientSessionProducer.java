@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * connects for a single input session and it will prioritize the sessions in the order the clients
  * connect to the server with id 1.
  *
- * Note, this producer will not attempt to authenticate the clients connecting for at session.
+ * Note, this producer will not attempt to authenticate the clients connecting for a session.
  * </p>
  *
  * <p>

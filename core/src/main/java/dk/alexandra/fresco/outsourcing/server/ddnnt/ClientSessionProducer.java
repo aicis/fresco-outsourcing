@@ -12,7 +12,7 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 public interface ClientSessionProducer {
 
   /**
-   * Gets the next fresh {@link ClientInputSession} produced by this producer.
+   * Gets the next fresh {@link DdnntClientInputSession} produced by this producer.
    *
    * <p>
    * This should block until a new session is available.
@@ -20,7 +20,7 @@ public interface ClientSessionProducer {
    *
    * @return a new session
    */
-  public DdnntClientInputSession next();
+  DdnntClientInputSession next();
 
   /**
    * Tells if there producers will produce mere sessions or if all expected sessions have handed
@@ -28,6 +28,6 @@ public interface ClientSessionProducer {
    *
    * @return true if there are more sessions waiting, false otherwise.
    */
-  public boolean hasNext();
+  boolean hasNext();
 
 }
