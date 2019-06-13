@@ -5,21 +5,14 @@ import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
-import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
-import java.util.PriorityQueue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import javax.net.ServerSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A demo client session producer based on SPDZ.
+ * TODO update A demo client session producer based on SPDZ.
  *
  * <p>
  * This producer will accept given number of expected sessions. It assumes that each client only
@@ -47,13 +40,9 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
 
   private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
   private final SpdzResourcePool resourcePool;
-  private final FieldDefinition definition;
-  private final PriorityQueue<QueuedClient> orderingQueue;
-  private final BlockingQueue<QueuedClient> processingQueue;
   private final int port;
-  private int clientsReady;
-  private int expectedClients;
-  private int sessionsProduced;
+  private final int expectedClients;
+  private final ClientInputSessionRequestHandler inputSessionProducer;
 
   /**
    * Constructs a new client session producer.
@@ -77,13 +66,10 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
           "Expected clients cannot be negative, but was: " + expectedInputClients);
     }
     this.resourcePool = Objects.requireNonNull(resourcePool);
-    this.definition = definition;
     this.port = port;
     this.expectedClients = expectedInputClients;
-    this.processingQueue = new ArrayBlockingQueue<>(expectedInputClients);
-    this.orderingQueue = new PriorityQueue<>(expectedInputClients,
-        Comparator.comparingInt(QueuedClient::getPriority));
-    this.clientsReady = 0;
+    this.inputSessionProducer = new DemoClientInputSessionProducer(resourcePool, definition,
+        expectedInputClients);
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
     t.setName("DemoClientSessionProducer Listener");
@@ -114,27 +100,20 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
     int inputAmount =
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 2, Integer.BYTES * 3));
-    // TODO check type, forward accordingly, network shouldn't be a problem because it's fresh for
-    // every new connection
+    // forward request to input session producer
+    int assignedPriority = inputSessionProducer.registerNewSessionRequest(
+        priority,
+        clientId,
+        inputAmount,
+        network);
+    // send updated priority to client if this is main server
     if (resourcePool.getMyId() == 1) {
-      priority = clientsReady++;
-      byte[] priorityBytes = ByteAndBitConverter.toByteArray(priority);
+      byte[] priorityBytes = ByteAndBitConverter.toByteArray(assignedPriority);
       network.send(priorityBytes);
       network.send(resourcePool.getModulus().toByteArray());
-      QueuedClient q = new QueuedClient(priority, clientId, inputAmount, network);
-      processingQueue.add(q);
-      logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
-          resourcePool.getMyId(), q.clientId, q.priority, q.inputAmount);
-    } else {
-      QueuedClient q = new QueuedClient(priority, clientId, inputAmount, network);
-      orderingQueue.add(q);
-      while (!orderingQueue.isEmpty() && orderingQueue.peek().getPriority() == clientsReady) {
-        clientsReady++;
-        processingQueue.add(orderingQueue.remove());
-      }
-      logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
-          resourcePool.getMyId(), q.clientId, q.priority, q.inputAmount);
     }
+    logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
+        resourcePool.getMyId(), clientId, assignedPriority, inputAmount);
   }
 
   /**
@@ -151,28 +130,12 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
 
   @Override
   public DdnntClientInputSession nextInput() {
-    try {
-      QueuedClient client = processingQueue.take();
-      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
-      for (int i = 0; i < client.getInputAmount(); i++) {
-        SpdzTriple trip = resourcePool
-            .getDataSupplier()
-            .getNextTriple();
-        tripList.add(new SpdzDdnntTuple(trip));
-      }
-      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
-      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
-          client.getInputAmount(), client.getNetwork(), distributor, definition);
-      sessionsProduced++;
-      return session;
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    return inputSessionProducer.next();
   }
 
   @Override
   public boolean hasNextInput() {
-    return expectedClients - sessionsProduced > 0;
+    return inputSessionProducer.hasNext();
   }
 
   @Override
@@ -185,7 +148,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     return false;
   }
 
-  private static class QueuedClient {
+  static class QueuedClient {
 
     int priority;
     int clientId;
@@ -199,15 +162,15 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
       this.priority = priority;
     }
 
-    private int getClientId() {
+    int getClientId() {
       return clientId;
     }
 
-    private int getInputAmount() {
+    int getInputAmount() {
       return inputAmount;
     }
 
-    private TwoPartyNetwork getNetwork() {
+    TwoPartyNetwork getNetwork() {
       return network;
     }
 

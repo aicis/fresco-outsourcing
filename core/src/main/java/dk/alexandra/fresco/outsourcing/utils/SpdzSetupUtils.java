@@ -14,7 +14,6 @@ import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.ClientInputSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer;
