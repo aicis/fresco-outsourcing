@@ -6,12 +6,12 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 
 /**
- * Defines a session between the servers where they process the input delivered by clients, in order
- * to make the clients input ready for further MPC processing.
+ * Defines a session between the servers where they process the input delivered by clients or output
+ * delivered to clients.
  *
  * @param <ResourcePoolT> the resource pool used
  */
-public interface ServerInputSession<ResourcePoolT extends NumericResourcePool> {
+public interface ServerSession<ResourcePoolT extends NumericResourcePool> {
 
   /**
    * Gets a network connecting the servers.

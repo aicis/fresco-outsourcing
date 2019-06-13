@@ -46,15 +46,11 @@ import org.slf4j.LoggerFactory;
  * </ol>
  * </p>
  */
-public class DemoDdnntInputClient implements InputClient {
+public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputClient {
 
   private static final Logger logger = LoggerFactory.getLogger(DemoDdnntInputClient.class);
 
   private int numInputs;
-  private int clientId;
-  private FieldDefinition definition;
-  private List<Party> servers;
-  private Map<Integer, TwoPartyNetwork> serverNetworks;
 
   /**
    * Constructs a new input client delivering a given number of values to a given set of servers.
@@ -72,13 +68,8 @@ public class DemoDdnntInputClient implements InputClient {
    */
   public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
+    super(numInputs, clientId, servers, definitionSupplier);
     this.numInputs = numInputs;
-    this.clientId = clientId;
-    this.servers = servers;
-    ExceptionConverter.safe(() -> {
-      this.handshake(definitionSupplier);
-      return null;
-    }, "Failed client handshake");
   }
 
   /**
@@ -87,37 +78,6 @@ public class DemoDdnntInputClient implements InputClient {
    */
   public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
     this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
-  }
-
-  private void handshake(Function<BigInteger, FieldDefinition> definitionSupplier) {
-    logger.info("C{}: Starting handshake", clientId);
-    try {
-      ExecutorService es = Executors.newFixedThreadPool(servers.size() - 1);
-      Party serverOne = servers.stream().filter(p -> p.getPartyId() == 1).findFirst().get();
-      logger.info("C{}: connecting to master server {}", clientId, serverOne);
-      TwoPartyNetwork masterNetwork = es.submit(connect(serverOne, 0)).get();
-      logger.info("C{}: Connected to master server", clientId);
-      byte[] response = masterNetwork.receive();
-      int priority = intFromBytes(response);
-      logger.info("C{}: Received priotity {}", clientId, priority);
-      Map<Integer, Future<TwoPartyNetwork>> futureNetworks = new HashMap<>(servers.size() - 1);
-      for (Party s : servers.stream().filter(p -> p.getPartyId() != 1)
-          .collect(Collectors.toList())) {
-        Future<TwoPartyNetwork> futureNetwork = es.submit(connect(s, priority));
-        futureNetworks.put(s.getPartyId(), futureNetwork);
-      }
-      serverNetworks = new HashMap<>(servers.size());
-      serverNetworks.put(1, masterNetwork);
-      for (Entry<Integer, Future<TwoPartyNetwork>> f : futureNetworks.entrySet()) {
-        serverNetworks.put(f.getKey(), f.getValue().get());
-      }
-      es.shutdown();
-      byte[] modResponse = masterNetwork.receive();
-      BigInteger modulus = new BigInteger(modResponse);
-      this.definition = definitionSupplier.apply(modulus);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 
   /**
@@ -130,23 +90,6 @@ public class DemoDdnntInputClient implements InputClient {
       res ^= (bytes[i] & 0xFF) << (topByteIndex - i * Byte.SIZE);
     }
     return res;
-  }
-
-  private Callable<TwoPartyNetwork> connect(Party server, int priority) {
-    return () -> {
-      byte[] msg = new byte[Integer.BYTES * 3];
-      System.arraycopy(ByteAndBitConverter.toByteArray(priority), 0, msg, 0, Integer.BYTES);
-      System.arraycopy(ByteAndBitConverter.toByteArray(clientId), 0, msg, Integer.BYTES,
-          Integer.BYTES);
-      System.arraycopy(ByteAndBitConverter.toByteArray(numInputs), 0, msg, Integer.BYTES * 2,
-          Integer.BYTES);
-      logger.info("C{}: Connecting to server {} ... ", clientId, server);
-      TwoPartyNetwork network =
-          ClientSideNetworkFactory.getNetwork(server.getHostname(), server.getPort());
-      network.send(msg);
-      logger.info("C{}: Connected to server {}", clientId, server);
-      return network;
-    };
   }
 
   @Override

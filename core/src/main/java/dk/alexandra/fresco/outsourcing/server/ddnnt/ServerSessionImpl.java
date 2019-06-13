@@ -11,8 +11,8 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
  *
  * @param <ResourcePoolT> the resource pool to use.
  */
-public class ServerInputSessionImpl<ResourcePoolT extends NumericResourcePool>
-    implements ServerInputSession<ResourcePoolT> {
+public class ServerSessionImpl<ResourcePoolT extends NumericResourcePool>
+    implements ServerSession<ResourcePoolT> {
 
   private final CloseableNetwork network;
   private final ResourcePoolT resourcePool;
@@ -25,7 +25,7 @@ public class ServerInputSessionImpl<ResourcePoolT extends NumericResourcePool>
    * @param resourcePool the resource pool
    * @param sce an SCE
    */
-  public ServerInputSessionImpl(CloseableNetwork network, ResourcePoolT resourcePool,
+  public ServerSessionImpl(CloseableNetwork network, ResourcePoolT resourcePool,
       SecureComputationEngine<ResourcePoolT, ProtocolBuilderNumeric> sce) {
     this.network = network;
     this.resourcePool = resourcePool;

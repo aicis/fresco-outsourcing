@@ -71,8 +71,7 @@ public class DdnntInputServerTest {
     es.awaitTermination(1, TimeUnit.HOURS);
   }
 
-  private List<Future<Object>> runServers(int numClients, List<Integer> clientFacingPorts)
-      throws InterruptedException, ExecutionException {
+  private List<Future<Object>> runServers(int numClients, List<Integer> clientFacingPorts) {
     Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
     Map<Integer, Future<ClientSessionProducer>> clientSessionProducers =

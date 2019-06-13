@@ -31,7 +31,6 @@ public interface DdnntClientInputSession {
    */
   TwoPartyNetwork getNetwork();
 
-
   /**
    * Gives the triple distributor distributing triples for the given client and session.
    *

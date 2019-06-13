@@ -84,7 +84,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private Map<Integer, List<SInt>> runInputSession() throws Exception {
     logger.info("Running input session");
     SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs = getMaskPairs();
-    ServerInputSession<ResourcePoolT> serverInputSession = serverSessionProducer.next();
+    ServerSession<ResourcePoolT> serverInputSession = serverSessionProducer.next();
     Network network = serverInputSession.getNetwork();
     broadcastMaskedInput(maskPairs, network);
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
@@ -113,8 +113,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private SortedMap<Integer, Pair<List<SInt>, byte[]>> getMaskPairs() throws Exception {
     ExecutorService es = Executors.newCachedThreadPool();
     HashMap<Integer, Future<Pair<List<SInt>, byte[]>>> maskPairsFuture = new HashMap<>();
-    while (clientSessionProducer.hasNext()) {
-      DdnntClientInputSession clientSession = clientSessionProducer.next();
+    while (clientSessionProducer.hasNextInput()) {
+      DdnntClientInputSession clientSession = clientSessionProducer.nextInput();
       logger.info("Running client input session for C{}", clientSession.getClientId());
       Future<Pair<List<SInt>, byte[]>> f = es.submit(new ClientCommunication(clientSession));
       maskPairsFuture.put(clientSession.getClientId(), f);

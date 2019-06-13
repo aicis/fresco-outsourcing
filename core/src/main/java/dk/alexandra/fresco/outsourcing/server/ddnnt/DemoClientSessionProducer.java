@@ -65,23 +65,23 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
    *
    * @param resourcePool a spdz resource pool to use for the input protocol
    * @param port a port to listen for incomming sessions on
-   * @param expectedClients the expected number of client sessions to produce
+   * @param expectedInputClients the expected number of client sessions to produce
    */
   public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
-      int port, int expectedClients) {
+      int port, int expectedInputClients) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
     }
-    if (expectedClients < 0) {
+    if (expectedInputClients < 0) {
       throw new IllegalArgumentException(
-          "Expected clients cannot be negative, but was: " + expectedClients);
+          "Expected clients cannot be negative, but was: " + expectedInputClients);
     }
     this.resourcePool = Objects.requireNonNull(resourcePool);
     this.definition = definition;
     this.port = port;
-    this.expectedClients = expectedClients;
-    this.processingQueue = new ArrayBlockingQueue<>(expectedClients);
-    this.orderingQueue = new PriorityQueue<>(expectedClients,
+    this.expectedClients = expectedInputClients;
+    this.processingQueue = new ArrayBlockingQueue<>(expectedInputClients);
+    this.orderingQueue = new PriorityQueue<>(expectedInputClients,
         Comparator.comparingInt(QueuedClient::getPriority));
     this.clientsReady = 0;
     Thread t = new Thread(this::listenForClients);
@@ -114,6 +114,8 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
     int inputAmount =
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 2, Integer.BYTES * 3));
+    // TODO check type, forward accordingly, network shouldn't be a problem because it's fresh for
+    // every new connection
     if (resourcePool.getMyId() == 1) {
       priority = clientsReady++;
       byte[] priorityBytes = ByteAndBitConverter.toByteArray(priority);
@@ -147,6 +149,42 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     return res;
   }
 
+  @Override
+  public DdnntClientInputSession nextInput() {
+    try {
+      QueuedClient client = processingQueue.take();
+      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
+      for (int i = 0; i < client.getInputAmount(); i++) {
+        SpdzTriple trip = resourcePool
+            .getDataSupplier()
+            .getNextTriple();
+        tripList.add(new SpdzDdnntTuple(trip));
+      }
+      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
+      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
+          client.getInputAmount(), client.getNetwork(), distributor, definition);
+      sessionsProduced++;
+      return session;
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public boolean hasNextInput() {
+    return expectedClients - sessionsProduced > 0;
+  }
+
+  @Override
+  public DdnntClientOutputSession nextOutput() {
+    return null;
+  }
+
+  @Override
+  public boolean hasNextOutput() {
+    return false;
+  }
+
   private static class QueuedClient {
 
     int priority;
@@ -176,32 +214,6 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     int getPriority() {
       return priority;
     }
-  }
-
-  @Override
-  public DdnntClientInputSession next() {
-    try {
-      QueuedClient client = processingQueue.take();
-      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
-      for (int i = 0; i < client.getInputAmount(); i++) {
-        SpdzTriple trip = resourcePool
-            .getDataSupplier()
-            .getNextTriple();
-        tripList.add(new SpdzDdnntTuple(trip));
-      }
-      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
-      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
-          client.getInputAmount(), client.getNetwork(), distributor, definition);
-      sessionsProduced++;
-      return session;
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public boolean hasNext() {
-    return expectedClients - sessionsProduced > 0;
   }
 
 }

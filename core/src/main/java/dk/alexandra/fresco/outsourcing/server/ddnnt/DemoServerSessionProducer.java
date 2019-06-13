@@ -61,13 +61,13 @@ public class DemoServerSessionProducer implements ServerSessionProducer<SpdzReso
   }
 
   @Override
-  public ServerInputSession<SpdzResourcePool> next() {
+  public ServerSession<SpdzResourcePool> next() {
     CloseableNetwork net = new SocketNetwork(conf);
     SpdzProtocolSuite suite = new SpdzProtocolSuite(resourcePool.getModulus().bitLength());
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,
             new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite, batchSize));
-    return new ServerInputSessionImpl<>(net, resourcePool, sce);
+    return new ServerSessionImpl<>(net, resourcePool, sce);
   }
 
 }
