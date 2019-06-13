@@ -5,21 +5,11 @@ import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
-import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
-import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
-import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -78,18 +68,6 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
    */
   public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
     this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
-  }
-
-  /**
-   * Converts big-endian byte array to int.
-   */
-  private static int intFromBytes(byte[] bytes) {
-    int res = 0;
-    int topByteIndex = Byte.SIZE * (Integer.BYTES - 1);
-    for (int i = 3; i >= 0; i--) {
-      res ^= (bytes[i] & 0xFF) << (topByteIndex - i * Byte.SIZE);
-    }
-    return res;
   }
 
   @Override

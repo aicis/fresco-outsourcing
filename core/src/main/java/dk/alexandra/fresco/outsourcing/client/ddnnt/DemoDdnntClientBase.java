@@ -1,5 +1,7 @@
 package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
@@ -71,18 +73,6 @@ public abstract class DemoDdnntClientBase {
     }
   }
 
-  /**
-   * Converts big-endian byte array to int.
-   */
-  private static int intFromBytes(byte[] bytes) {
-    int res = 0;
-    int topByteIndex = Byte.SIZE * (Integer.BYTES - 1);
-    for (int i = 3; i >= 0; i--) {
-      res ^= (bytes[i] & 0xFF) << (topByteIndex - i * Byte.SIZE);
-    }
-    return res;
-  }
-
   private Callable<TwoPartyNetwork> connect(Party server, int priority, int numInputs) {
     return () -> {
       byte[] msg = new byte[Integer.BYTES * 3];
@@ -99,5 +89,4 @@ public abstract class DemoDdnntClientBase {
       return network;
     };
   }
-
 }

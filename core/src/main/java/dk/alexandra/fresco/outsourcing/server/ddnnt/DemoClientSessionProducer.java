@@ -1,5 +1,7 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
@@ -116,17 +118,6 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
         resourcePool.getMyId(), clientId, assignedPriority, inputAmount);
   }
 
-  /**
-   * Converts big-endian byte array to int.
-   */
-  private static int intFromBytes(byte[] bytes) {
-    int res = 0;
-    int topByteIndex = Byte.SIZE * (Integer.BYTES - 1);
-    for (int i = 3; i >= 0; i--) {
-      res ^= (bytes[i] & 0xFF) << (topByteIndex - i * Byte.SIZE);
-    }
-    return res;
-  }
 
   @Override
   public DdnntClientInputSession nextInput() {
