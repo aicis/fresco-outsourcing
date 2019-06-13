@@ -45,17 +45,17 @@ public class DdnntOutputServerTest {
     List<BigInteger> expectedOutputs = Arrays.asList(
         BigInteger.valueOf(0),
         BigInteger.valueOf(1),
-        BigInteger.valueOf(32)
+        BigInteger.valueOf(42)
     );
     List<Integer> clientFacingPorts = SpdzSetup.Builder.getFreePorts(numServers);
-    List<Future<Object>> assertFutures = runServers(numClients, clientFacingPorts, expectedOutputs);
-    runClients(numClients, clientFacingPorts, expectedOutputs);
+    runServers(numClients, clientFacingPorts, expectedOutputs);
+    List<Future<Object>> assertFutures = runClients(numClients, clientFacingPorts, expectedOutputs);
     for (Future<Object> assertFuture : assertFutures) {
       assertFuture.get();
     }
   }
 
-  private void runClients(int numClients, List<Integer> clientFacingPorts,
+  private List<Future<Object>> runClients(int numClients, List<Integer> clientFacingPorts,
       List<BigInteger> expectedOutputs)
       throws InterruptedException {
     List<Party> servers = new ArrayList<>(clientFacingPorts.size());
@@ -63,19 +63,23 @@ public class DdnntOutputServerTest {
       servers.add(new Party(i + 1, "localhost", clientFacingPorts.get(i)));
     }
     ExecutorService es = Executors.newFixedThreadPool(8);
+    List<Future<Object>> assertFutures = new ArrayList<>(numClients);
     for (int i = 0; i < numClients; i++) {
       final int id = i + 1;
-      es.submit(() -> {
+      Future<Object> assertFuture = es.submit(() -> {
         OutputClient client = new DemoDdnntOutputClient(NUM_OUTPUTS, id, servers);
         List<BigInteger> actual = client.getBigIntegerOutputs();
         assertEquals(expectedOutputs, actual);
+        return null;
       });
+      assertFutures.add(assertFuture);
     }
     es.shutdown();
     es.awaitTermination(1, TimeUnit.HOURS);
+    return assertFutures;
   }
 
-  private List<Future<Object>> runServers(int numClients, List<Integer> clientFacingPorts,
+  private void runServers(int numClients, List<Integer> clientFacingPorts,
       List<BigInteger> toOutput) {
     Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
@@ -85,24 +89,19 @@ public class DdnntOutputServerTest {
         getServerSessionProducers(setup, es);
     Map<Integer, Future<OutputServer>> outputServers =
         getOutputServers(setup, es, clientSessionProducers, serverSessionProducers);
-    List<Future<Object>> assertFutures = getFutureAsserts(setup, es, outputServers, toOutput);
+    runServers(setup, es, outputServers, toOutput);
     es.shutdown();
-    return assertFutures;
   }
 
-  private List<Future<Object>> getFutureAsserts(Map<Integer, SpdzSetup> setup,
+  private void runServers(Map<Integer, SpdzSetup> setup,
       ExecutorService es, Map<Integer, Future<OutputServer>> outputServers,
       List<BigInteger> toOutput) {
-    List<Future<Object>> assertFutures = new ArrayList<>(setup.size());
     for (SpdzSetup s : setup.values()) {
       Future<OutputServer> futureServer = outputServers.get(s.getRp().getMyId());
-      Future<Object> assertFuture = es.submit(() -> {
+      es.submit(() -> {
         sendOutputs(futureServer, s, toOutput);
-        return null;
       });
-      assertFutures.add(assertFuture);
     }
-    return assertFutures;
   }
 
   private Map<Integer, Future<OutputServer>> getOutputServers(Map<Integer, SpdzSetup> setup,
