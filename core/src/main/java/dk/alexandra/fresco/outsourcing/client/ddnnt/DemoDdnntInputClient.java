@@ -99,12 +99,11 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
       logger.info("C{}: Received input tuples from server {}", clientId, s);
     }
     for (int i = 0; i < accA.size(); i++) {
-      FieldElement aTimesB = accA.get(i).multiply(accB.get(i));
-      BigInteger aTimesBConverted = definition.convertToUnsigned(aTimesB);
-      BigInteger cConverted = definition.convertToUnsigned(accC.get(i));
-      if (!aTimesBConverted.equals(cConverted)) {
-        logger.debug("Product was {} but should be {}",
-            aTimesB, accC.get(i));
+      FieldElement a = accA.get(i);
+      FieldElement b = accB.get(i);
+      FieldElement c = accC.get(i);
+      if (!productCheck(a, b, c)) {
+        logger.debug("Product was {} but should be {}", a.multiply(b), c);
         throw new MaliciousException("Mac for input " + i + " did not pass check");
       }
     }
@@ -117,15 +116,6 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
       network.send(definition.serialize(maskedInputs));
       logger.info("C{}: Send masked input to {}", clientId, s);
     }
-  }
-
-  private List<FieldElement> sumLists(List<FieldElement> left, List<FieldElement> right) {
-    List<FieldElement> res = new ArrayList<>(left.size());
-    for (int i = 0; i < left.size(); i++) {
-      FieldElement b = left.get(i).add(right.get(i));
-      res.add(b);
-    }
-    return res;
   }
 
   @Override

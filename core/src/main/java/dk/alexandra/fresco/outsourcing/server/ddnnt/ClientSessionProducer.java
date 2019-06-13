@@ -7,7 +7,7 @@ public interface ClientSessionProducer {
 
   boolean hasNextInput();
 
-  DdnntClientOutputSession nextOutput();
+  DdnntClientInputSession nextOutput();
 
   boolean hasNextOutput();
 

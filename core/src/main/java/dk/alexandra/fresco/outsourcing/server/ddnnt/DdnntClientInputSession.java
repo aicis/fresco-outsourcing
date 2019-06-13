@@ -7,6 +7,8 @@ import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 /**
  * Represents a session between a client and the server where the client provides an MPC input to
  * the servers using the DDNNT protocol.
+ *
+ * TODO this is more of a generic client session, not input specific
  */
 public interface DdnntClientInputSession {
 

@@ -43,8 +43,10 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
   private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
   private final SpdzResourcePool resourcePool;
   private final int port;
+  private final int expectedInputClients;
   private final int expectedClients;
-  private final ClientInputSessionRequestHandler inputSessionProducer;
+  private final ClientInputSessionRequestHandler inputSessionRequestHandler;
+  private final ClientInputSessionRequestHandler outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -56,26 +58,50 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
    *
    * @param resourcePool a spdz resource pool to use for the input protocol
    * @param port a port to listen for incomming sessions on
-   * @param expectedInputClients the expected number of client sessions to produce
+   * @param expectedInputClients the expected number of input client sessions to produce
+   * @param expectedOutputClients the expected number of output client sessions to produce
    */
   public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
-      int port, int expectedInputClients) {
+      int port, int expectedInputClients, int expectedOutputClients) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
     }
     if (expectedInputClients < 0) {
       throw new IllegalArgumentException(
-          "Expected clients cannot be negative, but was: " + expectedInputClients);
+          "Expected input clients cannot be negative, but was: " + expectedInputClients);
+    }
+    if (expectedOutputClients < 0) {
+      throw new IllegalArgumentException(
+          "Expected output clients cannot be negative, but was: " + expectedInputClients);
+    }
+    if (expectedOutputClients > 1) {
+      throw new IllegalArgumentException(
+          "This producer does not support more than 1 output client: " + expectedInputClients);
     }
     this.resourcePool = Objects.requireNonNull(resourcePool);
     this.port = port;
-    this.expectedClients = expectedInputClients;
-    this.inputSessionProducer = new DemoClientInputSessionProducer(resourcePool, definition,
-        expectedInputClients);
+    this.expectedInputClients = expectedInputClients;
+    this.expectedClients = expectedInputClients + expectedOutputClients;
+    // TODO this is ugly
+    this.inputSessionRequestHandler =
+        (expectedInputClients > 0) ? new DemoClientInputSessionProducer(resourcePool, definition,
+            expectedInputClients) : null;
+    this.outputSessionRequestHandler =
+        ((expectedClients - expectedInputClients) > 0) ? new DemoClientInputSessionProducer(
+            resourcePool, definition,
+            expectedClients - expectedInputClients) : null;
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
     t.setName("DemoClientSessionProducer Listener");
     t.start();
+  }
+
+  /**
+   * Default constructor call with 0 output clients.
+   */
+  public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
+      int port, int expectedInputClients) {
+    this(resourcePool, definition, port, expectedInputClients, 0);
   }
 
   void listenForClients() {
@@ -102,41 +128,59 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
     int inputAmount =
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 2, Integer.BYTES * 3));
-    // forward request to input session producer
-    int assignedPriority = inputSessionProducer.registerNewSessionRequest(
-        priority,
-        clientId,
-        inputAmount,
-        network);
+    int assignedPriority;
+    if (isInputClient(clientId)) {
+      // forward request to input session request handler
+      assignedPriority = inputSessionRequestHandler.registerNewSessionRequest(
+          priority,
+          clientId,
+          inputAmount,
+          network);
+    } else {
+      // forward request to output session request handler
+      assignedPriority = outputSessionRequestHandler.registerNewSessionRequest(
+          priority,
+          clientId,
+          inputAmount,
+          network);
+    }
     // send updated priority to client if this is main server
     if (resourcePool.getMyId() == 1) {
       byte[] priorityBytes = ByteAndBitConverter.toByteArray(assignedPriority);
       network.send(priorityBytes);
       network.send(resourcePool.getModulus().toByteArray());
     }
+    // TODO inputs?
     logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
         resourcePool.getMyId(), clientId, assignedPriority, inputAmount);
   }
 
+  /**
+   * Returns true if client ID is for an input client, false if for output client.
+   */
+  private boolean isInputClient(int clientId) {
+    return clientId <= expectedInputClients;
+  }
 
   @Override
   public DdnntClientInputSession nextInput() {
-    return inputSessionProducer.next();
+    return inputSessionRequestHandler.next();
   }
 
   @Override
   public boolean hasNextInput() {
-    return inputSessionProducer.hasNext();
+    return inputSessionRequestHandler.hasNext();
   }
 
   @Override
-  public DdnntClientOutputSession nextOutput() {
-    return null;
+  public DdnntClientInputSession nextOutput() {
+    // TODO enforce that this is only called once all input session have been activated?
+    return outputSessionRequestHandler.next();
   }
 
   @Override
   public boolean hasNextOutput() {
-    return false;
+    return outputSessionRequestHandler.hasNext();
   }
 
   static class QueuedClient {

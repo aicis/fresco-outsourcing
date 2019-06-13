@@ -2,13 +2,16 @@ package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
+import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,9 @@ public abstract class DemoDdnntClientBase {
 
   DemoDdnntClientBase(int numInputs, int clientId, List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
+    if (clientId < 1) {
+      throw new IllegalArgumentException("Client ID must be 1 or higher");
+    }
     this.clientId = clientId;
     this.servers = servers;
     ExceptionConverter.safe(() -> {
@@ -71,6 +77,31 @@ public abstract class DemoDdnntClientBase {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  /**
+   * Computes pairwise sum of left and right elements.
+   */
+  final List<FieldElement> sumLists(List<FieldElement> left, List<FieldElement> right) {
+    if (left.size() != right.size()) {
+      throw new IllegalArgumentException("Left and right should be same size");
+    }
+    List<FieldElement> res = new ArrayList<>(left.size());
+    for (int i = 0; i < left.size(); i++) {
+      FieldElement b = left.get(i).add(right.get(i));
+      res.add(b);
+    }
+    return res;
+  }
+
+  /**
+   * Returns true if a * b = c, false otherwise.
+   */
+  final boolean productCheck(FieldElement a, FieldElement b, FieldElement c) {
+    FieldElement actualProd = a.multiply(b);
+    BigInteger actualProdConverted = definition.convertToUnsigned(actualProd);
+    BigInteger expected = definition.convertToUnsigned(c);
+    return actualProdConverted.equals(expected);
   }
 
   private Callable<TwoPartyNetwork> connect(Party server, int priority, int numInputs) {

@@ -31,12 +31,12 @@ class DemoClientInputSessionProducer implements ClientInputSessionRequestHandler
   private final FieldDefinition definition;
 
   DemoClientInputSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
-      int expectedInputClients) {
+      int expectedClients) {
     this.resourcePool = resourcePool;
     this.definition = definition;
-    this.expectedClients = expectedInputClients;
-    this.processingQueue = new ArrayBlockingQueue<>(expectedInputClients);
-    this.orderingQueue = new PriorityQueue<>(expectedInputClients,
+    this.expectedClients = expectedClients;
+    this.processingQueue = new ArrayBlockingQueue<>(expectedClients);
+    this.orderingQueue = new PriorityQueue<>(expectedClients,
         Comparator.comparingInt(QueuedClient::getPriority));
     this.clientsReady = 0;
   }

@@ -19,14 +19,14 @@ public interface OutputClient {
    *
    * @return a future eventually holding the output
    */
-  Future<List<BigInteger>> getBigIntegerOutputs();
+  List<BigInteger> getBigIntegerOutputs();
 
   /**
    * Gets output as a list of Longs.
    *
    * @return a future eventually holding the output
    */
-  Future<List<Long>> getLongOutputs();
+  List<Long> getLongOutputs();
 
 
   /**
@@ -34,5 +34,5 @@ public interface OutputClient {
    *
    * @return a future eventually holding the output
    */
-  Future<List<Integer>> getIntOutputs();
+  List<Integer> getIntOutputs();
 }

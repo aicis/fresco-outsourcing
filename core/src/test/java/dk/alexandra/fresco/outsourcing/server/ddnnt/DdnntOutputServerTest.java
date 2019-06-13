@@ -2,43 +2,39 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
 import static org.junit.Assert.assertEquals;
 
-import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.network.Network;
-import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
-import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.OutputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
-import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
+import dk.alexandra.fresco.suite.spdz.datatypes.SpdzSInt;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.Test;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
  * clients.
  */
-public class DdnntInputServerTest {
+public class DdnntOutputServerTest {
 
-  private static final int INPUTS_PER_CLIENT = 1000;
+  private static final int OUTPUTS_PER_CLIENT = 0;
   private static final int NUMBER_OF_SERVERS = 3;
-  private static final int NUMBER_OF_CLIENTS = 100;
+  private static final int NUMBER_OF_CLIENTS = 1;
+  private static final int OUTPUT_CLIENT_ID = 1;
 
   @Test
-  public void testClientInputs() throws InterruptedException, ExecutionException {
+  public void testClientOutput() throws InterruptedException, ExecutionException {
     int numClients = NUMBER_OF_CLIENTS;
     int numServers = NUMBER_OF_SERVERS;
     List<Integer> clientFacingPorts = SpdzSetup.Builder.getFreePorts(numServers);
@@ -61,10 +57,9 @@ public class DdnntInputServerTest {
     for (int i = 0; i < numClients; i++) {
       final int id = i + 1;
       es.submit(() -> {
-        DemoDdnntInputClient client = new DemoDdnntInputClient(INPUTS_PER_CLIENT, id, servers);
-        List<BigInteger> inputs = IntStream.range(0, INPUTS_PER_CLIENT)
-            .mapToObj(num -> BigInteger.valueOf(id)).collect(Collectors.toList());
-        client.putBigIntegerInputs(inputs);
+        OutputClient client = new DemoDdnntOutputClient(OUTPUTS_PER_CLIENT, id, servers);
+        List<BigInteger> outs = client.getBigIntegerOutputs();
+        System.out.println(outs);
       });
     }
     es.shutdown();
@@ -78,26 +73,20 @@ public class DdnntInputServerTest {
         getClientSessionProducers(numClients, clientFacingPorts, setup, es);
     Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
         getServerSessionProducers(setup, es);
-    Map<Integer, Future<InputServer>> inputServers =
-        getInputServers(setup, es, clientSessionProducers, serverSessionProducers);
-    List<Future<Object>> assertFutures = getFutureAsserts(setup, es, inputServers);
+    Map<Integer, Future<OutputServer>> outputServers =
+        getOutputServers(setup, es, clientSessionProducers, serverSessionProducers);
+    List<Future<Object>> assertFutures = getFutureAsserts(setup, es, outputServers);
     es.shutdown();
     return assertFutures;
   }
 
   private List<Future<Object>> getFutureAsserts(Map<Integer, SpdzSetup> setup,
-      ExecutorService es, Map<Integer, Future<InputServer>> inputServers) {
+      ExecutorService es, Map<Integer, Future<OutputServer>> outputServers) {
     List<Future<Object>> assertFutures = new ArrayList<>(setup.size());
     for (SpdzSetup s : setup.values()) {
-      Future<InputServer> futureServer = inputServers.get(s.getRp().getMyId());
+      Future<OutputServer> futureServer = outputServers.get(s.getRp().getMyId());
       Future<Object> assertFuture = es.submit(() -> {
-        Map<Integer, List<BigInteger>> result = openInputs(futureServer, s);
-        for (Entry<Integer, List<BigInteger>> e : result.entrySet()) {
-          int clientId = e.getKey();
-          for (BigInteger b : e.getValue()) {
-            assertEquals(clientId, b.intValue());
-          }
-        }
+        sendOutputs(futureServer, s);
         return null;
       });
       assertFutures.add(assertFuture);
@@ -105,16 +94,15 @@ public class DdnntInputServerTest {
     return assertFutures;
   }
 
-  private Map<Integer, Future<InputServer>> getInputServers(Map<Integer, SpdzSetup> setup,
+  private Map<Integer, Future<OutputServer>> getOutputServers(Map<Integer, SpdzSetup> setup,
       ExecutorService es, Map<Integer, Future<ClientSessionProducer>> clientSessionProducers,
       Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers) {
-    Map<Integer, Future<InputServer>> inputServers = new HashMap<>(setup.size());
+    Map<Integer, Future<OutputServer>> inputServers = new HashMap<>(setup.size());
     for (SpdzSetup s : setup.values()) {
       int id = s.getRp().getMyId();
-      Future<InputServer> server = es.submit(() -> {
-        return new DdnntInputServer<>(clientSessionProducers.get(id).get(),
-            serverSessionProducers.get(id).get());
-      });
+      Future<OutputServer> server = es
+          .submit(() -> new DdnntOutputServer<>(clientSessionProducers.get(id).get(),
+              serverSessionProducers.get(id).get()));
       inputServers.put(id, server);
     }
     return inputServers;
@@ -140,39 +128,22 @@ public class DdnntInputServerTest {
       Future<ClientSessionProducer> producer = es.submit(() -> {
         int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
         return new DemoClientSessionProducer(s.getRp(), SpdzSetupUtils.getDefaultFieldDefinition(),
-            port, numClients);
+            port, 0, numClients);
       });
       clientSessionProducers.put(s.getRp().getMyId(), producer);
     }
     return clientSessionProducers;
   }
 
-  private Map<Integer, List<BigInteger>> openInputs(Future<InputServer> futureServer,
+  private void sendOutputs(Future<OutputServer> futureServer,
       SpdzSetup setup) {
-    Map<Integer, List<SInt>> inputs;
     try {
-      InputServer server = futureServer.get();
-      inputs = server.getClientInputs().get();
+      OutputServer server = futureServer.get();
+      server.putClientOutputs(OUTPUT_CLIENT_ID, new ArrayList<>());
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
-      return null;
+      return;
     }
-    Network net = new SocketNetwork(setup.getNetConf());
-    Map<Integer, DRes<List<DRes<BigInteger>>>> wrapped =
-        setup.getSce().runApplication((builder) -> {
-          Map<Integer, DRes<List<DRes<BigInteger>>>> openInputs =
-              new HashMap<>(inputs.keySet().size());
-          for (Entry<Integer, List<SInt>> e : inputs.entrySet()) {
-            DRes<List<DRes<BigInteger>>> partyInputs =
-                builder.collections().openList(() -> e.getValue());
-            openInputs.put(e.getKey(), partyInputs);
-          }
-          return () -> openInputs;
-        }, setup.getRp(), net);
-    Map<Integer, List<BigInteger>> openedInputs =
-        wrapped.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-            e -> e.getValue().out().stream().map(DRes::out).collect(Collectors.toList())));
-    return openedInputs;
   }
 
 }
