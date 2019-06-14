@@ -13,9 +13,12 @@ import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
+import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
+import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.ServerSessionProducer;
@@ -82,7 +85,8 @@ public class SpdzSetupUtils {
     return new SpdzSetup(netConf, rp, sce);
   }
 
-  public static InputServer initInputServer(SpdzSetup spdzSetup, List<Integer> clientIds,
+  public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
+      List<Integer> inputClientIds, List<Integer> outputClientIds,
       int basePort) {
     final DdnntClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
         spdzSetup.getRp(),
@@ -91,7 +95,8 @@ public class SpdzSetupUtils {
             .getNetConf()
             .getMe()
             .getPort(),
-        clientIds.size()
+        inputClientIds.size(),
+        outputClientIds.size()
     );
     final int numServers = spdzSetup.getNetConf().noOfParties();
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
@@ -100,9 +105,14 @@ public class SpdzSetupUtils {
             spdzSetup.getNetConf().getMyId(),
             numServers,
             basePort + numServers));
-    return new DdnntInputServer<>(
+    InputServer inputServer = new DdnntInputServer<>(
         clientSessionProducer,
         serverSessionProducer
     );
+    OutputServer outputServer = new DdnntOutputServer<>(
+        clientSessionProducer,
+        serverSessionProducer
+    );
+    return new Pair<>(inputServer, outputServer);
   }
 }

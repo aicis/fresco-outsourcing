@@ -6,41 +6,39 @@ import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
+import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Demo {
 
-  private static final Logger logger = LoggerFactory.getLogger(Demo.class);
-
   private static void runAsClient(int clientId, List<Party> servers) {
     final List<Integer> inputs = Arrays.asList(1, 2, 3, 4, 5);
-    InputClient client = new DemoDdnntInputClient(inputs.size(), clientId, servers);
-    client.putIntInputs(inputs);
+    InputClient inputClient = new DemoDdnntInputClient(inputs.size(), clientId, servers);
+    inputClient.putIntInputs(inputs);
+    OutputClient outputClient = new DemoDdnntOutputClient(clientId + 1, servers);
+    System.out.println("Outputs received " + outputClient.getBigIntegerOutputs());
   }
 
   private static void runAsServer(int serverId) {
-    SpdzServer spdz = new SpdzServer(serverId);
+    SpdzServer spdz = new SpdzServer(serverId, Collections.singletonList(1),
+        Collections.singletonList(2));
 
-    Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputsFrom(Collections.singletonList(1));
+    Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputs();
 
     // Example MPC application
-    Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
+    Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       List<DRes<SInt>> clientOneInputs = new ArrayList<>(clientsInputs.get(1));
       DRes<SInt> res = builder.advancedNumeric().sum(clientOneInputs);
-      return builder.numeric().open(res);
+      return () -> Collections.singletonList(res.out());
     };
-
-    BigInteger res = spdz.run(app);
-    logger.info("Sum of inputs is " + res);
+    spdz.sendOutputsTo(2, spdz.run(app));
     // TODO shutdown servers
   }
 
