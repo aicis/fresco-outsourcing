@@ -42,9 +42,7 @@ public class DdnntInputServerTest {
     int numClients = NUMBER_OF_CLIENTS;
     int numServers = NUMBER_OF_SERVERS;
     List<Integer> clientFacingPorts = SpdzSetup.Builder.getFreePorts(numServers);
-    System.out.println("Run servers");
     List<Future<Object>> assertFutures = runServers(numClients, clientFacingPorts);
-    System.out.println("Run clients");
     runClients(numClients, clientFacingPorts);
     for (Future<Object> assertFuture : assertFutures) {
       assertFuture.get();

@@ -35,16 +35,16 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
   private final DdnntClientSessionProducer clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
-  private final Map<Integer, List<SInt>> outputs = new HashMap<>();
+  private final List<SInt> outputs;
 
   public DdnntOutputServer(DdnntClientSessionProducer clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
+    this.outputs = new ArrayList<>();
   }
 
   private void runOutputSession() {
-    ExecutorService es = Executors.newCachedThreadPool();
     logger.info("Running output session");
     ServerSession<ResourcePoolT> serverOutputSession = serverSessionProducer.next();
     Network network = serverOutputSession.getNetwork();
@@ -52,28 +52,31 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     AuthenticateOutput app = new AuthenticateOutput(outputs);
     List<Map<String, DRes<SInt>>> result =
         serverOutputSession.getSce().runApplication(app, resourcePool, network);
+    ExecutorService es = Executors.newCachedThreadPool();
     while (clientSessionProducer.hasNextOutput()) {
       DdnntClientOutputSession clientSession = clientSessionProducer.nextOutput();
       logger.info("Running client output session for C{}", clientSession.getClientId());
       es.submit(new ClientCommunication(clientSession, result));
     }
+    es.shutdown();
   }
 
   private static class AuthenticateOutput
       implements Application<List<Map<String, DRes<SInt>>>, ProtocolBuilderNumeric> {
 
-    private final Map<Integer, List<SInt>> outputs;
+    private final List<SInt> outputs;
 
-    AuthenticateOutput(Map<Integer, List<SInt>> outputs) {
+    AuthenticateOutput(List<SInt> outputs) {
       this.outputs = outputs;
     }
 
     @Override
     public DRes<List<Map<String, DRes<SInt>>>> buildComputation(ProtocolBuilderNumeric builder) {
+      // TODO outer par scope
       return builder.seq(seq -> {
         Numeric numeric = seq.numeric();
         List<Map<String, DRes<SInt>>> result = new ArrayList<>();
-        for (SInt output : outputs.get(1)) {
+        for (SInt output : outputs) {
           DRes<SInt> maskR = numeric.randomElement();
           DRes<SInt> maskV = numeric.randomElement();
           DRes<SInt> productW = numeric.mult(output, maskR);
@@ -94,7 +97,10 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
   @Override
   public void putClientOutputs(int clientId, List<SInt> outputs) {
-    this.outputs.put(clientId, outputs);
+    if (!this.outputs.isEmpty()) {
+      throw new UnsupportedOperationException("Currently only support output to at most one party");
+    }
+    this.outputs.addAll(outputs);
     this.runOutputSession();
   }
 
