@@ -82,19 +82,18 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
     this.port = port;
     this.expectedInputClients = expectedInputClients;
     this.expectedClients = expectedInputClients + expectedOutputClients;
-    // TODO this is ugly
+    // TODO this is still ugly
     if (expectedInputClients > 0) {
       this.inputSessionRequestHandler =
           new DemoClientInputSessionRequestHandler(resourcePool,
               definition,
               expectedInputClients);
     }
-    int expectedOutClients = expectedClients - expectedInputClients;
-    if (expectedOutClients > 0) {
+    if (expectedOutputClients > 0) {
       this.outputSessionRequestHandler =
           new DemoClientOutputSessionRequestHandler(
               resourcePool, definition,
-              expectedOutClients);
+              expectedOutputClients);
     }
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
