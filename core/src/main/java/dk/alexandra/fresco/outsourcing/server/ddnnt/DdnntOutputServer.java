@@ -7,9 +7,11 @@ import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
+import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzSInt;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,6 +112,8 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     @Override
     public void run() {
       TwoPartyNetwork net = session.getNetwork();
+      // send number of outputs to client
+      net.send(ByteAndBitConverter.toByteArray(outputs.size()));
       for (Map<String, DRes<SInt>> e : outputs) {
         List<FieldElement> listOfOutputShares = new ArrayList<>();
         SpdzSInt r = (SpdzSInt) e.get("r").out();

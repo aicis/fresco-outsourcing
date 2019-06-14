@@ -118,11 +118,33 @@ public class DemoDdnntOutputClient extends DemoDdnntClientBase implements Output
     return finalResult;
   }
 
+  /**
+   * Receives number of outputs from all servers and verifies that info is consistent.
+   */
   private int receiveNumOutputs() {
-    TwoPartyNetwork masterNetwork = serverNetworks.get(MASTER_SERVER_ID);
-    return ByteConversionUtils.intFromBytes(masterNetwork.receive());
+    int numOutputs = getNumOutputsFrom(servers.get(0).getPartyId());
+    for (Party s : servers.subList(1, servers.size())) {
+      int newNumOutputs = getNumOutputsFrom(s.getPartyId());
+      if (newNumOutputs != numOutputs) {
+        throw new MaliciousException("Received incorrect number of outputs for servers");
+      }
+    }
+    return numOutputs;
   }
 
+  /**
+   * Receives number of outputs from given party.
+   */
+  private int getNumOutputsFrom(int partyId) {
+    TwoPartyNetwork network = serverNetworks.get(partyId);
+    return ByteConversionUtils.intFromBytes(network.receive());
+  }
+
+  /**
+   * Constructs handshake message.
+   *
+   * <p>Message format is priority|clientId.</p>
+   */
   private byte[] getHandShakeMessage(int priority) {
     byte[] msg = new byte[Integer.BYTES * 2];
     System.arraycopy(ByteAndBitConverter.toByteArray(priority), 0, msg, 0, Integer.BYTES);
