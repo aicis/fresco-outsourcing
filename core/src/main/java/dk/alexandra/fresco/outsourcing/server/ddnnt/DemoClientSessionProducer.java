@@ -45,8 +45,8 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
   private final int port;
   private final int expectedInputClients;
   private final int expectedClients;
-  private final ClientSessionRequestHandler<DdnntClientInputSession> inputSessionRequestHandler;
-  private final ClientSessionRequestHandler<DdnntClientOutputSession> outputSessionRequestHandler;
+  private ClientSessionRequestHandler<DdnntClientInputSession> inputSessionRequestHandler;
+  private ClientSessionRequestHandler<DdnntClientOutputSession> outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -83,14 +83,19 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
     this.expectedInputClients = expectedInputClients;
     this.expectedClients = expectedInputClients + expectedOutputClients;
     // TODO this is ugly
-    this.inputSessionRequestHandler =
-        (expectedInputClients > 0) ? new DemoClientInputSessionRequestHandler(resourcePool,
-            definition,
-            expectedInputClients) : null;
-    this.outputSessionRequestHandler =
-        ((expectedClients - expectedInputClients) > 0) ? new DemoClientOutputSessionRequestHandler(
-            resourcePool, definition,
-            expectedClients - expectedInputClients) : null;
+    if (expectedInputClients > 0) {
+      this.inputSessionRequestHandler =
+          new DemoClientInputSessionRequestHandler(resourcePool,
+              definition,
+              expectedInputClients);
+    }
+    int expectedOutClients = expectedClients - expectedInputClients;
+    if (expectedOutClients > 0) {
+      this.outputSessionRequestHandler =
+          new DemoClientOutputSessionRequestHandler(
+              resourcePool, definition,
+              expectedOutClients);
+    }
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
     t.setName("DemoClientSessionProducer Listener");
@@ -123,9 +128,7 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
     // Bytes 0-3: client priority, assigned by server 1 (big endian int)
     // Bytes 4-7: unique id for client (big endian int)
     byte[] introBytes = network.receive();
-    int priority = intFromBytes(Arrays.copyOfRange(introBytes, 0, Integer.BYTES * 1));
-    int clientId =
-        intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
+    int clientId = getClientId(introBytes);
 
     int assignedPriority;
     if (isInputClient(clientId)) {
@@ -150,6 +153,40 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
         resourcePool.getMyId(), clientId, assignedPriority);
   }
 
+  @Override
+  public DdnntClientInputSession nextInput() {
+    if (inputSessionRequestHandler == null) {
+      throw new IllegalStateException("Requesting input session although no inputs anticipated.");
+    }
+    return inputSessionRequestHandler.next();
+  }
+
+  @Override
+  public boolean hasNextInput() {
+    if (inputSessionRequestHandler == null) {
+      throw new IllegalStateException(
+          "Requesting input session info although no inputs anticipated.");
+    }
+    return inputSessionRequestHandler.hasNext();
+  }
+
+  @Override
+  public DdnntClientOutputSession nextOutput() {
+    if (outputSessionRequestHandler == null) {
+      throw new IllegalStateException("Requesting output session although no outputs anticipated.");
+    }
+    return outputSessionRequestHandler.next();
+  }
+
+  @Override
+  public boolean hasNextOutput() {
+    if (outputSessionRequestHandler == null) {
+      throw new IllegalStateException(
+          "Requesting output session info although no outputs anticipated.");
+    }
+    return outputSessionRequestHandler.hasNext();
+  }
+
   /**
    * Returns true if client ID is for an input client, false if for output client.
    */
@@ -157,25 +194,11 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
     return clientId <= expectedInputClients;
   }
 
-  @Override
-  public DdnntClientInputSession nextInput() {
-    return inputSessionRequestHandler.next();
-  }
-
-  @Override
-  public boolean hasNextInput() {
-    return inputSessionRequestHandler.hasNext();
-  }
-
-  @Override
-  public DdnntClientOutputSession nextOutput() {
-    // TODO enforce that this is only called once all input session have been activated?
-    return outputSessionRequestHandler.next();
-  }
-
-  @Override
-  public boolean hasNextOutput() {
-    return outputSessionRequestHandler.hasNext();
+  /**
+   * Gets client ID from handshake.
+   */
+  private int getClientId(byte[] introBytes) {
+    return intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
   }
 
   static class QueuedClient {
@@ -185,7 +208,7 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
     int inputAmount;
     TwoPartyNetwork network;
 
-    public QueuedClient(int priority, int clientId, int inputAmount, TwoPartyNetwork network) {
+    QueuedClient(int priority, int clientId, int inputAmount, TwoPartyNetwork network) {
       this.clientId = clientId;
       this.inputAmount = inputAmount;
       this.network = network;

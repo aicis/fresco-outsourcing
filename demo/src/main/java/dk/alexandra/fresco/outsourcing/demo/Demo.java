@@ -27,7 +27,7 @@ public class Demo {
   }
 
   private static void runAsServer(int serverId) {
-    SpdzServer spdz = new SpdzServer(serverId, Collections.singletonList(1),
+    Spdz spdz = new Spdz(serverId, Collections.singletonList(1),
         Collections.singletonList(2));
 
     Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputs();

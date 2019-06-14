@@ -22,7 +22,7 @@ import java.util.Map;
  * parameters. These might not work for your specific application in which case you should manually
  * instantiate SPDZ with the right parameters.</p>
  */
-public class SpdzServer {
+public class Spdz {
 
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
@@ -30,7 +30,6 @@ public class SpdzServer {
   private final SpdzSetup spdzSetup;
   private final InputServer inputServer;
   private final OutputServer outputServer;
-
 
   /**
    * Construct new SPDZ server.
@@ -42,7 +41,7 @@ public class SpdzServer {
    * @param inputParties all client parties that will contribute input
    * @param outputParties all client parties that will receive outputs
    */
-  public SpdzServer(
+  public Spdz(
       int serverId,
       int numServers,
       int basePort,
@@ -59,20 +58,20 @@ public class SpdzServer {
   }
 
   /**
-   * Default constructor for {@link #SpdzServer(int, int, int, List, List)} that sets up two servers
+   * Default constructor for {@link #Spdz(int, int, int, List, List)} that sets up two servers
    * and uses {@link #DEFAULT_FRESCO_BASE_PORT} base port.
    */
-  public SpdzServer(int serverId, List<Integer> inputParties,
+  public Spdz(int serverId, List<Integer> inputParties,
       List<Integer> outputParties) {
     this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, inputParties,
         outputParties);
   }
 
   /**
-   * Default constructor for {@link #SpdzServer(int, int, int, List, List)} that sets up two servers
+   * Default constructor for {@link #Spdz(int, int, int, List, List)} that sets up two servers
    * and uses {@link #DEFAULT_FRESCO_BASE_PORT} base port and no input or output parties.
    */
-  public SpdzServer(int serverId) {
+  public Spdz(int serverId) {
     this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, Collections.emptyList(), Collections.emptyList());
   }
 
