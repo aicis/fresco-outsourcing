@@ -72,24 +72,27 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
     @Override
     public DRes<List<Map<String, DRes<SInt>>>> buildComputation(ProtocolBuilderNumeric builder) {
-      // TODO outer par scope
-      return builder.seq(seq -> {
-        Numeric numeric = seq.numeric();
+      return builder.par(par -> {
         List<Map<String, DRes<SInt>>> result = new ArrayList<>();
         for (SInt output : outputs) {
-          DRes<SInt> maskR = numeric.randomElement();
-          DRes<SInt> maskV = numeric.randomElement();
-          DRes<SInt> productW = numeric.mult(output, maskR);
-          DRes<SInt> productU = numeric.mult(maskV, maskR);
-          Map<String, DRes<SInt>> resultShares = new HashMap<>();
-          resultShares.put("r", maskR);
-          resultShares.put("v", maskV);
-          resultShares.put("w", productW);
-          resultShares.put("u", productU);
-          resultShares.put("y", output);
-          result.add(resultShares);
-          logger.info("Added outputs shares to result");
+          DRes<SInt> maskR = par.numeric().randomElement();
+          DRes<SInt> maskV = par.numeric().randomElement();
+          par.seq(seq -> {
+            Numeric numeric = seq.numeric();
+            // TODO these could also happen in parallel
+            DRes<SInt> productW = numeric.mult(output, maskR);
+            DRes<SInt> productU = numeric.mult(maskV, maskR);
+            Map<String, DRes<SInt>> resultShares = new HashMap<>();
+            resultShares.put("r", maskR);
+            resultShares.put("v", maskV);
+            resultShares.put("w", productW);
+            resultShares.put("u", productU);
+            resultShares.put("y", output);
+            result.add(resultShares);
+            return () -> null;
+          });
         }
+        logger.info("Added output shares to result");
         return () -> result;
       });
     }
@@ -119,6 +122,7 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
       TwoPartyNetwork net = session.getNetwork();
       // send number of outputs to client
       net.send(ByteAndBitConverter.toByteArray(outputs.size()));
+      // TODO these should all be batched
       for (Map<String, DRes<SInt>> e : outputs) {
         List<FieldElement> listOfOutputShares = new ArrayList<>();
         SpdzSInt r = (SpdzSInt) e.get("r").out();
@@ -132,8 +136,8 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
         listOfOutputShares.add(u.getShare());
         listOfOutputShares.add(y.getShare());
         net.send(session.getSerializer().serialize(listOfOutputShares));
-        logger.info("Sent shares to C{}", session.getClientId());
       }
+      logger.info("Sent shares to C{}", session.getClientId());
     }
   }
 
