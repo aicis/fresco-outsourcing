@@ -14,7 +14,7 @@ import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.ClientSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
@@ -84,7 +84,7 @@ public class SpdzSetupUtils {
 
   public static InputServer initInputServer(SpdzSetup spdzSetup, List<Integer> clientIds,
       int basePort) {
-    final ClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
+    final DdnntClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
         spdzSetup.getRp(),
         getDefaultFieldDefinition(),
         spdzSetup

@@ -82,7 +82,7 @@ public class DdnntOutputServerTest {
       List<BigInteger> toOutput) {
     Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
-    Map<Integer, Future<ClientSessionProducer>> clientSessionProducers =
+    Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers =
         getClientSessionProducers(numClients, clientFacingPorts, setup, es);
     Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
         getServerSessionProducers(setup, es);
@@ -104,7 +104,7 @@ public class DdnntOutputServerTest {
   }
 
   private Map<Integer, Future<OutputServer>> getOutputServers(Map<Integer, SpdzSetup> setup,
-      ExecutorService es, Map<Integer, Future<ClientSessionProducer>> clientSessionProducers,
+      ExecutorService es, Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers,
       Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers) {
     Map<Integer, Future<OutputServer>> inputServers = new HashMap<>(setup.size());
     for (SpdzSetup s : setup.values()) {
@@ -129,12 +129,12 @@ public class DdnntOutputServerTest {
     return serverSessionProducers;
   }
 
-  private Map<Integer, Future<ClientSessionProducer>> getClientSessionProducers(int numClients,
+  private Map<Integer, Future<DdnntClientSessionProducer>> getClientSessionProducers(int numClients,
       List<Integer> clientFacingPorts, Map<Integer, SpdzSetup> setup, ExecutorService es) {
-    Map<Integer, Future<ClientSessionProducer>> clientSessionProducers =
+    Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers =
         new HashMap<>(clientFacingPorts.size());
     for (SpdzSetup s : setup.values()) {
-      Future<ClientSessionProducer> producer = es.submit(() -> {
+      Future<DdnntClientSessionProducer> producer = es.submit(() -> {
         int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
         return new DemoClientSessionProducer(s.getRp(), SpdzSetupUtils.getDefaultFieldDefinition(),
             port, 0, numClients);

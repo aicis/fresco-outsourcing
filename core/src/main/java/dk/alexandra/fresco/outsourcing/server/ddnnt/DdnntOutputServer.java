@@ -11,7 +11,6 @@ import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzSInt;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,11 +33,11 @@ import org.slf4j.LoggerFactory;
 public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implements OutputServer {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
-  private final ClientSessionProducer clientSessionProducer;
+  private final DdnntClientSessionProducer clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final Map<Integer, List<SInt>> outputs = new HashMap<>();
 
-  public DdnntOutputServer(ClientSessionProducer clientSessionProducer,
+  public DdnntOutputServer(DdnntClientSessionProducer clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
@@ -54,7 +53,7 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     List<Map<String, DRes<SInt>>> result =
         serverOutputSession.getSce().runApplication(app, resourcePool, network);
     while (clientSessionProducer.hasNextOutput()) {
-      DdnntClientInputSession clientSession = clientSessionProducer.nextOutput();
+      DdnntClientOutputSession clientSession = clientSessionProducer.nextOutput();
       logger.info("Running client output session for C{}", clientSession.getClientId());
       es.submit(new ClientCommunication(clientSession, result));
     }
@@ -101,10 +100,10 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
   private static class ClientCommunication implements Runnable {
 
-    private final DdnntClientInputSession session;
+    private final DdnntClientOutputSession session;
     private List<Map<String, DRes<SInt>>> outputs;
 
-    ClientCommunication(DdnntClientInputSession session, List<Map<String, DRes<SInt>>> outputs) {
+    ClientCommunication(DdnntClientOutputSession session, List<Map<String, DRes<SInt>>> outputs) {
       this.outputs = outputs;
       this.session = session;
     }

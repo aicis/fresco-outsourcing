@@ -1,11 +1,14 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer.QueuedClient;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -17,10 +20,11 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO
  */
-class DemoClientInputSessionProducer implements ClientInputSessionRequestHandler {
+class DemoClientInputSessionRequestHandler implements
+    ClientSessionRequestHandler<DdnntClientInputSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(DemoClientInputSessionProducer.class);
+      .getLogger(DemoClientInputSessionRequestHandler.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -30,7 +34,7 @@ class DemoClientInputSessionProducer implements ClientInputSessionRequestHandler
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
 
-  DemoClientInputSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
+  DemoClientInputSessionRequestHandler(SpdzResourcePool resourcePool, FieldDefinition definition,
       int expectedClients) {
     this.resourcePool = resourcePool;
     this.definition = definition;
@@ -68,7 +72,19 @@ class DemoClientInputSessionProducer implements ClientInputSessionRequestHandler
   }
 
   @Override
-  public int registerNewSessionRequest(int suggestedPriority, int clientId, int inputAmount,
+  public int registerNewSessionRequest(byte[] handshakeMessage, TwoPartyNetwork network) {
+    // Bytes 0-3: client priority, assigned by server 1 (big endian int)
+    // Bytes 4-7: unique id for client (big endian int)
+    // Bytes 8-11: number of inputs (big endian int)
+    int priority = intFromBytes(Arrays.copyOfRange(handshakeMessage, 0, Integer.BYTES * 1));
+    int clientId =
+        intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 1, Integer.BYTES * 2));
+    int numInputs =
+        intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 2, Integer.BYTES * 3));
+    return registerNewSessionRequest(priority, clientId, numInputs, network);
+  }
+
+  private int registerNewSessionRequest(int suggestedPriority, int clientId, int inputAmount,
       TwoPartyNetwork network) {
     if (resourcePool.getMyId() == 1) {
       int priority = clientsReady++;

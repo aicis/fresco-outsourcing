@@ -45,7 +45,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private static final Logger logger = LoggerFactory.getLogger(DdnntInputServer.class);
   private static final String HASH_ALGO = "SHA-256";
   private final Future<Map<Integer, List<SInt>>> clientInputs;
-  private final ClientSessionProducer clientSessionProducer;
+  private final DdnntClientSessionProducer clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
 
   /**
@@ -60,7 +60,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @param clientSessionProducer producer of client sessions
    * @param serverSessionProducer producer of server sessions
    */
-  public DdnntInputServer(ClientSessionProducer clientSessionProducer,
+  public DdnntInputServer(DdnntClientSessionProducer clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);

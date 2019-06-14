@@ -38,15 +38,15 @@ import org.slf4j.LoggerFactory;
  * clients input.
  * </p>
  */
-public class DemoClientSessionProducer implements ClientSessionProducer {
+public class DemoClientSessionProducer implements DdnntClientSessionProducer {
 
   private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
   private final SpdzResourcePool resourcePool;
   private final int port;
   private final int expectedInputClients;
   private final int expectedClients;
-  private final ClientInputSessionRequestHandler inputSessionRequestHandler;
-  private final ClientInputSessionRequestHandler outputSessionRequestHandler;
+  private final ClientSessionRequestHandler<DdnntClientInputSession> inputSessionRequestHandler;
+  private final ClientSessionRequestHandler<DdnntClientOutputSession> outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -84,10 +84,11 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     this.expectedClients = expectedInputClients + expectedOutputClients;
     // TODO this is ugly
     this.inputSessionRequestHandler =
-        (expectedInputClients > 0) ? new DemoClientInputSessionProducer(resourcePool, definition,
+        (expectedInputClients > 0) ? new DemoClientInputSessionRequestHandler(resourcePool,
+            definition,
             expectedInputClients) : null;
     this.outputSessionRequestHandler =
-        ((expectedClients - expectedInputClients) > 0) ? new DemoClientInputSessionProducer(
+        ((expectedClients - expectedInputClients) > 0) ? new DemoClientOutputSessionRequestHandler(
             resourcePool, definition,
             expectedClients - expectedInputClients) : null;
     Thread t = new Thread(this::listenForClients);
@@ -104,7 +105,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     this(resourcePool, definition, port, expectedInputClients, 0);
   }
 
-  void listenForClients() {
+  private void listenForClients() {
     logger.info("Started Listening for " + expectedClients + " client connections.");
     ServerSideNetworkFactory networkFactory =
         new ServerSideNetworkFactory(port, ServerSocketFactory.getDefault());
@@ -117,42 +118,36 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
     networkFactory.stopListening();
   }
 
-  void handshake(TwoPartyNetwork network) {
+  private void handshake(TwoPartyNetwork network) {
     // The introduction message from the client is expected to be the following 12 bytes
     // Bytes 0-3: client priority, assigned by server 1 (big endian int)
     // Bytes 4-7: unique id for client (big endian int)
-    // Bytes 8-11: number of inputs
     byte[] introBytes = network.receive();
     int priority = intFromBytes(Arrays.copyOfRange(introBytes, 0, Integer.BYTES * 1));
     int clientId =
         intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
-    int inputAmount =
-        intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 2, Integer.BYTES * 3));
+
     int assignedPriority;
     if (isInputClient(clientId)) {
       // forward request to input session request handler
       assignedPriority = inputSessionRequestHandler.registerNewSessionRequest(
-          priority,
-          clientId,
-          inputAmount,
+          introBytes.clone(),
           network);
     } else {
       // forward request to output session request handler
       assignedPriority = outputSessionRequestHandler.registerNewSessionRequest(
-          priority,
-          clientId,
-          inputAmount,
+          introBytes.clone(),
           network);
     }
+
     // send updated priority to client if this is main server
     if (resourcePool.getMyId() == 1) {
       byte[] priorityBytes = ByteAndBitConverter.toByteArray(assignedPriority);
       network.send(priorityBytes);
       network.send(resourcePool.getModulus().toByteArray());
     }
-    // TODO inputs?
-    logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
-        resourcePool.getMyId(), clientId, assignedPriority, inputAmount);
+    logger.info("S{}: Finished handskake for client {} with priority {}.",
+        resourcePool.getMyId(), clientId, assignedPriority);
   }
 
   /**
@@ -173,7 +168,7 @@ public class DemoClientSessionProducer implements ClientSessionProducer {
   }
 
   @Override
-  public DdnntClientInputSession nextOutput() {
+  public DdnntClientOutputSession nextOutput() {
     // TODO enforce that this is only called once all input session have been activated?
     return outputSessionRequestHandler.next();
   }
