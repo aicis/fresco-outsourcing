@@ -1,15 +1,22 @@
 package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
+import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
+import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,28 +24,60 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO
+ * A simple demo client for the DDNNT output protocol.
+ *
+ * <p>Parts of the code contributed by Mathias Rahbek.</p>
  */
 public class DemoDdnntOutputClient extends DemoDdnntClientBase implements OutputClient {
 
+  private static final int MASTER_SERVER_ID = 1;
+
   private static final Logger logger = LoggerFactory.getLogger(DemoDdnntOutputClient.class);
 
-  private final int numOutputs;
-
-  public DemoDdnntOutputClient(int numOutputs, int clientId,
+  public DemoDdnntOutputClient(int clientId,
       List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
-    super(0, clientId, servers, definitionSupplier);
-    this.numOutputs = numOutputs;
+    super(clientId, servers);
+    ExceptionConverter.safe(() -> {
+      this.handshake(definitionSupplier);
+      return null;
+    }, "Failed client handshake");
   }
 
-  public DemoDdnntOutputClient(int numOutputs, int clientId,
-      List<Party> servers) {
-    this(numOutputs, clientId, servers, BigIntegerFieldDefinition::new);
+  public DemoDdnntOutputClient(int clientId, List<Party> servers) {
+    this(clientId, servers, BigIntegerFieldDefinition::new);
+  }
+
+  private void handshake(Function<BigInteger, FieldDefinition> definitionSupplier) {
+    logger.info("C{}: Starting handshake", clientId);
+    try {
+      ExecutorService es = Executors.newFixedThreadPool(servers.size() - 1);
+
+      Party serverOne = servers.stream().filter(p -> p.getPartyId() == 1).findFirst().get();
+      logger.info("C{}: connecting to master server {}", clientId, serverOne);
+      TwoPartyNetwork masterNetwork = es
+          .submit(connect(serverOne, getHandShakeMessage(0))).get();
+      logger.info("C{}: Connected to master server", clientId);
+      byte[] response = masterNetwork.receive();
+
+      int priority = intFromBytes(response);
+      logger.info("C{}: Received priority {}", clientId, priority);
+
+      initServerNetworks(es, masterNetwork, getHandShakeMessage(priority));
+
+      es.shutdown();
+
+      initFieldDefinition(definitionSupplier, masterNetwork);
+    } catch (Exception e) {
+      logger.error("Error during handshake", e);
+      e.printStackTrace();
+    }
   }
 
   @Override
   public List<BigInteger> getBigIntegerOutputs() {
+    int numOutputs = receiveNumOutputs();
+
     List<List<FieldElement>> outputs = new ArrayList<>();
     List<BigInteger> finalResult = new ArrayList<>();
 
@@ -77,6 +116,19 @@ public class DemoDdnntOutputClient extends DemoDdnntClientBase implements Output
       }
     }
     return finalResult;
+  }
+
+  private int receiveNumOutputs() {
+    TwoPartyNetwork masterNetwork = serverNetworks.get(MASTER_SERVER_ID);
+    return ByteConversionUtils.intFromBytes(masterNetwork.receive());
+  }
+
+  private byte[] getHandShakeMessage(int priority) {
+    byte[] msg = new byte[Integer.BYTES * 2];
+    System.arraycopy(ByteAndBitConverter.toByteArray(priority), 0, msg, 0, Integer.BYTES);
+    System.arraycopy(ByteAndBitConverter.toByteArray(clientId), 0, msg, Integer.BYTES,
+        Integer.BYTES);
+    return msg;
   }
 
   @Override

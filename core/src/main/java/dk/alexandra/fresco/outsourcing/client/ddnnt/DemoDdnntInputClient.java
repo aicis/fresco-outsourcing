@@ -1,15 +1,21 @@
 package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
+import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
+import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -40,7 +46,7 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
 
   private static final Logger logger = LoggerFactory.getLogger(DemoDdnntInputClient.class);
 
-  private int numInputs;
+  private final int numInputs;
 
   /**
    * Constructs a new input client delivering a given number of values to a given set of servers.
@@ -58,16 +64,12 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
    */
   public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
-    super(numInputs, clientId, servers, definitionSupplier);
+    super(clientId, servers);
     this.numInputs = numInputs;
-  }
-
-  /**
-   * Default constructor that uses {@link BigIntegerFieldDefinition} for the default field
-   * definition.
-   */
-  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
-    this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
+    ExceptionConverter.safe(() -> {
+      this.handshake(definitionSupplier, numInputs);
+      return null;
+    }, "Failed client handshake");
   }
 
   @Override
@@ -126,6 +128,51 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
   @Override
   public void putIntInputs(List<Integer> inputs) {
     putBigIntegerInputs(inputs.stream().map(BigInteger::valueOf).collect(Collectors.toList()));
+  }
+
+  /**
+   * Default constructor that uses {@link BigIntegerFieldDefinition} for the default field
+   * definition.
+   */
+  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
+    this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
+  }
+
+  private void handshake(Function<BigInteger, FieldDefinition> definitionSupplier,
+      int numInputs) {
+    logger.info("C{}: Starting handshake", clientId);
+    try {
+      ExecutorService es = Executors.newFixedThreadPool(servers.size() - 1);
+
+      Party serverOne = servers.stream().filter(p -> p.getPartyId() == 1).findFirst().get();
+      logger.info("C{}: connecting to master server {}", clientId, serverOne);
+      TwoPartyNetwork masterNetwork = es
+          .submit(connect(serverOne, getHandShakeMessage(0, numInputs))).get();
+      logger.info("C{}: Connected to master server", clientId);
+      byte[] response = masterNetwork.receive();
+
+      int priority = intFromBytes(response);
+      logger.info("C{}: Received priority {}", clientId, priority);
+
+      initServerNetworks(es, masterNetwork, getHandShakeMessage(priority, numInputs));
+
+      es.shutdown();
+
+      initFieldDefinition(definitionSupplier, masterNetwork);
+    } catch (Exception e) {
+      logger.error("Error during handshake", e);
+      e.printStackTrace();
+    }
+  }
+
+  private byte[] getHandShakeMessage(int priority, int numInputs) {
+    byte[] msg = new byte[Integer.BYTES * 3];
+    System.arraycopy(ByteAndBitConverter.toByteArray(priority), 0, msg, 0, Integer.BYTES);
+    System.arraycopy(ByteAndBitConverter.toByteArray(clientId), 0, msg, Integer.BYTES,
+        Integer.BYTES);
+    System.arraycopy(ByteAndBitConverter.toByteArray(numInputs), 0, msg, Integer.BYTES * 2,
+        Integer.BYTES);
+    return msg;
   }
 
 }

@@ -21,6 +21,14 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Output server using the DDNNT output protocol to deliver output to clients.
+ *
+ * <p>Parts of the code contributed by Mathias Rahbek.</p>
+ *
+ * @param <ResourcePoolT> type of resource pool used to run the protocol
+ * @see <a href="https://eprint.iacr.org/2015/1006">Protocol Description on ePrint</a>
+ */
 public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implements OutputServer {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);

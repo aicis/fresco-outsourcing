@@ -33,7 +33,6 @@ import org.junit.Test;
  */
 public class DdnntOutputServerTest {
 
-  private static final int NUM_OUTPUTS = 3;
   private static final int NUMBER_OF_SERVERS = 3;
   private static final int NUMBER_OF_CLIENTS = 1;
   private static final int OUTPUT_CLIENT_ID = 1;
@@ -67,7 +66,7 @@ public class DdnntOutputServerTest {
     for (int i = 0; i < numClients; i++) {
       final int id = i + 1;
       Future<Object> assertFuture = es.submit(() -> {
-        OutputClient client = new DemoDdnntOutputClient(NUM_OUTPUTS, id, servers);
+        OutputClient client = new DemoDdnntOutputClient(id, servers);
         List<BigInteger> actual = client.getBigIntegerOutputs();
         assertEquals(expectedOutputs, actual);
         return null;
