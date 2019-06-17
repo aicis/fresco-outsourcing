@@ -11,12 +11,14 @@ import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.setup.Spdz;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.Test;
 
 /**
@@ -37,6 +40,7 @@ public class DdnntOutputServerTest {
   private static final int NUMBER_OF_SERVERS = 3;
   private static final int NUMBER_OF_CLIENTS = 1;
   private static final int OUTPUT_CLIENT_ID = 1;
+  private static final int BASE_PORT = 8042;
 
   @Test
   public void testClientOutput() throws InterruptedException, ExecutionException {
@@ -47,15 +51,18 @@ public class DdnntOutputServerTest {
         BigInteger.valueOf(1),
         BigInteger.valueOf(42)
     );
-    List<Integer> clientFacingPorts = SpdzSetup.Builder.getFreePorts(numServers);
+    List<Integer> clientFacingPorts = IntStream
+        .range(BASE_PORT + 1, BASE_PORT + 1 + NUMBER_OF_SERVERS).boxed()
+        .collect(Collectors.toList());
     runServers(numClients, clientFacingPorts, expectedOutputs);
-    List<Future<Object>> assertFutures = runClients(numClients, clientFacingPorts, expectedOutputs);
+    List<Future<Object>> assertFutures = runOutputClients(numClients, clientFacingPorts,
+        expectedOutputs);
     for (Future<Object> assertFuture : assertFutures) {
       assertFuture.get();
     }
   }
 
-  private List<Future<Object>> runClients(int numClients, List<Integer> clientFacingPorts,
+  private List<Future<Object>> runOutputClients(int numClients, List<Integer> clientFacingPorts,
       List<BigInteger> expectedOutputs)
       throws InterruptedException {
     List<Party> servers = new ArrayList<>(clientFacingPorts.size());
@@ -81,108 +88,44 @@ public class DdnntOutputServerTest {
 
   private void runServers(int numClients, List<Integer> clientFacingPorts,
       List<BigInteger> toOutput) {
-    Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
-    Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers =
-        getClientSessionProducers(numClients, clientFacingPorts, setup, es);
-    Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
-        getServerSessionProducers(setup, es);
-    Map<Integer, Future<OutputServer>> outputServers =
-        getOutputServers(setup, es, clientSessionProducers, serverSessionProducers);
-    runServers(setup, es, outputServers, toOutput);
+    List<Integer> serverIds = IntStream.rangeClosed(1, clientFacingPorts.size()).boxed()
+        .collect(Collectors.toList());
+
+    List<Integer> outputIds = IntStream
+        .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numClients).boxed()
+        .collect(Collectors.toList());
+
+    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(clientFacingPorts.size());
+    for (int serverId : serverIds) {
+      Future<Spdz> spdzServer = es
+          .submit(() -> new Spdz(
+              serverId,
+              clientFacingPorts.size(),
+              BASE_PORT,
+              Collections.emptyList(),
+              outputIds));
+      spdzServers.put(serverId, spdzServer);
+    }
+
+    for (int serverId : serverIds) {
+      Future<Spdz> futureServer = spdzServers.get(serverId);
+      es.submit(() -> serverSideProtocol(futureServer, toOutput));
+    }
+
     es.shutdown();
   }
 
-  private void runServers(Map<Integer, SpdzSetup> setup,
-      ExecutorService es, Map<Integer, Future<OutputServer>> outputServers,
-      List<BigInteger> toOutput) {
-    for (SpdzSetup s : setup.values()) {
-      Future<OutputServer> futureServer = outputServers.get(s.getRp().getMyId());
-      es.submit(() -> sendOutputs(futureServer, s, toOutput));
-    }
-  }
-
-  private Map<Integer, Future<OutputServer>> getOutputServers(Map<Integer, SpdzSetup> setup,
-      ExecutorService es,
-      Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers,
-      Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers) {
-    Map<Integer, Future<OutputServer>> inputServers = new HashMap<>(setup.size());
-    for (SpdzSetup s : setup.values()) {
-      int id = s.getRp().getMyId();
-      Future<OutputServer> server = es
-          .submit(() -> new DdnntOutputServer<>(clientSessionProducers.get(id).get(),
-              serverSessionProducers.get(id).get()));
-      inputServers.put(id, server);
-    }
-    return inputServers;
-  }
-
-  private Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> getServerSessionProducers(
-      Map<Integer, SpdzSetup> setup, ExecutorService es) {
-    Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
-        new HashMap<>(setup.size());
-    for (SpdzSetup s : setup.values()) {
-      Future<ServerSessionProducer<SpdzResourcePool>> producer = es
-          .submit(() -> new DemoServerSessionProducer(s.getRp(), s.getNetConf()));
-      serverSessionProducers.put(s.getRp().getMyId(), producer);
-    }
-    return serverSessionProducers;
-  }
-
-  private Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> getClientSessionProducers(
-      int numClients,
-      List<Integer> clientFacingPorts, Map<Integer, SpdzSetup> setup, ExecutorService es) {
-    Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers =
-        new HashMap<>(clientFacingPorts.size());
-    for (SpdzSetup s : setup.values()) {
-      Future<ClientSessionProducer<DdnntClientOutputSession>> producer = es.submit(() -> {
-        int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
-        DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
-            s.getRp(),
-            SpdzSetupUtils.getDefaultFieldDefinition(),
-            numClients);
-        new DemoClientSessionRequestHandler(
-            s.getRp(),
-            port,
-            new ClientSessionRegistration<DdnntClientInputSession>() {
-              @Override
-              public int registerNewSessionRequest(byte[] handshakeMessage,
-                  TwoPartyNetwork network) {
-                throw new IllegalStateException("No input clients expected");
-              }
-
-              @Override
-              public int getExpectedClients() {
-                return 0;
-              }
-            },
-            outputSessionEndpoint
-        );
-
-        return outputSessionEndpoint;
-      });
-      clientSessionProducers.put(s.getRp().getMyId(), producer);
-    }
-    return clientSessionProducers;
-  }
-
-  private void sendOutputs(Future<OutputServer> futureServer,
-      SpdzSetup setup, List<BigInteger> toOutput) {
+  private void serverSideProtocol(Future<Spdz> futureServer, List<BigInteger> toOutput) {
     try {
-      OutputServer server = futureServer.get();
-      List<SInt> out = runComputation(setup, toOutput);
-      server.putClientOutputs(OUTPUT_CLIENT_ID, out);
+      Spdz server = futureServer.get();
+      List<SInt> out = server.run((builder) -> {
+        DRes<List<DRes<SInt>>> secretShares = builder.collections().closeList(toOutput, 1);
+        return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());
+      });
+      server.sendOutputsTo(OUTPUT_CLIENT_ID, out);
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
   }
-
-  private List<SInt> runComputation(SpdzSetup setup, List<BigInteger> toOutput) {
-    Network net = new SocketNetwork(setup.getNetConf());
-    return setup.getSce().runApplication((builder) -> {
-      DRes<List<DRes<SInt>>> secretShares = builder.collections().closeList(toOutput, 1);
-      return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());
-    }, setup.getRp(), net);
-  }
-
 }

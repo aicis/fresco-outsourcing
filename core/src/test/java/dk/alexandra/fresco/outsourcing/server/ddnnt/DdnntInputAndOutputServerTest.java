@@ -53,6 +53,16 @@ public class DdnntInputAndOutputServerTest {
     }
   }
 
+  private void serverSideProtocol(Future<Spdz> futureServer) {
+    try {
+      Spdz spdz = futureServer.get();
+      Map<Integer, List<SInt>> clientInputs = spdz.receiveInputs();
+      spdz.sendOutputsTo(OUTPUT_CLIENT_ID, clientInputs.get(1));
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
   private void runInputClients(int numClients, List<Integer> clientFacingPorts) {
     List<Party> servers = new ArrayList<>(clientFacingPorts.size());
     for (int i = 0; i < clientFacingPorts.size(); i++) {
@@ -100,8 +110,7 @@ public class DdnntInputAndOutputServerTest {
 
   private void runServers(int numInputClients,
       int numOutputClients,
-      List<Integer> clientFacingPorts) throws InterruptedException {
-
+      List<Integer> clientFacingPorts) {
     ExecutorService es = Executors.newCachedThreadPool();
     List<Integer> serverIds = IntStream.rangeClosed(1, clientFacingPorts.size()).boxed()
         .collect(Collectors.toList());
@@ -116,33 +125,21 @@ public class DdnntInputAndOutputServerTest {
     Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(clientFacingPorts.size());
     for (int serverId : serverIds) {
       Future<Spdz> spdzServer = es
-          .submit(() -> {
-            return new Spdz(
-                serverId,
-                clientFacingPorts.size(),
-                BASE_PORT,
-                inputIds,
-                outputIds);
-          });
+          .submit(() -> new Spdz(
+              serverId,
+              clientFacingPorts.size(),
+              BASE_PORT,
+              inputIds,
+              outputIds));
       spdzServers.put(serverId, spdzServer);
     }
 
     for (int serverId : serverIds) {
       Future<Spdz> futureServer = spdzServers.get(serverId);
-      es.submit(() -> sendOutputs(futureServer));
+      es.submit(() -> serverSideProtocol(futureServer));
     }
 
     es.shutdown();
-  }
-
-  private void sendOutputs(Future<Spdz> futureServer) {
-    try {
-      Spdz spdz = futureServer.get();
-      Map<Integer, List<SInt>> clientInputs = spdz.receiveInputs();
-      spdz.sendOutputsTo(OUTPUT_CLIENT_ID, clientInputs.get(1));
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
   }
 
 }

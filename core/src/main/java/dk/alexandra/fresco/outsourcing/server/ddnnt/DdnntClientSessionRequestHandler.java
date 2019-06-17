@@ -5,6 +5,10 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
  */
 public interface DdnntClientSessionRequestHandler {
 
-  // TODO add registration hooks
+  void setInputRegistrationHandler(ClientSessionRegistration<DdnntClientInputSession> handler);
+
+  void setOutputRegistrationHandler(ClientSessionRegistration<DdnntClientOutputSession> handler);
+
+  void launch();
 
 }

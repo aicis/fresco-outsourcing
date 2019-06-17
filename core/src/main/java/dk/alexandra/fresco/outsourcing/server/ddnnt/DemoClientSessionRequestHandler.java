@@ -8,6 +8,7 @@ import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.net.ServerSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +45,9 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
   private final SpdzResourcePool resourcePool;
   private final int port;
   private final int expectedClients;
-  private final ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler;
-  private final ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler;
+  private final Predicate<Integer> isInputClient;
+  private ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler;
+  private ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -57,26 +59,17 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
    *
    * @param resourcePool a spdz resource pool to use for the input protocol
    * @param port a port to listen for incoming sessions on
+   * TODO
    */
   public DemoClientSessionRequestHandler(SpdzResourcePool resourcePool,
-      int port, ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler,
-      ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler) {
+      int port, int expectedClients, Predicate<Integer> isInputClient) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
     }
-    Objects.requireNonNull(inputSessionRequestHandler);
-    Objects.requireNonNull(outputSessionRequestHandler);
-    this.inputSessionRequestHandler = inputSessionRequestHandler;
-    this.outputSessionRequestHandler = outputSessionRequestHandler;
-    this.expectedClients =
-        inputSessionRequestHandler.getExpectedClients() + outputSessionRequestHandler
-            .getExpectedClients();
     this.resourcePool = Objects.requireNonNull(resourcePool);
     this.port = port;
-    Thread t = new Thread(this::listenForClients);
-    t.setDaemon(true);
-    t.setName("DemoClientSessionRequestHandler Listener");
-    t.start();
+    this.expectedClients = expectedClients;
+    this.isInputClient = isInputClient;
   }
 
   private void listenForClients() {
@@ -100,7 +93,7 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
     int clientId = getClientId(introBytes);
 
     int assignedPriority;
-    if (isInputClient(clientId)) {
+    if (this.isInputClient.test(clientId)) {
       // forward request to input session request handler
       assignedPriority = inputSessionRequestHandler.registerNewSessionRequest(
           introBytes.clone(),
@@ -123,17 +116,36 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
   }
 
   /**
-   * Returns true if client ID is for an input client, false if for output client.
-   */
-  private boolean isInputClient(int clientId) {
-    return clientId <= inputSessionRequestHandler.getExpectedClients();
-  }
-
-  /**
    * Gets client ID from handshake.
    */
   private int getClientId(byte[] introBytes) {
     return intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
+  }
+
+  @Override
+  public void setInputRegistrationHandler(
+      ClientSessionRegistration<DdnntClientInputSession> handler) {
+    if (this.inputSessionRequestHandler != null) {
+      throw new IllegalStateException("Input handler already set");
+    }
+    this.inputSessionRequestHandler = handler;
+  }
+
+  @Override
+  public void setOutputRegistrationHandler(
+      ClientSessionRegistration<DdnntClientOutputSession> handler) {
+    if (this.outputSessionRequestHandler != null) {
+      throw new IllegalStateException("Output handler already set");
+    }
+    this.outputSessionRequestHandler = handler;
+  }
+
+  @Override
+  public void launch() {
+    Thread t = new Thread(this::listenForClients);
+    t.setDaemon(true);
+    t.setName("DemoClientSessionRequestHandler Listener");
+    t.start();
   }
 
   static class QueuedClient {
