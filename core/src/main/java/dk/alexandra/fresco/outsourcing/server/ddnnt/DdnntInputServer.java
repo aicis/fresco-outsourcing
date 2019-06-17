@@ -45,7 +45,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private static final Logger logger = LoggerFactory.getLogger(DdnntInputServer.class);
   private static final String HASH_ALGO = "SHA-256";
   private final Future<Map<Integer, List<SInt>>> clientInputs;
-  private final DdnntClientSessionProducer clientSessionProducer;
+  private final ClientSessionProducer<DdnntClientInputSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
 
   /**
@@ -60,7 +60,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @param clientSessionProducer producer of client sessions
    * @param serverSessionProducer producer of server sessions
    */
-  public DdnntInputServer(DdnntClientSessionProducer clientSessionProducer,
+  public DdnntInputServer(ClientSessionProducer<DdnntClientInputSession> clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
@@ -113,8 +113,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private SortedMap<Integer, Pair<List<SInt>, byte[]>> getMaskPairs() throws Exception {
     ExecutorService es = Executors.newCachedThreadPool();
     HashMap<Integer, Future<Pair<List<SInt>, byte[]>>> maskPairsFuture = new HashMap<>();
-    while (clientSessionProducer.hasNextInput()) {
-      DdnntClientInputSession clientSession = clientSessionProducer.nextInput();
+    while (clientSessionProducer.hasNext()) {
+      DdnntClientInputSession clientSession = clientSessionProducer.next();
       logger.info("Running client input session for C{}", clientSession.getClientId());
       Future<Pair<List<SInt>, byte[]>> f = es.submit(new ClientCommunication(clientSession));
       maskPairsFuture.put(clientSession.getClientId(), f);
@@ -152,7 +152,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     private final SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs;
     private final FieldDefinition definition;
 
-    public UnMaskingApp(SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs,
+    UnMaskingApp(SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs,
         FieldDefinition definition) {
       this.maskPairs = maskPairs;
       this.definition = definition;
@@ -183,7 +183,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
         Iterator<FieldElement> maskedIt = masked.iterator();
         List<DRes<SInt>> unMaskedInputs = new ArrayList<>(masks.size());
         while (maskedIt.hasNext() && maskIt.hasNext()) {
-          unMaskedInputs.add(builder.numeric().add(definition.convertToUnsigned(maskedIt.next()), maskIt.next()));
+          unMaskedInputs.add(
+              builder.numeric().add(definition.convertToUnsigned(maskedIt.next()), maskIt.next()));
         }
         return () -> unMaskedInputs.stream().map(DRes::out).collect(Collectors.toList());
       };

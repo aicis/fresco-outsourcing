@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.demo;
+package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
@@ -8,7 +8,6 @@ import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.Collections;
 import java.util.List;

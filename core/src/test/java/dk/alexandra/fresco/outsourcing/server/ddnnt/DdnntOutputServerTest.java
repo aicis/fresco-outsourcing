@@ -9,6 +9,7 @@ import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
@@ -82,7 +83,7 @@ public class DdnntOutputServerTest {
       List<BigInteger> toOutput) {
     Map<Integer, SpdzSetup> setup = SpdzSetup.builder(clientFacingPorts.size()).build();
     ExecutorService es = Executors.newCachedThreadPool();
-    Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers =
+    Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers =
         getClientSessionProducers(numClients, clientFacingPorts, setup, es);
     Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers =
         getServerSessionProducers(setup, es);
@@ -97,14 +98,13 @@ public class DdnntOutputServerTest {
       List<BigInteger> toOutput) {
     for (SpdzSetup s : setup.values()) {
       Future<OutputServer> futureServer = outputServers.get(s.getRp().getMyId());
-      es.submit(() -> {
-        sendOutputs(futureServer, s, toOutput);
-      });
+      es.submit(() -> sendOutputs(futureServer, s, toOutput));
     }
   }
 
   private Map<Integer, Future<OutputServer>> getOutputServers(Map<Integer, SpdzSetup> setup,
-      ExecutorService es, Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers,
+      ExecutorService es,
+      Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers,
       Map<Integer, Future<ServerSessionProducer<SpdzResourcePool>>> serverSessionProducers) {
     Map<Integer, Future<OutputServer>> inputServers = new HashMap<>(setup.size());
     for (SpdzSetup s : setup.values()) {
@@ -129,15 +129,37 @@ public class DdnntOutputServerTest {
     return serverSessionProducers;
   }
 
-  private Map<Integer, Future<DdnntClientSessionProducer>> getClientSessionProducers(int numClients,
+  private Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> getClientSessionProducers(
+      int numClients,
       List<Integer> clientFacingPorts, Map<Integer, SpdzSetup> setup, ExecutorService es) {
-    Map<Integer, Future<DdnntClientSessionProducer>> clientSessionProducers =
+    Map<Integer, Future<ClientSessionProducer<DdnntClientOutputSession>>> clientSessionProducers =
         new HashMap<>(clientFacingPorts.size());
     for (SpdzSetup s : setup.values()) {
-      Future<DdnntClientSessionProducer> producer = es.submit(() -> {
+      Future<ClientSessionProducer<DdnntClientOutputSession>> producer = es.submit(() -> {
         int port = clientFacingPorts.get(s.getRp().getMyId() - 1);
-        return new DemoClientSessionProducer(s.getRp(), SpdzSetupUtils.getDefaultFieldDefinition(),
-            port, 0, numClients);
+        DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
+            s.getRp(),
+            SpdzSetupUtils.getDefaultFieldDefinition(),
+            numClients);
+        new DemoClientSessionRequestHandler(
+            s.getRp(),
+            port,
+            new ClientSessionRegistration<DdnntClientInputSession>() {
+              @Override
+              public int registerNewSessionRequest(byte[] handshakeMessage,
+                  TwoPartyNetwork network) {
+                throw new IllegalStateException("No input clients expected");
+              }
+
+              @Override
+              public int getExpectedClients() {
+                return 0;
+              }
+            },
+            outputSessionEndpoint
+        );
+
+        return outputSessionEndpoint;
       });
       clientSessionProducers.put(s.getRp().getMyId(), producer);
     }

@@ -16,10 +16,11 @@ import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientOutputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.ServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
@@ -88,17 +89,30 @@ public class SpdzSetupUtils {
   public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
       int basePort) {
-    final DdnntClientSessionProducer clientSessionProducer = new DemoClientSessionProducer(
+    DemoClientInputSessionEndpoint inputSessionEndpoint =
+        new DemoClientInputSessionEndpoint(
+            spdzSetup.getRp(),
+            getDefaultFieldDefinition(),
+            inputClientIds.size());
+
+    DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
         spdzSetup.getRp(),
         getDefaultFieldDefinition(),
+        outputClientIds.size());
+
+    new DemoClientSessionRequestHandler(
+        spdzSetup.getRp(),
         spdzSetup
             .getNetConf()
             .getMe()
             .getPort(),
-        inputClientIds.size(),
-        outputClientIds.size()
+        inputSessionEndpoint,
+        outputSessionEndpoint
     );
-    final int numServers = spdzSetup.getNetConf().noOfParties();
+    final int numServers = spdzSetup
+        .getNetConf()
+        .noOfParties();
+
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
         getNetConf(
@@ -106,13 +120,14 @@ public class SpdzSetupUtils {
             numServers,
             basePort + numServers));
     InputServer inputServer = new DdnntInputServer<>(
-        clientSessionProducer,
+        inputSessionEndpoint,
         serverSessionProducer
     );
     OutputServer outputServer = new DdnntOutputServer<>(
-        clientSessionProducer,
+        outputSessionEndpoint,
         serverSessionProducer
     );
+
     return new Pair<>(inputServer, outputServer);
   }
 }

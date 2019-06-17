@@ -1,13 +1,11 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-
 /**
- * Produces new client sessions for each registered request.
+ * Produces new client sessions.
  *
  * @param <SessionT> the session type (input or output) this handler can process
  */
-public interface ClientSessionRequestHandler<SessionT extends DdnntClientSession> {
+public interface ClientSessionProducer<SessionT extends DdnntClientSession> {
 
   /**
    * Gets the next fresh {@link SessionT} produced by this producer.
@@ -27,13 +25,5 @@ public interface ClientSessionRequestHandler<SessionT extends DdnntClientSession
    * @return true if there are more sessions waiting, false otherwise.
    */
   boolean hasNext();
-
-  /**
-   * Adds request to produce another session for given client.
-   *
-   * @param handshakeMessage the handshake message received from the client
-   * @return priority assigned to client (may be same as suggested priority)
-   */
-  int registerNewSessionRequest(byte[] handshakeMessage, TwoPartyNetwork network);
 
 }

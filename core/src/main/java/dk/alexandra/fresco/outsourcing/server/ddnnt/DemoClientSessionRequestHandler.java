@@ -2,7 +2,6 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
-import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
@@ -38,15 +37,15 @@ import org.slf4j.LoggerFactory;
  * clients input.
  * </p>
  */
-public class DemoClientSessionProducer implements DdnntClientSessionProducer {
+public class DemoClientSessionRequestHandler implements DdnntClientSessionRequestHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(DemoClientSessionProducer.class);
+  private static final Logger logger = LoggerFactory
+      .getLogger(DemoClientSessionRequestHandler.class);
   private final SpdzResourcePool resourcePool;
   private final int port;
-  private final int expectedInputClients;
   private final int expectedClients;
-  private ClientSessionRequestHandler<DdnntClientInputSession> inputSessionRequestHandler;
-  private ClientSessionRequestHandler<DdnntClientOutputSession> outputSessionRequestHandler;
+  private final ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler;
+  private final ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -57,56 +56,27 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
    * </p>
    *
    * @param resourcePool a spdz resource pool to use for the input protocol
-   * @param port a port to listen for incomming sessions on
-   * @param expectedInputClients the expected number of input client sessions to produce
-   * @param expectedOutputClients the expected number of output client sessions to produce
+   * @param port a port to listen for incoming sessions on
    */
-  public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
-      int port, int expectedInputClients, int expectedOutputClients) {
+  public DemoClientSessionRequestHandler(SpdzResourcePool resourcePool,
+      int port, ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler,
+      ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler) {
     if (port < 0) {
       throw new IllegalArgumentException("Port number cannot be negative, but was: " + port);
     }
-    if (expectedInputClients < 0) {
-      throw new IllegalArgumentException(
-          "Expected input clients cannot be negative, but was: " + expectedInputClients);
-    }
-    if (expectedOutputClients < 0) {
-      throw new IllegalArgumentException(
-          "Expected output clients cannot be negative, but was: " + expectedInputClients);
-    }
-    if (expectedOutputClients > 1) {
-      throw new IllegalArgumentException(
-          "This producer does not support more than 1 output client: " + expectedInputClients);
-    }
+    Objects.requireNonNull(inputSessionRequestHandler);
+    Objects.requireNonNull(outputSessionRequestHandler);
+    this.inputSessionRequestHandler = inputSessionRequestHandler;
+    this.outputSessionRequestHandler = outputSessionRequestHandler;
+    this.expectedClients =
+        inputSessionRequestHandler.getExpectedClients() + outputSessionRequestHandler
+            .getExpectedClients();
     this.resourcePool = Objects.requireNonNull(resourcePool);
     this.port = port;
-    this.expectedInputClients = expectedInputClients;
-    this.expectedClients = expectedInputClients + expectedOutputClients;
-    // TODO this is still ugly
-    if (expectedInputClients > 0) {
-      this.inputSessionRequestHandler =
-          new DemoClientInputSessionRequestHandler(resourcePool,
-              definition,
-              expectedInputClients);
-    }
-    if (expectedOutputClients > 0) {
-      this.outputSessionRequestHandler =
-          new DemoClientOutputSessionRequestHandler(
-              resourcePool, definition,
-              expectedOutputClients);
-    }
     Thread t = new Thread(this::listenForClients);
     t.setDaemon(true);
-    t.setName("DemoClientSessionProducer Listener");
+    t.setName("DemoClientSessionRequestHandler Listener");
     t.start();
-  }
-
-  /**
-   * Default constructor call with 0 output clients.
-   */
-  public DemoClientSessionProducer(SpdzResourcePool resourcePool, FieldDefinition definition,
-      int port, int expectedInputClients) {
-    this(resourcePool, definition, port, expectedInputClients, 0);
   }
 
   private void listenForClients() {
@@ -152,45 +122,11 @@ public class DemoClientSessionProducer implements DdnntClientSessionProducer {
         resourcePool.getMyId(), clientId, assignedPriority);
   }
 
-  @Override
-  public DdnntClientInputSession nextInput() {
-    if (inputSessionRequestHandler == null) {
-      throw new IllegalStateException("Requesting input session although no inputs anticipated.");
-    }
-    return inputSessionRequestHandler.next();
-  }
-
-  @Override
-  public boolean hasNextInput() {
-    if (inputSessionRequestHandler == null) {
-      throw new IllegalStateException(
-          "Requesting input session info although no inputs anticipated.");
-    }
-    return inputSessionRequestHandler.hasNext();
-  }
-
-  @Override
-  public DdnntClientOutputSession nextOutput() {
-    if (outputSessionRequestHandler == null) {
-      throw new IllegalStateException("Requesting output session although no outputs anticipated.");
-    }
-    return outputSessionRequestHandler.next();
-  }
-
-  @Override
-  public boolean hasNextOutput() {
-    if (outputSessionRequestHandler == null) {
-      throw new IllegalStateException(
-          "Requesting output session info although no outputs anticipated.");
-    }
-    return outputSessionRequestHandler.hasNext();
-  }
-
   /**
    * Returns true if client ID is for an input client, false if for output client.
    */
   private boolean isInputClient(int clientId) {
-    return clientId <= expectedInputClients;
+    return clientId <= inputSessionRequestHandler.getExpectedClients();
   }
 
   /**

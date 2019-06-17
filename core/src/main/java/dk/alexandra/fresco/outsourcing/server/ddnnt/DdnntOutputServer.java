@@ -33,11 +33,11 @@ import org.slf4j.LoggerFactory;
 public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implements OutputServer {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
-  private final DdnntClientSessionProducer clientSessionProducer;
+  private final ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final List<SInt> outputs;
 
-  public DdnntOutputServer(DdnntClientSessionProducer clientSessionProducer,
+  public DdnntOutputServer(ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
@@ -53,8 +53,8 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     List<Map<String, DRes<SInt>>> result =
         serverOutputSession.getSce().runApplication(app, resourcePool, network);
     ExecutorService es = Executors.newCachedThreadPool();
-    while (clientSessionProducer.hasNextOutput()) {
-      DdnntClientOutputSession clientSession = clientSessionProducer.nextOutput();
+    while (clientSessionProducer.hasNext()) {
+      DdnntClientOutputSession clientSession = clientSessionProducer.next();
       logger.info("Running client output session for C{}", clientSession.getClientId());
       es.submit(new ClientCommunication(clientSession, result));
     }

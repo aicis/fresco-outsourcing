@@ -4,7 +4,7 @@ import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromB
 
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionProducer.QueuedClient;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionRequestHandler.QueuedClient;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -17,11 +17,12 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO
  */
-class DemoClientOutputSessionRequestHandler implements
-    ClientSessionRequestHandler<DdnntClientOutputSession> {
+public class DemoClientOutputSessionEndpoint implements
+    ClientSessionRegistration<DdnntClientOutputSession>,
+    ClientSessionProducer<DdnntClientOutputSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(DemoClientOutputSessionRequestHandler.class);
+      .getLogger(DemoClientOutputSessionEndpoint.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -31,8 +32,17 @@ class DemoClientOutputSessionRequestHandler implements
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
 
-  DemoClientOutputSessionRequestHandler(SpdzResourcePool resourcePool, FieldDefinition definition,
+  public DemoClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
+      FieldDefinition definition,
       int expectedClients) {
+    if (expectedClients < 0) {
+      throw new IllegalArgumentException(
+          "Expected output clients cannot be negative, but was: " + expectedClients);
+    }
+    if (expectedClients > 1) {
+      throw new IllegalArgumentException(
+          "This producer does not support more than 1 output client: " + expectedClients);
+    }
     this.resourcePool = resourcePool;
     this.definition = definition;
     this.expectedClients = expectedClients;
@@ -70,6 +80,11 @@ class DemoClientOutputSessionRequestHandler implements
     return registerNewSessionRequest(priority, clientId, network);
   }
 
+  @Override
+  public int getExpectedClients() {
+    return expectedClients;
+  }
+
   private int registerNewSessionRequest(int suggestedPriority, int clientId,
       TwoPartyNetwork network) {
     if (resourcePool.getMyId() == 1) {
@@ -84,8 +99,8 @@ class DemoClientOutputSessionRequestHandler implements
         clientsReady++;
         processingQueue.add(orderingQueue.remove());
       }
-      logger.info("S{}: Finished handskake for client {} with priority {}. Expecting {} inputs.",
-          resourcePool.getMyId(), q.clientId, q.priority, q.inputAmount);
+      logger.info("S{}: Finished handskake for output client {} with priority {}.",
+          resourcePool.getMyId(), q.clientId, q.priority);
       return q.priority;
     }
   }

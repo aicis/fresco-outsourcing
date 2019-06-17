@@ -9,6 +9,7 @@ import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.setup.Spdz;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.ArrayList;
 import java.util.Arrays;

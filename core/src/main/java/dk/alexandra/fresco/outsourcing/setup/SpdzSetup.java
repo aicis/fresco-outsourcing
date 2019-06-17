@@ -89,7 +89,7 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
     private int modLength = DEFAULT_MOD_BIT_LENGTH;
     private int parties;
 
-    public Builder(int parties) {
+    Builder(int parties) {
       this.parties = parties;
     }
 
