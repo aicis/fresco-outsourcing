@@ -45,7 +45,7 @@ public class SpdzSetupUtils {
 
   public static FieldDefinition getDefaultFieldDefinition() {
     return new BigIntegerFieldDefinition(
-        ModulusFinder.findSuitableModulus(64));
+        ModulusFinder.findSuitableModulus(128));
   }
 
   public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {

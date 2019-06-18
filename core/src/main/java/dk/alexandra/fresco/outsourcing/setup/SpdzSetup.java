@@ -82,7 +82,7 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
    */
   public static class Builder {
 
-    private static final int DEFAULT_MOD_BIT_LENGTH = 64;
+    private static final int DEFAULT_MOD_BIT_LENGTH = 128;
     private static final int DEFAULT_MAX_BIT_LENGTH = 64;
 
     private int maxLength = DEFAULT_MAX_BIT_LENGTH;
