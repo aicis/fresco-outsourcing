@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.setup.Spdz;
+import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,29 +29,27 @@ import org.junit.Test;
  */
 public class DdnntInputServerTest {
 
-  private static final int INPUTS_PER_CLIENT = 1;
+  private static final int INPUTS_PER_CLIENT = 100;
   private static final int NUMBER_OF_SERVERS = 3;
-  private static final int NUMBER_OF_INPUT_CLIENTS = 1;
+  private static final int NUMBER_OF_INPUT_CLIENTS = 100;
   private static final int NUMBER_OF_OUTPUT_CLIENTS = 1;
   private static final int OUTPUT_CLIENT_ID = NUMBER_OF_INPUT_CLIENTS + NUMBER_OF_OUTPUT_CLIENTS;
-  private static final int BASE_PORT = 8042;
 
   @Test
   public void testInputsOnly() throws InterruptedException, ExecutionException {
     int numInputClients = NUMBER_OF_INPUT_CLIENTS;
     int numOutputClients = NUMBER_OF_OUTPUT_CLIENTS;
-    List<Integer> clientFacingPorts = IntStream
-        .range(BASE_PORT + 1, BASE_PORT + 1 + NUMBER_OF_SERVERS).boxed()
-        .collect(Collectors.toList());
-    List<Future<Object>> assertFutures = runServers(numInputClients, numOutputClients,
-        clientFacingPorts);
-    runInputClients(numInputClients, clientFacingPorts);
+    int numServers = NUMBER_OF_SERVERS;
+    List<Integer> freePorts = SpdzSetup.getFreePorts(NUMBER_OF_SERVERS * 3);
+    List<Future<Object>> assertFutures = runServers(numInputClients, numOutputClients, numServers,
+        freePorts);
+    runInputClients(numInputClients, SpdzSetup.getClientFacingPorts(freePorts, numServers));
 
     for (Future<Object> assertFuture : assertFutures) {
       assertFuture.get();
     }
   }
-  
+
   private Map<Integer, List<BigInteger>> serverSideProtocol(Future<Spdz> futureServer) {
     try {
       Spdz spdz = futureServer.get();
@@ -66,25 +65,23 @@ public class DdnntInputServerTest {
             }
             return () -> openInputs;
           });
-      Map<Integer, List<BigInteger>> openedInputs =
-          wrapped.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              e -> e.getValue().out().stream().map(DRes::out).collect(Collectors.toList())));
-      return openedInputs;
+      return wrapped.entrySet().stream().collect(Collectors.toMap(Entry::getKey,
+          e -> e.getValue().out().stream().map(DRes::out).collect(Collectors.toList())));
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
       return null;
     }
   }
 
-  private void runInputClients(int numClients, List<Integer> clientFacingPorts)
+  private void runInputClients(int numClients, Map<Integer, Integer> clientFacingPorts)
       throws InterruptedException {
     List<Party> servers = new ArrayList<>(clientFacingPorts.size());
-    for (int i = 0; i < clientFacingPorts.size(); i++) {
-      servers.add(new Party(i + 1, "localhost", clientFacingPorts.get(i)));
+    for (int i = 1; i <= clientFacingPorts.size(); i++) {
+      servers.add(new Party(i, "localhost", clientFacingPorts.get(i)));
     }
     ExecutorService es = Executors.newFixedThreadPool(8);
-    for (int i = 0; i < numClients; i++) {
-      final int id = i + 1;
+    for (int i = 1; i <= numClients; i++) {
+      final int id = i;
       es.submit(() -> {
         DemoDdnntInputClient client = new DemoDdnntInputClient(INPUTS_PER_CLIENT, id, servers);
         List<BigInteger> inputs = computeInputs(id);
@@ -122,9 +119,11 @@ public class DdnntInputServerTest {
 
   private List<Future<Object>> runServers(int numInputClients,
       int numOutputClients,
-      List<Integer> clientFacingPorts) {
+      int numServers,
+      List<Integer> freePorts) {
     ExecutorService es = Executors.newCachedThreadPool();
-    List<Integer> serverIds = IntStream.rangeClosed(1, clientFacingPorts.size()).boxed()
+
+    List<Integer> serverIds = IntStream.rangeClosed(1, numServers).boxed()
         .collect(Collectors.toList());
 
     List<Integer> inputIds = IntStream.rangeClosed(1, numInputClients).boxed()
@@ -134,13 +133,14 @@ public class DdnntInputServerTest {
         .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numOutputClients).boxed()
         .collect(Collectors.toList());
 
-    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(clientFacingPorts.size());
+    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(numServers);
     for (int serverId : serverIds) {
       Future<Spdz> spdzServer = es
           .submit(() -> new Spdz(
               serverId,
-              clientFacingPorts.size(),
-              BASE_PORT,
+              SpdzSetup.getClientFacingPorts(freePorts, numServers),
+              SpdzSetup.getInternalPorts(freePorts, numServers),
+              SpdzSetup.getApplicationPorts(freePorts, numServers),
               inputIds,
               outputIds));
       spdzServers.put(serverId, spdzServer);

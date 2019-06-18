@@ -12,6 +12,8 @@ import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * This is a facade for the SPDZ suite functionality that allows receiving inputs from clients and
@@ -25,10 +27,40 @@ public class Spdz {
 
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
-  private final int basePort;
+  private final Map<Integer, Integer> applicationPorts;
   private final SpdzSetup spdzSetup;
   private final InputServer inputServer;
   private final OutputServer outputServer;
+
+  /**
+   * Creates new {@link Spdz}.
+   *
+   * <p>Note that the plethora of ports is necessary because FRESCO doesn't have a channeled
+   * network implementation. Once that is in place, a single port per server can be used.</p>
+   *
+   * @param serverId Id of this server
+   * @param clientFacingPorts ports to be used by IO with clients
+   * @param internalPorts ports to be used internally between servers for IO protocols
+   * @param applicationPorts ports to be used for running MPC applications
+   * @param inputParties IDs of parties contributing inputs (empty means no inputs)
+   * @param outputParties IDs of parties receiving outputs (empty means no outputs)
+   */
+  public Spdz(
+      int serverId,
+      Map<Integer, Integer> clientFacingPorts,
+      Map<Integer, Integer> internalPorts,
+      Map<Integer, Integer> applicationPorts,
+      List<Integer> inputParties,
+      List<Integer> outputParties) {
+    // TODO check that all required ports are available
+    // TODO handle non-localhost addresses
+    this.applicationPorts = applicationPorts;
+    this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts);
+    Pair<InputServer, OutputServer> io = SpdzSetupUtils
+        .initIOServers(spdzSetup, inputParties, outputParties, internalPorts);
+    this.inputServer = io.getFirst();
+    this.outputServer = io.getSecond();
+  }
 
   /**
    * Construct new SPDZ server.
@@ -36,7 +68,7 @@ public class Spdz {
    * @param serverId Id of this server
    * @param numServers total number of servers
    * @param basePort the base FRESCO port, if running on same machine all ports in range {@code
-   * basePort} to {@code basePort} + 2 * {@code numServers} must be available
+   * basePort} to {@code basePort} + 3 * {@code numServers} must be available
    * @param inputParties all client parties that will contribute input
    * @param outputParties all client parties that will receive outputs
    */
@@ -46,32 +78,21 @@ public class Spdz {
       int basePort,
       List<Integer> inputParties,
       List<Integer> outputParties) {
-    // TODO check that all required ports are available
-    // TODO handle non-localhost addresses
-    this.basePort = basePort;
-    this.spdzSetup = SpdzSetupUtils.getSetup(serverId, numServers, basePort);
-    Pair<InputServer, OutputServer> io = SpdzSetupUtils
-        .initIOServers(spdzSetup, inputParties, outputParties, basePort);
-    this.inputServer = io.getFirst();
-    this.outputServer = io.getSecond();
+    this(serverId,
+        SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getApplicationPorts(contiguousPorts(basePort, numServers), numServers),
+        inputParties,
+        outputParties
+    );
   }
 
   /**
-   * Default constructor for {@link #Spdz(int, int, int, List, List)} that sets up two servers
-   * and uses {@link #DEFAULT_FRESCO_BASE_PORT} base port.
+   * Default constructor that will use {@link #DEFAULT_FRESCO_BASE_PORT} as base port and 2
+   * servers.
    */
-  public Spdz(int serverId, List<Integer> inputParties,
-      List<Integer> outputParties) {
-    this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, inputParties,
-        outputParties);
-  }
-
-  /**
-   * Default constructor for {@link #Spdz(int, int, int, List, List)} that sets up two servers
-   * and uses {@link #DEFAULT_FRESCO_BASE_PORT} base port and no input or output parties.
-   */
-  public Spdz(int serverId) {
-    this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, Collections.emptyList(), Collections.emptyList());
+  public Spdz(int serverId, List<Integer> inputParties, List<Integer> outputParties) {
+    this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, inputParties, outputParties);
   }
 
   /**
@@ -99,7 +120,6 @@ public class Spdz {
    * @return the result
    */
   public <T> T run(Application<T, ProtocolBuilderNumeric> app) {
-    final int applicationBasePort = this.basePort + 2 * getNumServers();
     return spdzSetup
         .getSce()
         .runApplication(
@@ -107,7 +127,7 @@ public class Spdz {
             spdzSetup.getRp(),
             new SocketNetwork(
                 SpdzSetupUtils
-                    .getNetConf(getServerId(), getNumServers(), applicationBasePort)));
+                    .getNetConf(getServerId(), applicationPorts)));
   }
 
   private int getServerId() {
@@ -116,10 +136,9 @@ public class Spdz {
         .getMyId();
   }
 
-  private int getNumServers() {
-    return spdzSetup
-        .getNetConf()
-        .noOfParties();
+  private static List<Integer> contiguousPorts(int basePort, int numServers) {
+    return IntStream.range(basePort + 1, basePort + 1 + 3 * numServers).boxed()
+        .collect(Collectors.toList());
   }
 
 }

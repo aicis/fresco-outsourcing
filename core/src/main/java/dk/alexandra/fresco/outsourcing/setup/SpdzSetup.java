@@ -144,38 +144,79 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
       return confs;
     }
 
-    /**
-     * Finds {@code portsRequired} free ports and returns their port numbers.
-     * <p>
-     * NOTE: two subsequent calls to this method can return overlapping sets of free ports (same
-     * with parallel calls).
-     * </p>
-     *
-     * @param portsRequired number of free ports required
-     * @return list of port numbers of free ports
-     */
-    public static List<Integer> getFreePorts(int portsRequired) {
-      List<ServerSocket> sockets = new ArrayList<>(portsRequired);
-      for (int i = 0; i < portsRequired; i++) {
-        try {
-          ServerSocket s = new ServerSocket(0);
-          sockets.add(s);
-          // we keep the socket open to ensure that the port is not re-used in a sub-sequent
-          // iteration
-        } catch (IOException e) {
-          throw new RuntimeException("No free ports", e);
-        }
-      }
-      return sockets.stream().map(socket -> {
-        int portNumber = socket.getLocalPort();
-        try {
-          socket.close();
-        } catch (IOException e) {
-          throw new RuntimeException("No free ports", e);
-        }
-        return portNumber;
-      }).collect(Collectors.toList());
-    }
   }
 
+  /**
+   * Finds {@code portsRequired} free ports and returns their port numbers.
+   * <p>
+   * NOTE: two subsequent calls to this method can return overlapping sets of free ports (same with
+   * parallel calls).
+   * </p>
+   *
+   * @param portsRequired number of free ports required
+   * @return list of port numbers of free ports
+   */
+  public static List<Integer> getFreePorts(int portsRequired) {
+    List<ServerSocket> sockets = new ArrayList<>(portsRequired);
+    for (int i = 0; i < portsRequired; i++) {
+      try {
+        ServerSocket s = new ServerSocket(0);
+        sockets.add(s);
+        // we keep the socket open to ensure that the port is not re-used in a sub-sequent
+        // iteration
+      } catch (IOException e) {
+        throw new RuntimeException("No free ports", e);
+      }
+    }
+    return sockets.stream().map(socket -> {
+      int portNumber = socket.getLocalPort();
+      try {
+        socket.close();
+      } catch (IOException e) {
+        throw new RuntimeException("No free ports", e);
+      }
+      return portNumber;
+    }).collect(Collectors.toList());
+  }
+
+  /**
+   * Returns map of party IDs to ports used for client-facing IO.
+   *
+   * <p>By convention these will be ports at 0 to numServers in {@code freePorts}.</p>
+   */
+  public static Map<Integer, Integer> getClientFacingPorts(List<Integer> freePorts,
+      int numServers) {
+    return getPortMap(freePorts, numServers, 0);
+  }
+
+  /**
+   * Returns map of party IDs to ports used for running internal server functionality.
+   *
+   * <p>By convention these will be ports at numServers to 2 * numServers in {@code freePorts}.</p>
+   */
+  public static Map<Integer, Integer> getInternalPorts(List<Integer> freePorts, int numServers) {
+    return getPortMap(freePorts, numServers, numServers);
+  }
+
+  /**
+   * Returns map of party IDs to ports used for running MPC applications.
+   *
+   * <p>By convention these will be ports at 2 * numServers to 3 * numServers in {@code
+   * freePorts}.</p>
+   */
+  public static Map<Integer, Integer> getApplicationPorts(List<Integer> freePorts, int numServers) {
+    return getPortMap(freePorts, numServers, 2 * numServers);
+  }
+
+  private static Map<Integer, Integer> getPortMap(List<Integer> freePorts, int numServers,
+      int offset) {
+    if (!(freePorts.size() / numServers == 3 && freePorts.size() % numServers == 0)) {
+      throw new IllegalArgumentException("Number of ports must be exactly 3 * number of servers.");
+    }
+    Map<Integer, Integer> ports = new HashMap<>(numServers);
+    for (int i = 1; i <= numServers; i++) {
+      ports.put(i, freePorts.get(i - 1 + offset));
+    }
+    return ports;
+  }
 }

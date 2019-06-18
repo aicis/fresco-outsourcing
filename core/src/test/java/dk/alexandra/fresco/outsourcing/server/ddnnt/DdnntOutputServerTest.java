@@ -40,7 +40,6 @@ public class DdnntOutputServerTest {
   private static final int NUMBER_OF_SERVERS = 3;
   private static final int NUMBER_OF_CLIENTS = 1;
   private static final int OUTPUT_CLIENT_ID = 1;
-  private static final int BASE_PORT = 8042;
 
   @Test
   public void testClientOutput() throws InterruptedException, ExecutionException {
@@ -51,23 +50,23 @@ public class DdnntOutputServerTest {
         BigInteger.valueOf(1),
         BigInteger.valueOf(42)
     );
-    List<Integer> clientFacingPorts = IntStream
-        .range(BASE_PORT + 1, BASE_PORT + 1 + NUMBER_OF_SERVERS).boxed()
-        .collect(Collectors.toList());
-    runServers(numClients, clientFacingPorts, expectedOutputs);
-    List<Future<Object>> assertFutures = runOutputClients(numClients, clientFacingPorts,
+    List<Integer> freePorts = SpdzSetup.getFreePorts(NUMBER_OF_SERVERS * 3);
+    runServers(numClients, numServers, freePorts, expectedOutputs);
+    List<Future<Object>> assertFutures = runOutputClients(numClients,
+        SpdzSetup.getClientFacingPorts(freePorts, numServers),
         expectedOutputs);
     for (Future<Object> assertFuture : assertFutures) {
       assertFuture.get();
     }
   }
 
-  private List<Future<Object>> runOutputClients(int numClients, List<Integer> clientFacingPorts,
+  private List<Future<Object>> runOutputClients(int numClients,
+      Map<Integer, Integer> clientFacingPorts,
       List<BigInteger> expectedOutputs)
       throws InterruptedException {
     List<Party> servers = new ArrayList<>(clientFacingPorts.size());
-    for (int i = 0; i < clientFacingPorts.size(); i++) {
-      servers.add(new Party(i + 1, "localhost", clientFacingPorts.get(i)));
+    for (int i = 1; i <= clientFacingPorts.size(); i++) {
+      servers.add(new Party(i, "localhost", clientFacingPorts.get(i)));
     }
     ExecutorService es = Executors.newFixedThreadPool(8);
     List<Future<Object>> assertFutures = new ArrayList<>(numClients);
@@ -86,23 +85,25 @@ public class DdnntOutputServerTest {
     return assertFutures;
   }
 
-  private void runServers(int numClients, List<Integer> clientFacingPorts,
+  private void runServers(int numClients, int numServers,
+      List<Integer> freePorts,
       List<BigInteger> toOutput) {
     ExecutorService es = Executors.newCachedThreadPool();
-    List<Integer> serverIds = IntStream.rangeClosed(1, clientFacingPorts.size()).boxed()
+    List<Integer> serverIds = IntStream.rangeClosed(1, numServers).boxed()
         .collect(Collectors.toList());
 
     List<Integer> outputIds = IntStream
         .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numClients).boxed()
         .collect(Collectors.toList());
 
-    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(clientFacingPorts.size());
+    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(numServers);
     for (int serverId : serverIds) {
       Future<Spdz> spdzServer = es
           .submit(() -> new Spdz(
               serverId,
-              clientFacingPorts.size(),
-              BASE_PORT,
+              SpdzSetup.getClientFacingPorts(freePorts, numServers),
+              SpdzSetup.getInternalPorts(freePorts, numServers),
+              SpdzSetup.getApplicationPorts(freePorts, numServers),
               Collections.emptyList(),
               outputIds));
       spdzServers.put(serverId, spdzServer);

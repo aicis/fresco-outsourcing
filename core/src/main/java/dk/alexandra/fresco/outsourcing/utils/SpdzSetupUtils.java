@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 public class SpdzSetupUtils {
@@ -51,10 +52,11 @@ public class SpdzSetupUtils {
     return new BigInteger(modulus.bitLength(), new Random(partyId)).mod(modulus);
   }
 
-  public static NetworkConfiguration getNetConf(int serverId, int numServers, int basePort) {
+  public static NetworkConfiguration getNetConf(int serverId,
+      Map<Integer, Integer> partiesToPorts) {
     Map<Integer, Party> partyMap = new HashMap<>();
-    for (int i = 1; i <= numServers; i++) {
-      partyMap.put(i, new Party(i, "localhost", basePort + i));
+    for (Entry<Integer, Integer> entry : partiesToPorts.entrySet()) {
+      partyMap.put(entry.getKey(), new Party(entry.getKey(), "localhost", entry.getValue()));
     }
     return new NetworkConfigurationImpl(serverId, partyMap);
   }
@@ -67,17 +69,17 @@ public class SpdzSetupUtils {
     return servers;
   }
 
-  public static SpdzSetup getSetup(int serverId, int numServers, int basePort) {
-    NetworkConfiguration netConf = getNetConf(serverId, numServers, basePort);
+  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
+    NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts);
     FieldDefinition definition = getDefaultFieldDefinition();
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,
-            numServers,
+            partiesToPorts.size(),
             definition,
             definition.getModulus()
         );
-    SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, numServers,
+    SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
         new OpenedValueStoreImpl<>(),
         supplier, new AesCtrDrbg(new byte[32]));
     SpdzProtocolSuite suite = new SpdzProtocolSuite(64);
@@ -89,17 +91,15 @@ public class SpdzSetupUtils {
 
   public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      int basePort) {
-    final int numServers = spdzSetup
-        .getNetConf()
-        .noOfParties();
+      Map<Integer, Integer> internalPorts) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
         getNetConf(
-            spdzSetup.getNetConf().getMyId(),
-            numServers,
-            basePort + numServers));
+            spdzSetup
+                .getNetConf()
+                .getMyId(),
+            internalPorts));
 
     DdnntClientSessionRequestHandler handler = new DemoClientSessionRequestHandler(
         spdzSetup.getRp(),
