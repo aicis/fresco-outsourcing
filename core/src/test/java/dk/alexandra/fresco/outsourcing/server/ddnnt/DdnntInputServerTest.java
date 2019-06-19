@@ -6,7 +6,7 @@ import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
-import dk.alexandra.fresco.outsourcing.setup.Spdz;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -50,9 +50,9 @@ public class DdnntInputServerTest {
     }
   }
 
-  private Map<Integer, List<BigInteger>> serverSideProtocol(Future<Spdz> futureServer) {
+  private Map<Integer, List<BigInteger>> serverSideProtocol(Future<SpdzWithIO> futureServer) {
     try {
-      Spdz spdz = futureServer.get();
+      SpdzWithIO spdz = futureServer.get();
       Map<Integer, List<SInt>> inputs = spdz.receiveInputs();
       Map<Integer, DRes<List<DRes<BigInteger>>>> wrapped =
           spdz.run((builder) -> {
@@ -98,10 +98,10 @@ public class DdnntInputServerTest {
   }
 
   private List<Future<Object>> getFutureAsserts(ExecutorService es,
-      Map<Integer, Future<Spdz>> inputServers, List<Integer> serverIds) {
+      Map<Integer, Future<SpdzWithIO>> inputServers, List<Integer> serverIds) {
     List<Future<Object>> assertFutures = new ArrayList<>(inputServers.size());
     for (Integer serverId : serverIds) {
-      Future<Spdz> futureSpdz = inputServers.get(serverId);
+      Future<SpdzWithIO> futureSpdz = inputServers.get(serverId);
       Future<Object> assertFuture = es.submit(() -> {
         Map<Integer, List<BigInteger>> result = serverSideProtocol(futureSpdz);
         for (Entry<Integer, List<BigInteger>> e : result.entrySet()) {
@@ -133,10 +133,10 @@ public class DdnntInputServerTest {
         .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numOutputClients).boxed()
         .collect(Collectors.toList());
 
-    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(numServers);
+    Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(numServers);
     for (int serverId : serverIds) {
-      Future<Spdz> spdzServer = es
-          .submit(() -> new Spdz(
+      Future<SpdzWithIO> spdzServer = es
+          .submit(() -> new SpdzWithIO(
               serverId,
               SpdzSetup.getClientFacingPorts(freePorts, numServers),
               SpdzSetup.getInternalPorts(freePorts, numServers),

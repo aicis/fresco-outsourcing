@@ -4,17 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.network.Network;
-import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
-import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.setup.Spdz;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
-import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
-import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,10 +90,10 @@ public class DdnntOutputServerTest {
         .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numClients).boxed()
         .collect(Collectors.toList());
 
-    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(numServers);
+    Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(numServers);
     for (int serverId : serverIds) {
-      Future<Spdz> spdzServer = es
-          .submit(() -> new Spdz(
+      Future<SpdzWithIO> spdzServer = es
+          .submit(() -> new SpdzWithIO(
               serverId,
               SpdzSetup.getClientFacingPorts(freePorts, numServers),
               SpdzSetup.getInternalPorts(freePorts, numServers),
@@ -110,16 +104,16 @@ public class DdnntOutputServerTest {
     }
 
     for (int serverId : serverIds) {
-      Future<Spdz> futureServer = spdzServers.get(serverId);
+      Future<SpdzWithIO> futureServer = spdzServers.get(serverId);
       es.submit(() -> serverSideProtocol(futureServer, toOutput));
     }
 
     es.shutdown();
   }
 
-  private void serverSideProtocol(Future<Spdz> futureServer, List<BigInteger> toOutput) {
+  private void serverSideProtocol(Future<SpdzWithIO> futureServer, List<BigInteger> toOutput) {
     try {
-      Spdz server = futureServer.get();
+      SpdzWithIO server = futureServer.get();
       List<SInt> out = server.run((builder) -> {
         DRes<List<DRes<SInt>>> secretShares = builder.collections().closeList(toOutput, 1);
         return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());

@@ -9,7 +9,7 @@ import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
-import dk.alexandra.fresco.outsourcing.setup.Spdz;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +28,7 @@ public class Demo {
   }
 
   private static void runAsServer(int serverId) {
-    Spdz spdz = new Spdz(serverId, Collections.singletonList(1),
+    SpdzWithIO spdz = new SpdzWithIO(serverId, Collections.singletonList(1),
         Collections.singletonList(2));
 
     Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputs();

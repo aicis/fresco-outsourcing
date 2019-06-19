@@ -7,7 +7,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
-import dk.alexandra.fresco.outsourcing.setup.Spdz;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -53,9 +53,9 @@ public class DdnntInputAndOutputServerTest {
     }
   }
 
-  private void serverSideProtocol(Future<Spdz> futureServer) {
+  private void serverSideProtocol(Future<SpdzWithIO> futureServer) {
     try {
-      Spdz spdz = futureServer.get();
+      SpdzWithIO spdz = futureServer.get();
       Map<Integer, List<SInt>> clientInputs = spdz.receiveInputs();
       spdz.sendOutputsTo(OUTPUT_CLIENT_ID, clientInputs.get(1));
     } catch (InterruptedException | ExecutionException e) {
@@ -124,10 +124,10 @@ public class DdnntInputAndOutputServerTest {
         .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numOutputClients).boxed()
         .collect(Collectors.toList());
 
-    Map<Integer, Future<Spdz>> spdzServers = new HashMap<>(numServers);
+    Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(numServers);
     for (int serverId : serverIds) {
-      Future<Spdz> spdzServer = es
-          .submit(() -> new Spdz(
+      Future<SpdzWithIO> spdzServer = es
+          .submit(() -> new SpdzWithIO(
               serverId,
               SpdzSetup.getClientFacingPorts(freePorts, numServers),
               SpdzSetup.getInternalPorts(freePorts, numServers),
@@ -138,7 +138,7 @@ public class DdnntInputAndOutputServerTest {
     }
 
     for (int serverId : serverIds) {
-      Future<Spdz> futureServer = spdzServers.get(serverId);
+      Future<SpdzWithIO> futureServer = spdzServers.get(serverId);
       es.submit(() -> serverSideProtocol(futureServer));
     }
 
