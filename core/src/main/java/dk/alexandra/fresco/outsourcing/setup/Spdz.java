@@ -6,12 +6,15 @@ import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is facade for running MPC applications using the SPDZ protocol suite.
  */
 public class Spdz {
 
+  private static final Logger logger = LoggerFactory.getLogger(Spdz.class);
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   private final SpdzSetup spdzSetup;
@@ -36,6 +39,7 @@ public class Spdz {
   public Spdz(int partyId, int numParties) {
     this.spdzSetup = SpdzSetupUtils
         .getSetup(partyId, getDefaultPortMap(DEFAULT_FRESCO_BASE_PORT, numParties));
+    logger.info("Created SPDZ instance Party {}", partyId);
   }
 
   /**
