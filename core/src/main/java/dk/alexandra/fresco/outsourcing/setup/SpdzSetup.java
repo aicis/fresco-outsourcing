@@ -119,7 +119,7 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
         SpdzDataSupplier supplier =
             new SpdzDummyDataSupplier(i, parties, definition, ssk);
         SpdzResourcePool rp = new SpdzResourcePoolImpl(i, parties, new OpenedValueStoreImpl<>(),
-            supplier, new AesCtrDrbg(new byte[32]));
+            supplier, AesCtrDrbg::new);
         SpdzProtocolSuite suite = new SpdzProtocolSuite(maxLength);
         SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
             new SecureComputationEngineImpl<>(suite,

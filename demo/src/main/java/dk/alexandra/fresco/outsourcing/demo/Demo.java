@@ -5,6 +5,7 @@ import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.lib.common.math.AdvancedNumeric;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
@@ -36,7 +37,7 @@ public class Demo {
     // Example MPC application
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       List<DRes<SInt>> clientOneInputs = new ArrayList<>(clientsInputs.get(1));
-      DRes<SInt> res = builder.advancedNumeric().sum(clientOneInputs);
+      DRes<SInt> res = AdvancedNumeric.using(builder).sum(clientOneInputs);
       return () -> Collections.singletonList(res.out());
     };
     spdz.sendOutputsTo(2, spdz.run(app));
