@@ -31,6 +31,6 @@ public interface InputClient {
    *
    * @param inputs a list of input values
    */
-  void putIntInputs(List<Integer> inputs);
+  void  putIntInputs(List<Integer> inputs);
 
 }
