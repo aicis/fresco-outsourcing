@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
+import dk.alexandra.fresco.outsourcing.benchmark.PPP.Params;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -14,9 +14,9 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 // Code from https://developpaper.com/how-to-benchmark-using-jmh-in-java/
-public class Benchmarking {
-  public static final int WARMUP = 1;
-  public static final int ITERATIONS = 1;
+public class Main {
+  public static final int WARMUP = 5;
+  public static final int ITERATIONS = 10;
 
   //Generated file path: {project root} / {reportfiledir} / {XXX. Class. Getsimplename()}. JSON
   // e.g. jmh-reports/EmptyMethod.json
@@ -37,28 +37,23 @@ public class Benchmarking {
     for (int id = 1; id <= maxServers; id++) {
       serverIdIpMap.put(id, args[id+1]);
     }
-    Class<? extends PPP> targetClazz;// Classes that need to run jmh tests
+    PPP entity;
     if (mode.equals("c")) {
-      ClientPPP.MAX_SERVER =maxServers;
-      ClientPPP.SERVERID_IP_MAP = serverIdIpMap;
-      ClientPPP.MYID = myId;
-      targetClazz = ClientPPP.class;
+      entity = new ClientPPP(maxServers, serverIdIpMap);
+      Params.amount = 2;
+      Params.inputs = 1;
     } else if (mode.equals("s")) {
-      ServerPPP.MAX_SERVER =maxServers;
-      ServerPPP.SERVERID_IP_MAP = serverIdIpMap;
-      ServerPPP.MYID = myId;
-      targetClazz = ServerPPP.class;
+      entity = new ServerPPP(myId, maxServers, serverIdIpMap);
+      Params.amount = 2;
+      Params.inputs = 1;
     } else {
       throw new IllegalArgumentException();
     }
 
-
     if (!Files.exists(Paths.get(reportFileDir))) {
       Files.createDirectories(Paths.get(reportFileDir));
     }
-    String reportFilePath = setupStandardOptions(targetClazz);
-//    Files.createFile(Paths.get(resolvePath(targetClazz)));
-//    assertTrue(Files.exists(Paths.get(reportFilePath)));
+    System.out.println(Benchmark.parseTimes("Test", Benchmark.runBenchmark(entity)));
   }
 
 

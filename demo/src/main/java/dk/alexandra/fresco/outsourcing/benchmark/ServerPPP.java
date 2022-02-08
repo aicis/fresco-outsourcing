@@ -23,22 +23,31 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
-@State(Scope.Benchmark)
 public class ServerPPP extends PPP {
   private static List<Integer> serverIdsWOMe;
+  private final int myId;
+  private int currentBasePort = BASE_PORT;
+  private SpdzWithIO spdz;
 
-  @Setup
-  public void setupServer(Params param) {
-    List<Integer> serverIds = IntStream.range(1, param.amount+1).boxed().collect(Collectors.toList());
-    List<Integer> serverIdsWOMe = serverIds.stream().filter((current) -> MYID != current).collect(
+  public ServerPPP(int myId, int maxServers,  Map<Integer, String> serverIdIpMap) {
+    super(maxServers, serverIdIpMap);
+    this.myId = myId;
+  }
+
+  @Override
+  public void setup() {
+    List<Integer> serverIds = IntStream.range(1, Params.amount+1).boxed().collect(Collectors.toList());
+    serverIdsWOMe = serverIds.stream().filter((current) -> myId != current).collect(
           Collectors.toList());
   }
 
-  @Benchmark
-  public void serverExecute() {
-    SpdzWithIO spdz = new SpdzWithIO(MYID, Collections.singletonList(CLIENT_ID), serverIdsWOMe);
-    Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputs();
 
+  @Override
+  public void run(Hole hole) {
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1));
+    System.out.println("Setup spdz port " + currentBasePort);
+    Map<Integer, List<SInt>> clientsInputs = spdz.receiveInputs();
+    System.out.println("received input");
     // Example MPC application
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       List<DRes<SInt>> clientOneInputs = new ArrayList<>(clientsInputs.get(1));
@@ -46,5 +55,12 @@ public class ServerPPP extends PPP {
       return () -> Collections.singletonList(res.out());
     };
     serverIdsWOMe.stream().forEach((id) -> spdz.sendOutputsTo(id, spdz.run(app)));
+  }
+
+  @Override
+  public void afterEach() {
+    // Move base ports up
+    currentBasePort += maxServers;
+    spdz.shutdown();
   }
 }

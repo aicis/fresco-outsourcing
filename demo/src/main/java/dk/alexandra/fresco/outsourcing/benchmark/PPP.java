@@ -1,25 +1,36 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
 import java.util.Map;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.State;
 
-public class PPP {
-  public static int MYID;
-  public static final int CLIENT_ID = 1;
+public abstract class PPP implements Benchmarkable {
   public static final int BASE_PORT = 8042;
-  public static int MAX_SERVER;
-  public static Map<Integer, String> SERVERID_IP_MAP;
+  public final int maxServers;
+  public final Map<Integer, String> serverIdIpMap;
 
-  //  // Define benchmarks parameters with @State
-  @State(Scope.Benchmark)
+  public PPP(int maxServers,  Map<Integer, String> serverIdIpMap) {
+    this.maxServers = maxServers;
+    this.serverIdIpMap = serverIdIpMap;
+  }
+
+  @Override
+  public void setup() {
+    // nop
+  }
+
+  @Override
+  public void afterEach() {
+    // nop
+  }
+
+  @Override
+  public void beforeEach() {
+    // nop
+  }
+
+
   public static class Params {
+    public static int amount;
 
-    @Param({"2", "3"})
-    public int amount;
-
-    @Param({"5", "10"})
-    public int inputs;
+    public static int inputs;
   }
 }

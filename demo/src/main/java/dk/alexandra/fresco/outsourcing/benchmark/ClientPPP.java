@@ -24,31 +24,51 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
-@State(Scope.Benchmark)
 public class ClientPPP extends PPP {
-  private static List<Integer> clientInputs;
-  private static List<Party> servers;
+  public static final int CLIENT_ID = 1;
+  private int currentBasePort = BASE_PORT;
 
-  @Setup
-  public void setupClient(Params param) {
-    clientInputs = IntStream.range(0, param.inputs).boxed().collect(Collectors.toList());
-    servers = getServers(param.amount);
+  private List<Integer> clientInputs;
+  private List<Party> servers;
+
+  public ClientPPP(int maxServers,  Map<Integer, String> serverIdIpMap) {
+    super(maxServers, serverIdIpMap);
+  }
+
+  @Override
+  public void setup() {
+    clientInputs = IntStream.range(0, Params.inputs).boxed().collect(Collectors.toList());
   }
 
   private List<Party> getServers(int amount) {
-    List<Party> servers = new ArrayList<>(SERVERID_IP_MAP.size());
+    List<Party> servers = new ArrayList<>(serverIdIpMap.size());
     for (int id = 1; id <= amount; id++) {
-      servers.add(new Party(id, SERVERID_IP_MAP.get(id), BASE_PORT + id));
+      servers.add(new Party(id, serverIdIpMap.get(id), currentBasePort + id));
     }
     return servers;
   }
 
-  @Benchmark
-  public void clientExecute() {
-    InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
-    client.putIntInputs(clientInputs);
-    OutputClient outputClient = new DemoDdnntOutputClient(CLIENT_ID, servers);
-    System.out.println("Outputs received " + outputClient.getBigIntegerOutputs());
+  @Override
+  public void beforeEach() {
+    try {
+      servers = getServers(Params.amount);
+      InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
+      client.putIntInputs(clientInputs);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void run(Hole hole) {
+    OutputClient outputClient = new DemoDdnntOutputClient(CLIENT_ID+1, servers);
+    hole.consume(outputClient.getBigIntegerOutputs());
+  }
+
+  @Override
+  public void afterEach() {
+    // Move base ports up
+    currentBasePort += maxServers;
   }
 
 //  @Benchmark

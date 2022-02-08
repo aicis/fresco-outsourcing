@@ -36,7 +36,7 @@
           <finalName>demo</finalName>
           <archive>
             <manifest>
-              <mainClass>dk.alexandra.fresco.outsourcing.demo.Demo</mainClass>
+              <mainClass>dk.alexandra.fresco.outsourcing.benchmark.Main</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
