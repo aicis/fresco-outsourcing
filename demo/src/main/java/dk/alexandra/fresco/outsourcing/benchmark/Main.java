@@ -1,22 +1,21 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.outsourcing.benchmark.PPP.Params;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValue;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.results.format.ResultFormatType;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
+import java.util.stream.Collectors;
 
 // Code from https://developpaper.com/how-to-benchmark-using-jmh-in-java/
 public class Main {
-  public static final int WARMUP = 5;
-  public static final int ITERATIONS = 10;
 
   //Generated file path: {project root} / {reportfiledir} / {XXX. Class. Getsimplename()}. JSON
   // e.g. jmh-reports/EmptyMethod.json
@@ -32,56 +31,92 @@ public class Main {
   public static void main(String[] args) throws Exception {
     final String mode = args[0];
     final int myId = Integer.parseInt(args[1]);
-    final int maxServers = args.length-2;
-    final Map<Integer, String> serverIdIpMap = new HashMap<>();
+    final int maxServers = args.length - 2;
+    Map<Integer, String> serverIdIpMap = new HashMap<>();
     for (int id = 1; id <= maxServers; id++) {
-      serverIdIpMap.put(id, args[id+1]);
+      serverIdIpMap.put(id, args[id + 1]);
     }
-    PPP entity;
-    if (mode.equals("c")) {
-      entity = new ClientPPP(maxServers, serverIdIpMap);
-      Params.amount = 2;
-      Params.inputs = 1;
-    } else if (mode.equals("s")) {
-      entity = new ServerPPP(myId, maxServers, serverIdIpMap);
-      Params.amount = 2;
-      Params.inputs = 1;
-    } else {
-      throw new IllegalArgumentException();
-    }
+    int bitLength = 128;
+    Map<Integer, List<PPP>> amountOfServersToBenchmarks = setupBenchmark(myId, mode, serverIdIpMap, bitLength);
+    List<String> results = runBenchmark(amountOfServersToBenchmarks);
+    writeResults(reportFileDir + "/" + mode + "/" + myId, results);
+  }
 
-    if (!Files.exists(Paths.get(reportFileDir))) {
-      Files.createDirectories(Paths.get(reportFileDir));
+  private static Map<Integer, List<PPP>> setupBenchmark(int myId, String mode, Map<Integer, String> serverIdIpMap, int bitLength) {
+    int basePort = PPP.BASE_PORT;
+    Map<Integer, String> currentMap = serverIdIpMap;
+    Map<Integer, List<PPP>> amountOfServersToBenchmarks = new HashMap<>();
+    while (currentMap.size() >= 2 && myId <= currentMap.size()) {
+      List<PPP> currentList = new ArrayList<>();
+      if (mode.equals("c")) {
+        currentList.add(new ClientPPP(currentMap, 256 / bitLength, bitLength, basePort));
+      } else if (mode.equals("s")) {
+        currentList.add(new SameValue(myId, currentMap, bitLength, basePort));
+      } else {
+        throw new IllegalArgumentException();
+      }
+      amountOfServersToBenchmarks.put(currentMap.size(), currentList);
+      // Update the basePort
+      basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+      // Make a new map, excluding the last server
+      currentMap = new HashMap<>(currentMap);
+      currentMap.remove(currentMap.size());
     }
-    System.out.println(Benchmark.parseTimes("Test", Benchmark.runBenchmark(entity)));
+    return amountOfServersToBenchmarks;
+  }
+
+  private static List<String> runBenchmark(Map<Integer, List<PPP>> amountOfServersToBenchmarks) {
+    List<String> results = new ArrayList<>();
+    List<Integer> sortedAmountsList = amountOfServersToBenchmarks.keySet().stream().sorted().collect(Collectors.toList());
+    Collections.reverse(sortedAmountsList);
+    for (int servers: sortedAmountsList) {
+      results.add("Testing " + servers + " servers");
+      for (PPP currentBenchmark : amountOfServersToBenchmarks.get(servers)) {
+        results.add(Benchmark.parseTimes(currentBenchmark.getClass().getName(),
+            Benchmark.runBenchmark(currentBenchmark)));
+      }
+    }
+    return results;
+  }
+
+  private static void writeResults(String directory, List<String> toWrite) throws IOException {
+    if (!Files.exists(Paths.get(directory))) {
+      Files.createDirectories(Paths.get(directory));
+    }
+    Path filePath = Paths.get(directory + "/benchmark.csv");
+    BufferedWriter buffer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8);
+    for (String currentLine : toWrite) {
+      buffer.write(currentLine);
+    }
+    buffer.close();
   }
 
 
-  /**
-   *A standard configuration, which configures parameters such as preheating and iteration according to actual needs
-   *
-   *@ param targetclazz class to run jmh test
-   * @throws RunnerException See:{@link RunnerException}
-   */
-  private static String setupStandardOptions(Class<?> targetClazz) throws RunnerException {
-    String reportFilePath = resolvePath(targetClazz);
-    ChainedOptionsBuilder optionsBuilder =
-        new OptionsBuilder()
-            . include(targetClazz.getSimpleName())
-            . mode (Mode.AverageTime) // mode - throughput annotation method @ benchmarkmode
-            . forks (1) // number of forks @ fork
-            . warmupIterations (WARMUP) // number of preheating rounds ｜ annotation method @ warmup
-            . measurementIterations (ITERATIONS) // measurement rounds ｜ annotation method @ measurement
-            . timeUnit (TimeUnit.MILLISECONDS) // the time unit used in the result | annotation method @ outputtimeunit
-            . shouldFailOnError(true)
-//            . jvmArgs("Xms512m", "Xmx512m", "Xnoclassgc", "Xint")
-            . result (reportFilePath) // output path of the result report file
-            . resultFormat(ResultFormatType.JSON);// Result report file output format JSON
-    new Runner(optionsBuilder.build()).run();
-    return reportFilePath;
-  }
-
-  private static String resolvePath(Class<?> targetClazz) {
-    return reportFileDir + targetClazz.getSimpleName() + ".json";
-  }
+//  /**
+//   *A standard configuration, which configures parameters such as preheating and iteration according to actual needs
+//   *
+//   *@ param targetclazz class to run jmh test
+//   * @throws RunnerException See:{@link RunnerException}
+//   */
+//  private static String setupStandardOptions(Class<?> targetClazz) throws RunnerException {
+//    String reportFilePath = resolvePath(targetClazz);
+//    ChainedOptionsBuilder optionsBuilder =
+//        new OptionsBuilder()
+//            . include(targetClazz.getSimpleName())
+//            . mode (Mode.AverageTime) // mode - throughput annotation method @ benchmarkmode
+//            . forks (1) // number of forks @ fork
+//            . warmupIterations (WARMUP) // number of preheating rounds ｜ annotation method @ warmup
+//            . measurementIterations (ITERATIONS) // measurement rounds ｜ annotation method @ measurement
+//            . timeUnit (TimeUnit.MILLISECONDS) // the time unit used in the result | annotation method @ outputtimeunit
+//            . shouldFailOnError(true)
+////            . jvmArgs("Xms512m", "Xmx512m", "Xnoclassgc", "Xint")
+//            . result (reportFilePath) // output path of the result report file
+//            . resultFormat(ResultFormatType.JSON);// Result report file output format JSON
+//    new Runner(optionsBuilder.build()).run();
+//    return reportFilePath;
+//  }
+//
+//  private static String resolvePath(Class<?> targetClazz) {
+//    return reportFileDir + targetClazz.getSimpleName() + ".json";
+//  }
 }

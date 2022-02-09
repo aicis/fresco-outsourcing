@@ -1,43 +1,37 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.framework.Application;
-import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
-import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
-import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.lib.common.math.AdvancedNumeric;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
-import dk.alexandra.fresco.outsourcing.demo.Demo;
-import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 
 public class ClientPPP extends PPP {
   public static final int CLIENT_ID = 1;
-  private int currentBasePort = BASE_PORT;
+  private int currentBasePort;
 
   private List<Integer> clientInputs;
   private List<Party> servers;
+  private int inputs;
+  private OutputClient outputClient;
+  private int amountOfServers;
 
-  public ClientPPP(int maxServers,  Map<Integer, String> serverIdIpMap) {
-    super(maxServers, serverIdIpMap);
+  public ClientPPP(Map<Integer, String> serverIdIpMap, int inputs, int bitLength, int basePort) {
+    super(serverIdIpMap, bitLength);
+    this.inputs = inputs;
+    this.amountOfServers = serverIdIpMap.size();
+    this.currentBasePort = basePort;
   }
 
   @Override
   public void setup() {
-    clientInputs = IntStream.range(0, Params.inputs).boxed().collect(Collectors.toList());
+    // Let the client's input simply be consecutive integers
+    clientInputs = IntStream.range(0, inputs).boxed().collect(Collectors.toList());
   }
 
   private List<Party> getServers(int amount) {
@@ -50,19 +44,20 @@ public class ClientPPP extends PPP {
 
   @Override
   public void beforeEach() {
-    try {
-      servers = getServers(Params.amount);
-      InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
-      client.putIntInputs(clientInputs);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    servers = getServers(amountOfServers);
+    InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
+    client.putIntInputs(clientInputs);
+    outputClient = new DemoDdnntOutputClient(CLIENT_ID+1, servers);
   }
 
   @Override
   public void run(Hole hole) {
-    OutputClient outputClient = new DemoDdnntOutputClient(CLIENT_ID+1, servers);
-    hole.consume(outputClient.getBigIntegerOutputs());
+    List<Long> results = outputClient.getLongOutputs();
+    for (long res : results) {
+      if (1L != res) {
+        throw new RuntimeException("Incorrect result");
+      }
+    }
   }
 
   @Override

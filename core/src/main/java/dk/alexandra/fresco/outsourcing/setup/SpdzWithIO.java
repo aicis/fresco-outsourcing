@@ -61,6 +61,52 @@ public class SpdzWithIO {
     this.outputServer = io.getSecond();
   }
 
+  public SpdzWithIO(
+      int serverId,
+      Map<Integer, Integer> clientFacingPorts,
+      Map<Integer, Integer> internalPorts,
+      Map<Integer, Integer> applicationPorts,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength) {
+    this.applicationPorts = applicationPorts;
+    this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps, bitLength);
+    Pair<InputServer, OutputServer> io = SpdzSetupUtils
+        .initIOServers(spdzSetup, inputParties, outputParties, internalPorts);
+    this.inputServer = io.getFirst();
+    this.outputServer = io.getSecond();
+  }
+
+  /**
+   * Construct new SPDZ server.
+   *
+   * @param serverId Id of this server
+   * @param numServers total number of servers
+   * @param basePort the base FRESCO port, if running on same machine all ports in range {@code
+   * basePort} to {@code basePort} + 3 * {@code numServers} must be available
+   * @param inputParties all client parties that will contribute input
+   * @param outputParties all client parties that will receive outputs
+   */
+  public SpdzWithIO(
+      int serverId,
+      int numServers,
+      int basePort,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength) {
+    this(serverId,
+        SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getApplicationPorts(contiguousPorts(basePort, numServers), numServers),
+        inputParties,
+        outputParties,
+        partiesToIps,
+        bitLength
+    );
+  }
+
   /**
    * Construct new SPDZ server.
    *

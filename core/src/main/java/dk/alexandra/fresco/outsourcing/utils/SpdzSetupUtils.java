@@ -43,9 +43,9 @@ public class SpdzSetupUtils {
   private SpdzSetupUtils() {
   }
 
-  public static FieldDefinition getDefaultFieldDefinition() {
+  public static FieldDefinition getDefaultFieldDefinition(int bitLength) {
     return new BigIntegerFieldDefinition(
-        ModulusFinder.findSuitableModulus(128));
+        ModulusFinder.findSuitableModulus(bitLength));
   }
 
   public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {
@@ -54,9 +54,18 @@ public class SpdzSetupUtils {
 
   public static NetworkConfiguration getNetConf(int serverId,
       Map<Integer, Integer> partiesToPorts) {
+    Map<Integer, String> partiesToIp = new HashMap<>();
+    for (int id: partiesToPorts.keySet()) {
+      partiesToIp.put(id, "localhost");
+    }
+    return getNetConf(serverId, partiesToPorts, partiesToIp);
+  }
+
+  public static NetworkConfiguration getNetConf(int serverId,
+    Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
     Map<Integer, Party> partyMap = new HashMap<>();
     for (Entry<Integer, Integer> entry : partiesToPorts.entrySet()) {
-      partyMap.put(entry.getKey(), new Party(entry.getKey(), "localhost", entry.getValue()));
+      partyMap.put(entry.getKey(), new Party(entry.getKey(), partiesToIp.get(entry.getKey()), entry.getValue()));
     }
     return new NetworkConfigurationImpl(serverId, partyMap);
   }
@@ -70,8 +79,16 @@ public class SpdzSetupUtils {
   }
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
-    NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts);
-    FieldDefinition definition = getDefaultFieldDefinition();
+    Map<Integer, String> partiesToIp = new HashMap<>();
+    for (int id: partiesToPorts.keySet()) {
+      partiesToIp.put(id, "localhost");
+    }
+    return getSetup(serverId, partiesToPorts, partiesToIp, 64);
+  }
+
+  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp, int bitLength) {
+    NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
+    FieldDefinition definition = getDefaultFieldDefinition(bitLength);
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,
@@ -82,13 +99,14 @@ public class SpdzSetupUtils {
     SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
         new OpenedValueStoreImpl<>(),
         supplier, AesCtrDrbg::new);
-    SpdzProtocolSuite suite = new SpdzProtocolSuite(64);
+    SpdzProtocolSuite suite = new SpdzProtocolSuite(bitLength);
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,
             new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
     return new SpdzSetup(netConf, rp, sce);
   }
 
+  // TODO probably needs the real IPs
   public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
       Map<Integer, Integer> internalPorts) {
@@ -117,7 +135,7 @@ public class SpdzSetupUtils {
       DemoClientInputSessionEndpoint inputSessionEndpoint =
           new DemoClientInputSessionEndpoint(
               spdzSetup.getRp(),
-              getDefaultFieldDefinition(),
+              spdzSetup.getRp().getFieldDefinition(),
               inputClientIds.size());
       handler.setInputRegistrationHandler(inputSessionEndpoint);
       inputServer = new DdnntInputServer<>(
@@ -129,7 +147,7 @@ public class SpdzSetupUtils {
     if (!outputClientIds.isEmpty()) {
       DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
           spdzSetup.getRp(),
-          getDefaultFieldDefinition(),
+          spdzSetup.getRp().getFieldDefinition(),
           outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new DdnntOutputServer<>(

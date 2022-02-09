@@ -6,10 +6,12 @@ public abstract class PPP implements Benchmarkable {
   public static final int BASE_PORT = 8042;
   public final int maxServers;
   public final Map<Integer, String> serverIdIpMap;
+  public final int bitLength;
 
-  public PPP(int maxServers,  Map<Integer, String> serverIdIpMap) {
-    this.maxServers = maxServers;
+  public PPP(Map<Integer, String> serverIdIpMap, int bitLength) {
+    this.maxServers = serverIdIpMap.size();
     this.serverIdIpMap = serverIdIpMap;
+    this.bitLength = bitLength;
   }
 
   @Override
@@ -25,12 +27,5 @@ public abstract class PPP implements Benchmarkable {
   @Override
   public void beforeEach() {
     // nop
-  }
-
-
-  public static class Params {
-    public static int amount;
-
-    public static int inputs;
   }
 }

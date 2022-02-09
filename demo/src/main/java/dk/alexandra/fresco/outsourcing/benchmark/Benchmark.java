@@ -4,24 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Benchmark {
-  private static final int ITERATIONS = 50;
-  private static final int WARMUP = 30;
+  public static final int ITERATIONS = 50;
+  public static final int WARMUP = 30;
 
   public static List<Long> runBenchmark(Benchmarkable toRun) {
     List<Long> times = new ArrayList<>(ITERATIONS);
-    System.out.println("Running setup");
+//    System.out.println("Running setup");
     toRun.setup();
     for (int i = 0; i < ITERATIONS + WARMUP; i++) {
-      System.out.println("Starting iteration " + i);
+//      System.out.println("Starting iteration " + i);
       toRun.beforeEach();
-      System.out.println("Starting benchmark " + i);
+//      System.out.println("Starting benchmark " + i);
       long startTime = System.currentTimeMillis();
       toRun.run(Hole.getInstance());
       long endTime = System.currentTimeMillis();
       if (i >= WARMUP) {
         times.add(endTime - startTime);
       }
-      System.out.println("Closing connection");
+//      System.out.println("Closing connection");
       toRun.afterEach();
     }
     return times;
