@@ -30,8 +30,8 @@ public class ClientPPP extends PPP {
 
   @Override
   public void setup() {
-    // Let the client's input simply be consecutive integers
-    clientInputs = IntStream.range(0, inputs).boxed().collect(Collectors.toList());
+    // Let the client's input simply be consecutive integers starting at 42
+    clientInputs = IntStream.range(42, 42+inputs).boxed().collect(Collectors.toList());
   }
 
   private List<Party> getServers(int amount) {

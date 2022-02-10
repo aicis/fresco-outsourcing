@@ -9,14 +9,15 @@ import dk.alexandra.fresco.outsourcing.benchmark.ClientPPP;
 import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class SameValue extends ServerPPP {
+public class Age extends ServerPPP  {
   private Map<Integer, List<SInt>> clientsInputs;
 
-  public SameValue(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort) {
+  public Age(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort) {
     super(myId, serverIdIpMap, bitLength, basePort);
   }
 
@@ -30,10 +31,14 @@ public class SameValue extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       return builder.par(par -> {
-        DRes<SInt> currentKnown = par.numeric().known(42);
-        // TODO only works with half bitlength and requires at least 128 bits
-
-        DRes<SInt> res = Comparison.using(par).equals(bitLength/2, clientsInputs.get(1).get(0), currentKnown);
+        DRes<SInt> lower = par.numeric().known(18);
+        DRes<SInt> upper = par.numeric().known(60);
+        // TODO no specific bitlength
+        DRes<SInt> first = Comparison.using(par).compareLEQ(lower, clientsInputs.get(ClientPPP.CLIENT_ID).get(0));
+        DRes<SInt> second = Comparison.using(par).compareLEQ(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), upper);
+        return () -> Arrays.asList(first.out(), second.out());
+      }).par( (par, comparisons) -> {
+        DRes<SInt> res = par.numeric().mult(comparisons.get(0), comparisons.get(1));
         return () ->  Collections.singletonList(res.out());
       });
     };

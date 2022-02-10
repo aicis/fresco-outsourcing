@@ -8,23 +8,24 @@ public class Benchmark {
   public static final int WARMUP = 30;
 
   public static List<Long> runBenchmark(Benchmarkable toRun) {
-    List<Long> times = new ArrayList<>(ITERATIONS);
-//    System.out.println("Running setup");
-    toRun.setup();
-    for (int i = 0; i < ITERATIONS + WARMUP; i++) {
-//      System.out.println("Starting iteration " + i);
-      toRun.beforeEach();
-//      System.out.println("Starting benchmark " + i);
-      long startTime = System.currentTimeMillis();
-      toRun.run(Hole.getInstance());
-      long endTime = System.currentTimeMillis();
-      if (i >= WARMUP) {
-        times.add(endTime - startTime);
+    try {
+      List<Long> times = new ArrayList<>(ITERATIONS);
+      toRun.setup();
+      for (int i = 0; i < ITERATIONS + WARMUP; i++) {
+        toRun.beforeEach();
+        Thread.sleep(1);
+        long startTime = System.currentTimeMillis();
+        toRun.run(Hole.getInstance());
+        long endTime = System.currentTimeMillis();
+        if (i >= WARMUP) {
+          times.add(endTime - startTime);
+        }
+        toRun.afterEach();
       }
-//      System.out.println("Closing connection");
-      toRun.afterEach();
+      return times;
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
-    return times;
   }
 
   public static String parseTimes(String name, List<Long> times) {
