@@ -2,6 +2,8 @@ package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
+import dk.alexandra.fresco.framework.network.socket.Connector;
 import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
@@ -9,6 +11,8 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -165,9 +169,8 @@ public class SpdzWithIO {
    * @return the result
    */
   public <T> T run(Application<T, ProtocolBuilderNumeric> app) {
-    SocketNetwork network = new SocketNetwork(
-        SpdzSetupUtils
-            .getNetConf(getServerId(), applicationPorts));
+    NetworkConfiguration conf = SpdzSetupUtils.getNetConf(getServerId(), applicationPorts);
+    SocketNetwork network = new SocketNetwork(conf, new Connector(conf, Duration.of(1, ChronoUnit.MINUTES)).getSocketMap());
     T res = spdzSetup
         .getSce()
         .runApplication(
@@ -182,7 +185,7 @@ public class SpdzWithIO {
    * Shuts down all underlying resources.
    */
   public void shutdown() {
-    spdzSetup.getSce().close();
+    spdzSetup.getSce().shutdownSCE();
   }
 
   private int getServerId() {

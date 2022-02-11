@@ -2,8 +2,11 @@ package dk.alexandra.fresco.outsourcing.setup;
 
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.network.socket.Connector;
 import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -50,7 +53,8 @@ public class Spdz {
    * @return the result
    */
   public <T> T run(Application<T, ProtocolBuilderNumeric> app) {
-    SocketNetwork network = new SocketNetwork(spdzSetup.getNetConf());
+    SocketNetwork network = new SocketNetwork(spdzSetup.getNetConf(),
+        new Connector(spdzSetup.getNetConf(), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap());
     T res = spdzSetup
         .getSce()
         .runApplication(
@@ -65,7 +69,7 @@ public class Spdz {
    * Shuts down all underlying resources.
    */
   public void shutdown() {
-    spdzSetup.getSce().close();
+    spdzSetup.getSce().shutdownSCE();
   }
 
   /**

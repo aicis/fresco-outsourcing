@@ -4,7 +4,6 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
-import java.math.BigInteger;
 import java.util.Objects;
 
 /**
@@ -22,12 +21,12 @@ public class SpdzDdnntTuple implements DdnntInputTuple {
    *
    * @param triple a SPDZ triple
    */
-  public SpdzDdnntTuple(SpdzTriple triple) {
+  public SpdzDdnntTuple(SpdzTriple triple, FieldDefinition fieldDefinition) {
     Objects.requireNonNull(triple);
     this.sintA = Objects.requireNonNull(triple.getA());
-    this.shareA = Objects.requireNonNull(triple.getA().getShare());
-    this.shareB = Objects.requireNonNull(triple.getB().getShare());
-    this.shareC = Objects.requireNonNull(triple.getC().getShare());
+    this.shareA = fieldDefinition.createElement(Objects.requireNonNull(triple.getA().getShare()));
+    this.shareB = fieldDefinition.createElement(Objects.requireNonNull(triple.getB().getShare()));
+    this.shareC = fieldDefinition.createElement(Objects.requireNonNull(triple.getC().getShare()));
   }
 
   @Override

@@ -5,8 +5,11 @@ import static org.junit.Assert.assertArrayEquals;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkUtil;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
+import dk.alexandra.fresco.framework.network.socket.Connector;
 import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory.Parties;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,9 +34,9 @@ public class TwoPartyNetworkImplTest {
     Map<Integer, NetworkConfiguration> conf = NetworkUtil.getNetworkConfigurations(2);
     ExecutorService es = Executors.newFixedThreadPool(2);
     Future<CloseableNetwork> n1 =
-        es.submit(() -> new SocketNetwork(conf.get(Parties.SERVER.id())));
+        es.submit(() -> new SocketNetwork(conf.get(Parties.SERVER.id()), new Connector(conf.get(Parties.SERVER.id()), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap()));
     Future<CloseableNetwork> n2 =
-        es.submit(() -> new SocketNetwork(conf.get(Parties.CLIENT.id())));
+        es.submit(() -> new SocketNetwork(conf.get(Parties.CLIENT.id()), new Connector(conf.get(Parties.CLIENT.id()), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap()));
     this.serverNetwork = new TwoPartyNetworkImpl(n1.get(), Parties.SERVER.id());
     this.clientNetwork = new TwoPartyNetworkImpl(n2.get(), Parties.CLIENT.id());
   }
@@ -49,9 +52,9 @@ public class TwoPartyNetworkImplTest {
   public void testTooManyParties() throws InterruptedException, ExecutionException {
     Map<Integer, NetworkConfiguration> conf = NetworkUtil.getNetworkConfigurations(3);
     ExecutorService es = Executors.newFixedThreadPool(3);
-    Future<CloseableNetwork> n1 = es.submit(() -> new SocketNetwork(conf.get(1)));
-    es.submit(() -> new SocketNetwork(conf.get(2)));
-    es.submit(() -> new SocketNetwork(conf.get(3)));
+    Future<CloseableNetwork> n1 = es.submit(() -> new SocketNetwork(conf.get(1), new Connector(conf.get(1), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap()));
+    es.submit(() -> new SocketNetwork(conf.get(2), new Connector(conf.get(2), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap()));
+    es.submit(() -> new SocketNetwork(conf.get(3), new Connector(conf.get(3), Duration.of(1, ChronoUnit.MINUTES)).getSocketMap()));
     new TwoPartyNetworkImpl(n1.get(), Parties.SERVER.id());
   }
 

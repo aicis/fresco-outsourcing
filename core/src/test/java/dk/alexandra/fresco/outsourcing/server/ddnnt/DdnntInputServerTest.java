@@ -59,8 +59,7 @@ public class DdnntInputServerTest {
             Map<Integer, DRes<List<DRes<BigInteger>>>> openInputs =
                 new HashMap<>(inputs.keySet().size());
             for (Entry<Integer, List<SInt>> e : inputs.entrySet()) {
-              DRes<List<DRes<BigInteger>>> partyInputs =
-                  dk.alexandra.fresco.lib.common.collections.Collections.using(builder).openList(() -> e.getValue());
+              DRes<List<DRes<BigInteger>>> partyInputs = builder.collections().openList(() -> e.getValue());
               openInputs.put(e.getKey(), partyInputs);
             }
             return () -> openInputs;

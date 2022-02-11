@@ -44,8 +44,10 @@ public class SpdzSetupUtils {
   }
 
   public static FieldDefinition getDefaultFieldDefinition(int bitLength) {
-    return new BigIntegerFieldDefinition(
-        ModulusFinder.findSuitableModulus(bitLength));
+      return new BigIntegerFieldDefinition(
+          ModulusFinder.findSuitableModulus(bitLength+64));
+//    return
+//        ModulusFinder.findSuitableModulus(bitLength+64);
   }
 
   public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {
@@ -88,17 +90,16 @@ public class SpdzSetupUtils {
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp, int bitLength) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
-    FieldDefinition definition = getDefaultFieldDefinition(bitLength);
+    FieldDefinition definition =  getDefaultFieldDefinition(bitLength);
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,
             partiesToPorts.size(),
-            definition,
             definition.getModulus()
         );
     SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
         new OpenedValueStoreImpl<>(),
-        supplier, AesCtrDrbg::new);
+        supplier, new AesCtrDrbg());
     SpdzProtocolSuite suite = new SpdzProtocolSuite(bitLength);
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,
@@ -145,14 +146,16 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
+      FieldDefinition definition = new BigIntegerFieldDefinition(spdzSetup.getRp().getModulus());
       DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
           spdzSetup.getRp(),
-          spdzSetup.getRp().getFieldDefinition(),
+          definition,
           outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new DdnntOutputServer<>(
           outputSessionEndpoint,
-          serverSessionProducer
+          serverSessionProducer,
+          definition
       );
     }
 

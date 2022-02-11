@@ -117,9 +117,9 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
       for (int i = 1; i < parties + 1; i++) {
         BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(i, definition.getModulus());
         SpdzDataSupplier supplier =
-            new SpdzDummyDataSupplier(i, parties, definition, ssk);
+            new SpdzDummyDataSupplier(i, parties, definition.getModulus(), ssk);
         SpdzResourcePool rp = new SpdzResourcePoolImpl(i, parties, new OpenedValueStoreImpl<>(),
-            supplier, AesCtrDrbg::new);
+            supplier, new AesCtrDrbg());
         SpdzProtocolSuite suite = new SpdzProtocolSuite(maxLength);
         SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
             new SecureComputationEngineImpl<>(suite,

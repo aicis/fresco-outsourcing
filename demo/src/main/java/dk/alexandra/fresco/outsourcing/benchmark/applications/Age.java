@@ -4,11 +4,11 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.lib.common.compare.Comparison;
 import dk.alexandra.fresco.outsourcing.benchmark.ClientPPP;
 import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,11 +31,11 @@ public class Age extends ServerPPP  {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       return builder.par(par -> {
-        DRes<SInt> lower = par.numeric().known(18);
-        DRes<SInt> upper = par.numeric().known(60);
+        DRes<SInt> lower = par.numeric().known(BigInteger.valueOf(18));
+        DRes<SInt> upper = par.numeric().known(BigInteger.valueOf(60));
         // TODO no specific bitlength
-        DRes<SInt> first = Comparison.using(par).compareLEQ(lower, clientsInputs.get(ClientPPP.CLIENT_ID).get(0));
-        DRes<SInt> second = Comparison.using(par).compareLEQ(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), upper);
+        DRes<SInt> first = par.comparison().compareLEQ(lower, clientsInputs.get(ClientPPP.CLIENT_ID).get(0));
+        DRes<SInt> second = par.comparison().compareLEQ(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), upper);
         return () -> Arrays.asList(first.out(), second.out());
       }).par( (par, comparisons) -> {
         DRes<SInt> res = par.numeric().mult(comparisons.get(0), comparisons.get(1));

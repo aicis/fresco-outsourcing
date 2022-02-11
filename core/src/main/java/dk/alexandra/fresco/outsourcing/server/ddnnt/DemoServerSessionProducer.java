@@ -3,6 +3,7 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
+import dk.alexandra.fresco.framework.network.socket.Connector;
 import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
@@ -10,6 +11,8 @@ import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * A simple demo server session producer based on SPDZ.
@@ -61,7 +64,7 @@ public class DemoServerSessionProducer implements ServerSessionProducer<SpdzReso
 
   @Override
   public ServerSession<SpdzResourcePool> next() {
-    CloseableNetwork net = new SocketNetwork(conf);
+    CloseableNetwork net = new SocketNetwork(conf, new Connector(conf, Duration.of(1, ChronoUnit.MINUTES)).getSocketMap());
     SpdzProtocolSuite suite = new SpdzProtocolSuite(resourcePool.getModulus().bitLength());
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,

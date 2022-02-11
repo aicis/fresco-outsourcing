@@ -115,7 +115,7 @@ public class DdnntOutputServerTest {
     try {
       SpdzWithIO server = futureServer.get();
       List<SInt> out = server.run((builder) -> {
-        DRes<List<DRes<SInt>>> secretShares = dk.alexandra.fresco.lib.common.collections.Collections.using(builder).closeList(toOutput, 1);
+        DRes<List<DRes<SInt>>> secretShares = builder.collections().closeList(toOutput, 1);
         return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());
       });
       server.sendOutputsTo(OUTPUT_CLIENT_ID, out);

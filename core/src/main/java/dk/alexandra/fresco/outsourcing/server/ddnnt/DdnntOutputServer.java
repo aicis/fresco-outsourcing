@@ -5,6 +5,7 @@ import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.Numeric;
 import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
@@ -36,11 +37,13 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
   private final ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final List<SInt> outputs;
+  private final FieldDefinition definition;
 
   public DdnntOutputServer(ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+      ServerSessionProducer<ResourcePoolT> serverSessionProducer, FieldDefinition definition) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
+    this.definition = definition;
     this.outputs = new ArrayList<>();
   }
 
@@ -56,7 +59,7 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     while (clientSessionProducer.hasNext()) {
       DdnntClientOutputSession clientSession = clientSessionProducer.next();
       logger.info("Running client output session for C{}", clientSession.getClientId());
-      es.submit(new ClientCommunication(clientSession, result));
+      es.submit(new ClientCommunication(clientSession, result, definition));
     }
     es.shutdown();
   }
@@ -111,10 +114,12 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
     private final DdnntClientOutputSession session;
     private List<Map<String, DRes<SInt>>> outputs;
+    private final FieldDefinition definition;
 
-    ClientCommunication(DdnntClientOutputSession session, List<Map<String, DRes<SInt>>> outputs) {
+    ClientCommunication(DdnntClientOutputSession session, List<Map<String, DRes<SInt>>> outputs, FieldDefinition definition) {
       this.outputs = outputs;
       this.session = session;
+      this.definition = definition;
     }
 
     @Override
@@ -130,11 +135,11 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
         SpdzSInt w = (SpdzSInt) e.get("w").out();
         SpdzSInt u = (SpdzSInt) e.get("u").out();
         SpdzSInt y = (SpdzSInt) e.get("y").out();
-        listOfOutputShares.add(r.getShare());
-        listOfOutputShares.add(v.getShare());
-        listOfOutputShares.add(w.getShare());
-        listOfOutputShares.add(u.getShare());
-        listOfOutputShares.add(y.getShare());
+        listOfOutputShares.add(definition.createElement(r.getShare()));
+        listOfOutputShares.add(definition.createElement(v.getShare()));
+        listOfOutputShares.add(definition.createElement(w.getShare()));
+        listOfOutputShares.add(definition.createElement(u.getShare()));
+        listOfOutputShares.add(definition.createElement(y.getShare()));
         net.send(session.getSerializer().serialize(listOfOutputShares));
       }
       logger.info("Sent shares to C{}", session.getClientId());

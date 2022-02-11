@@ -4,12 +4,11 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.lib.common.compare.Comparison;
-import dk.alexandra.fresco.lib.common.math.AdvancedNumeric;
 import dk.alexandra.fresco.outsourcing.benchmark.ClientPPP;
 import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,12 +35,12 @@ public class SetMembership extends ServerPPP {
       return builder.par(par -> {
         List<DRes<SInt>> comparisons = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
-          comparisons.add(par.numeric().sub(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), i));
+          comparisons.add(par.numeric().sub(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), BigInteger.valueOf(i)));
         }
-        DRes<SInt> res = AdvancedNumeric.using(par).product(comparisons);
+        DRes<SInt> res = par.advancedNumeric().product(comparisons);
         return () -> res;
       }).par( (par, res) -> {
-        DRes<SInt> zeroChecked = Comparison.using(par).compareZero(res, bitLength);
+        DRes<SInt> zeroChecked = par.comparison().compareZero(res, bitLength);
         return () -> Collections.singletonList(zeroChecked.out());
       });
     };

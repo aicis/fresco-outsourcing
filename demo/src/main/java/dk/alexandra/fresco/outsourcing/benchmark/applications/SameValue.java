@@ -4,11 +4,11 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.lib.common.compare.Comparison;
 import dk.alexandra.fresco.outsourcing.benchmark.ClientPPP;
 import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +30,10 @@ public class SameValue extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       return builder.par(par -> {
-        DRes<SInt> currentKnown = par.numeric().known(42);
+        DRes<SInt> currentKnown = par.numeric().known(BigInteger.valueOf(42));
         // TODO only works with half bitlength and requires at least 128 bits
 
-        DRes<SInt> res = Comparison.using(par).equals(bitLength/2, clientsInputs.get(1).get(0), currentKnown);
+        DRes<SInt> res = par.comparison().equals(clientsInputs.get(1).get(0), currentKnown, bitLength/2);
         return () ->  Collections.singletonList(res.out());
       });
     };

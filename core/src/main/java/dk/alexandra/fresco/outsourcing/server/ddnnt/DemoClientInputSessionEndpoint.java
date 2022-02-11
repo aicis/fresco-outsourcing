@@ -60,7 +60,7 @@ public class DemoClientInputSessionEndpoint implements
         SpdzTriple trip = resourcePool
             .getDataSupplier()
             .getNextTriple();
-        tripList.add(new SpdzDdnntTuple(trip));
+        tripList.add(new SpdzDdnntTuple(trip, resourcePool.getFieldDefinition()));
       }
       TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
       DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),

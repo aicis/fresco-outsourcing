@@ -13,6 +13,31 @@
   <artifactId>outsourcing-core</artifactId>
   <name>Fresco Outsourcing Core</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>spdz</artifactId>
+      <version>spdz-1.1.4-SNAPSHOT</version>
+<!--      <scope>system</scope>-->
+<!--      <systemPath>${pom.basedir}/../lib/spdz-1.1.4-SNAPSHOT.jar</systemPath>-->
+    </dependency>
+
+    <dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>core</artifactId>
+      <version>core-1.1.4-SNAPSHOT</version>
+<!--      <scope>system</scope>-->
+<!--      <systemPath>${pom.basedir}/../lib/core-1.1.4-SNAPSHOT.jar</systemPath>-->
+    </dependency>
+    <dependency>
+      <groupId>dk.alexandra.fresco</groupId>
+      <artifactId>core-tests</artifactId>
+      <version>core-1.1.4-SNAPSHOT-tests</version>
+<!--      <scope>system</scope>-->
+<!--      <type>test-jar</type>-->
+<!--      <systemPath>${pom.basedir}/../lib/core-1.1.4-SNAPSHOT-tests.jar</systemPath>-->
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
 

@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.outsourcing.benchmark.applications.SetMembership;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValue;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -49,8 +49,8 @@ public class Main {
     while (currentMap.size() >= 2 && myId <= currentMap.size()) {
       List<PPP> currentList = new ArrayList<>();
       if (mode.equals("c")) {
-//        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
-//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
+        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 256 / bitLength, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
@@ -59,11 +59,11 @@ public class Main {
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
-        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-      } else if (mode.equals("s")) {
-//        currentList.add(new SameValue(myId, currentMap, bitLength, basePort));
+//        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+      } else if (mode.equals("s")) {
+        currentList.add(new SameValue(myId, currentMap, bitLength, basePort));
+        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new SameObject(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new Age(myId, currentMap, bitLength, basePort));
@@ -72,8 +72,8 @@ public class Main {
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new SetMembership(10000, myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-        currentList.add(new SetMembership(800000, myId, currentMap, bitLength, basePort));
-        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+//        currentList.add(new SetMembership(80000, myId, currentMap, bitLength, basePort));
+//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
       } else {
         throw new IllegalArgumentException();
       }
