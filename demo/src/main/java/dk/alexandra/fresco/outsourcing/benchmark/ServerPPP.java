@@ -7,8 +7,10 @@ import java.util.Map;
 
 public abstract class ServerPPP extends PPP {
   protected final int myId;
+
   protected int currentBasePort;
   protected SpdzWithIO spdz;
+
 
   public ServerPPP(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort) {
     super(serverIdIpMap, bitLength);
