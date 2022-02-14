@@ -33,7 +33,7 @@ public class SameValue extends ServerPPP {
         DRes<SInt> currentKnown = par.numeric().known(42);
         // TODO only works with half bitlength and requires at least 128 bits
 
-        DRes<SInt> res = Comparison.using(par).equals(bitLength/2, clientsInputs.get(1).get(0), currentKnown);
+        DRes<SInt> res = Comparison.using(par).equals(clientsInputs.get(1).get(0), currentKnown);
         return () ->  Collections.singletonList(res.out());
       });
     };

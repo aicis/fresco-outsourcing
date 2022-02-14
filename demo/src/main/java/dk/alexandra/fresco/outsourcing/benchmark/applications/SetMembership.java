@@ -41,6 +41,7 @@ public class SetMembership extends ServerPPP {
         DRes<SInt> res = AdvancedNumeric.using(par).product(comparisons);
         return () -> res;
       }).par( (par, res) -> {
+        // TODO should be full domain comparison
         DRes<SInt> zeroChecked = Comparison.using(par).compareZero(res, bitLength);
         return () -> Collections.singletonList(zeroChecked.out());
       });

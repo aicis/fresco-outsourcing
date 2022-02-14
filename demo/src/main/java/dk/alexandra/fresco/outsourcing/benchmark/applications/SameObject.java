@@ -36,7 +36,7 @@ public class SameObject extends ServerPPP {
             for (int i = 0; i < 256 / bitLength; i++) {
               DRes<SInt> currentKnown = par.numeric().known(42+i);
               // TODO only works with half bitlength and requires at least 128 bits
-              DRes<SInt> res = Comparison.using(par).equals(bitLength/2, clientsInputs.get(1).get(i), currentKnown);
+              DRes<SInt> res = Comparison.using(par).equals(clientsInputs.get(1).get(i), currentKnown);
               comparisons.add(res);
             }
             return () -> comparisons;
