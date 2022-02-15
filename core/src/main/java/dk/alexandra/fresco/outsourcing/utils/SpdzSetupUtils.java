@@ -4,13 +4,18 @@ import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
+import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkConfigurationImpl;
+import dk.alexandra.fresco.framework.network.Network;
+import dk.alexandra.fresco.framework.network.socket.SocketNetwork;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
+import dk.alexandra.fresco.framework.util.AesCtrDrbgFactory;
+import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.framework.util.Pair;
@@ -30,6 +35,11 @@ import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
+import dk.alexandra.fresco.suite.spdz.storage.SpdzMascotDataSupplier;
+import dk.alexandra.fresco.tools.ot.base.DhParameters;
+import dk.alexandra.fresco.tools.ot.base.NaorPinkasOt;
+import dk.alexandra.fresco.tools.ot.base.Ot;
+import dk.alexandra.fresco.tools.ot.otextension.RotList;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import javax.crypto.spec.DHParameterSpec;
 
 public class SpdzSetupUtils {
 
@@ -80,13 +91,63 @@ public class SpdzSetupUtils {
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
     Map<Integer, String> partiesToIp = new HashMap<>();
-    for (int id: partiesToPorts.keySet()) {
+    for (int id : partiesToPorts.keySet()) {
       partiesToIp.put(id, "localhost");
     }
     return getSetup(serverId, partiesToPorts, partiesToIp, 64);
   }
 
-  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp, int bitLength) {
+  static Map<Integer, RotList> getSeedOts(int myId, int parties, int prgSeedLength, Drbg drbg,
+      Network network) {
+    Map<Integer, RotList> seedOts = new HashMap<>();
+    for (int otherId = 1; otherId <= parties; otherId++) {
+      if (myId != otherId) {
+        DHParameterSpec dhSpec = DhParameters.getStaticDhParams();
+        Ot ot = new NaorPinkasOt(otherId, drbg, network, dhSpec);
+        RotList currentSeedOts = new RotList(drbg, prgSeedLength);
+        if (myId < otherId) {
+          currentSeedOts.send(ot);
+          currentSeedOts.receive(ot);
+        } else {
+          currentSeedOts.receive(ot);
+          currentSeedOts.send(ot);
+        }
+        seedOts.put(otherId, currentSeedOts);
+      }
+    }
+    return seedOts;
+  }
+
+  static Drbg getDrbg(int myId, int prgSeedLength) {
+    byte[] seed = new byte[prgSeedLength / 8];
+    new Random(myId).nextBytes(seed);
+    return AesCtrDrbgFactory.fromDerivedSeed(seed);
+  }
+
+  public static SpdzSetup getMascotSetup(int serverId, Map<Integer, Integer> partiesToPorts,
+      Map<Integer, String> partiesToIp, int bitLength) {
+    NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
+    FieldDefinition definition = getDefaultFieldDefinition(bitLength);
+    FieldElement ssk = SpdzMascotDataSupplier.createRandomSsk(definition, 32);
+    Drbg drbg = getDrbg(serverId, 32);
+    Network net = new SocketNetwork(netConf);
+    Map<Integer, RotList> seedOts =
+        getSeedOts(serverId, partiesToIp.size(), 32, drbg, net);
+    SpdzDataSupplier supplier = new SpdzMascotDataSupplier(serverId, partiesToIp.size(), 1,
+        () -> net, definition, bitLength, null, 256, 1024, ssk, seedOts, drbg);
+
+    SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
+        new OpenedValueStoreImpl<>(),
+        supplier, AesCtrDrbg::new);
+    SpdzProtocolSuite suite = new SpdzProtocolSuite(bitLength);
+    SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
+        new SecureComputationEngineImpl<>(suite,
+            new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
+    return new SpdzSetup(netConf, rp, sce);
+  }
+
+  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts,
+      Map<Integer, String> partiesToIp, int bitLength) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
     FieldDefinition definition = getDefaultFieldDefinition(bitLength);
     SpdzDataSupplier supplier =
@@ -109,7 +170,17 @@ public class SpdzSetupUtils {
   // TODO probably needs the real IPs
   public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> internalPorts) {
+      Map<Integer, Integer> partiesToPorts) {
+    Map<Integer, String> partiesToIp = new HashMap<>();
+    for (int id : partiesToPorts.keySet()) {
+      partiesToIp.put(id, "localhost");
+    }
+    return initIOServers(spdzSetup, inputClientIds, outputClientIds, partiesToPorts, partiesToIp);
+  }
+
+  public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
+      List<Integer> inputClientIds, List<Integer> outputClientIds,
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
@@ -117,7 +188,7 @@ public class SpdzSetupUtils {
             spdzSetup
                 .getNetConf()
                 .getMyId(),
-            internalPorts));
+            partiesToPorts, partiesToIp));
 
     DdnntClientSessionRequestHandler handler = new DemoClientSessionRequestHandler(
         spdzSetup.getRp(),

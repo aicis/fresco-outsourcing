@@ -62,8 +62,11 @@ public class Main {
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
       } else if (mode.equals("s")) {
+//        currentList.add(new MascotServer(myId, currentMap, bitLength, basePort));
+//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+
         currentList.add(new SameValueServer(myId, currentMap, bitLength, basePort));
-        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+        basePort += currentMap.size() * (Benchmark.WARMUP + Benchmark.ITERATIONS);
 //        currentList.add(new SameObject(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new Age(myId, currentMap, bitLength, basePort));

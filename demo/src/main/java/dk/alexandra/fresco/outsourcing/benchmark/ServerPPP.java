@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class ServerPPP extends PPP {
+
   protected final int myId;
 
   protected int currentBasePort;
@@ -21,7 +22,9 @@ public abstract class ServerPPP extends PPP {
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
+        Collections.singletonList(ClientPPP.CLIENT_ID),
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
   }
 
   @Override

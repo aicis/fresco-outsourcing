@@ -69,11 +69,18 @@ public class SpdzWithIO {
       List<Integer> inputParties,
       List<Integer> outputParties,
       Map<Integer, String> partiesToIps,
-      int bitLength) {
+      int bitLength,
+      boolean dummy) {
     this.applicationPorts = applicationPorts;
-    this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps, bitLength);
+    if (dummy) {
+      this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps,
+          bitLength);
+    } else {
+      this.spdzSetup = SpdzSetupUtils.getMascotSetup(serverId, clientFacingPorts, partiesToIps,
+          bitLength);
+    }
     Pair<InputServer, OutputServer> io = SpdzSetupUtils
-        .initIOServers(spdzSetup, inputParties, outputParties, internalPorts);
+        .initIOServers(spdzSetup, inputParties, outputParties, internalPorts, partiesToIps);
     this.inputServer = io.getFirst();
     this.outputServer = io.getSecond();
   }
@@ -103,7 +110,29 @@ public class SpdzWithIO {
         inputParties,
         outputParties,
         partiesToIps,
-        bitLength
+        bitLength,
+        true
+    );
+  }
+
+  public SpdzWithIO(
+      int serverId,
+      int numServers,
+      int basePort,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength,
+      boolean dummy) {
+    this(serverId,
+        SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getApplicationPorts(contiguousPorts(basePort, numServers), numServers),
+        inputParties,
+        outputParties,
+        partiesToIps,
+        bitLength,
+        dummy
     );
   }
 
