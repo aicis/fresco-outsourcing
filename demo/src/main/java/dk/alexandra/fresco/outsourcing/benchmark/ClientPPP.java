@@ -5,6 +5,7 @@ import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,26 +13,28 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ClientPPP extends PPP {
+
   public static final int CLIENT_ID = 1;
   private int currentBasePort;
 
-  private List<Integer> clientInputs;
   private List<Party> servers;
-  private int inputs;
+  private List<BigInteger> clientInputs;
   private OutputClient outputClient;
   private int amountOfServers;
 
   public ClientPPP(Map<Integer, String> serverIdIpMap, int inputs, int bitLength, int basePort) {
-    super(serverIdIpMap, bitLength);
-    this.inputs = inputs;
-    this.amountOfServers = serverIdIpMap.size();
-    this.currentBasePort = basePort;
+    this(serverIdIpMap,
+        IntStream.range(42, 42 + inputs).mapToObj(i -> BigInteger.valueOf(i))
+            .collect(Collectors.toList()),
+        bitLength, basePort);
   }
 
-  @Override
-  public void setup() {
-    // Let the client's input simply be consecutive integers starting at 42
-    clientInputs = IntStream.range(42, 42+inputs).boxed().collect(Collectors.toList());
+  public ClientPPP(Map<Integer, String> serverIdIpMap, List<BigInteger> clientInputs, int bitLength,
+      int basePort) {
+    super(serverIdIpMap, bitLength);
+    this.clientInputs = clientInputs;
+    this.amountOfServers = serverIdIpMap.size();
+    this.currentBasePort = basePort;
   }
 
   private List<Party> getServers(int amount) {
@@ -46,8 +49,8 @@ public class ClientPPP extends PPP {
   public void beforeEach() {
     servers = getServers(amountOfServers);
     InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
-    client.putIntInputs(clientInputs);
-    outputClient = new DemoDdnntOutputClient(CLIENT_ID+1, servers);
+    client.putBigIntegerInputs(clientInputs);
+    outputClient = new DemoDdnntOutputClient(CLIENT_ID + 1, servers);
   }
 
   @Override

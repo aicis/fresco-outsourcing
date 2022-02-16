@@ -16,18 +16,26 @@ import java.util.List;
 import java.util.Map;
 
 public class SameValueServer extends ServerPPP {
-  private Map<Integer, List<SInt>> clientsInputs;
-  private static final BigInteger DELTA_SHARE = BigInteger.valueOf(1);
-  private static final List<BigInteger> BETA_SHARE = Arrays.asList( BigInteger.valueOf(1), BigInteger.valueOf(34));
-//      IntStream.range(33, TOTAL_MACS+1).mapToObj(i -> BigInteger.valueOf(i)).collect(Collectors.toList());
 
-  public SameValueServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort) {
+  private Map<Integer, List<SInt>> clientsInputs;
+  public static final BigInteger REF_VALUE = BigInteger.valueOf(42);
+  public static final BigInteger UID = BigInteger.valueOf(10);
+  private static final BigInteger DELTA_SHARE = BigInteger.valueOf(100);
+  private static final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101),
+      BigInteger.valueOf(102));
+  public static final BigInteger DELTA = DELTA_SHARE; // The sharing is a linear function
+  public static final List<BigInteger> BETAS = BETA_SHARE;
+
+  public SameValueServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
+      int basePort) {
     super(myId, serverIdIpMap, bitLength, basePort);
   }
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
+        Collections.singletonList(ClientPPP.CLIENT_ID),
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
     clientsInputs = spdz.receiveInputs();
   }
 
@@ -35,8 +43,9 @@ public class SameValueServer extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      DRes<SInt> refValue = input.known(42); // Value to verify against
-      DRes<SInt> uid = input.known(10);
+      System.out.printf("Field mod " + builder.getBasicNumericContext().getModulus().toString());
+      DRes<SInt> refValue = input.known(REF_VALUE); // Value to verify against
+      DRes<SInt> uid = input.known(UID);
       List<DRes<SInt>> atts = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), uid);
       // First MAC is value MAC, second MAC is UID MAC
       List<DRes<SInt>> macs = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(1),

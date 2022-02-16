@@ -19,7 +19,6 @@ public class SameValue implements Computation<SInt, ProtocolBuilderNumeric> {
   @Override
   public DRes<SInt> buildComputation(ProtocolBuilderNumeric builder) {
     return builder.par((par) -> {
-      // TODO only works with half bitlength and requires at least 128 bits
       return Comparison.using(par).equals(clientsInput, referenceVal);
     });
   }

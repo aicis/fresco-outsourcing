@@ -37,4 +37,21 @@ public class Interpolate implements Computation<SInt, ProtocolBuilderNumeric> {
       return AdvancedNumeric.using(par).sum(terms);
     });
   }
+
+  public static BigInteger makeStaticPoly(BigInteger staticVal, int t, BigInteger modulus) {
+    BigInteger term = BigInteger.ZERO;
+    for (int i = 1; i <= t; i++) {
+      BigInteger coef = BigInteger.ONE;
+      for (int j = 1; j <= t; j++) {
+        if (i != j) {
+          BigInteger denominator = BigInteger.valueOf(j).subtract(BigInteger.valueOf(i));
+          BigInteger factor = BigInteger.valueOf(j)
+              .multiply(denominator.modPow(modulus.subtract(BigInteger.valueOf(2)), modulus));
+          coef = coef.multiply(factor);
+        }
+      }
+      term = term.add(staticVal.multiply(coef));
+    }
+    return term.mod(modulus);
+  }
 }

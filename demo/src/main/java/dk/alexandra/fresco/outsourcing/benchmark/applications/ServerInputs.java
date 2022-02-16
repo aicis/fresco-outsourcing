@@ -4,10 +4,13 @@ import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.ComputationParallel;
 import dk.alexandra.fresco.framework.builder.numeric.Numeric;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
+import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerInputs implements ComputationParallel<ServerInputModel, ProtocolBuilderNumeric> {
 
@@ -28,21 +31,28 @@ public class ServerInputs implements ComputationParallel<ServerInputModel, Proto
 
   @Override
   public DRes<ServerInputModel> buildComputation(ProtocolBuilderNumeric builder) {
-    Numeric input = builder.numeric();
-    List<DRes<SInt>> deltaShares = new ArrayList<>();
-    List<List<DRes<SInt>>> betaShares = new ArrayList<>();
-    for (int i = 1; i <= amountOfServers; i++) {
-      DRes<SInt> deltaShare, betaShare;
-      deltaShare = input.input(i == myId ? myDelta : null, i);
-      List<DRes<SInt>> internalBetaShares = new ArrayList<>();
-      for (int j = 0; j < amountOfAttr; j++) {
-        betaShare = input.input(i == myId ? myBetas.get(j) : null, i);
-        internalBetaShares.add(betaShare);
+    return builder.seq((seq) -> {
+      Numeric input = seq.numeric();
+      List<DRes<SInt>> deltaShares = new ArrayList<>();
+      DRes<SInt>[][] betaShares = new DRes[amountOfAttr][amountOfServers];
+      for (int i = 1; i <= amountOfServers; i++) {
+        DRes<SInt> deltaShare, betaShare;
+        deltaShare = input.input(i == myId ? myDelta : null, i);
+        for (int j = 0; j < amountOfAttr; j++) {
+          betaShare = input.input(i == myId ? myBetas.get(j) : null, i);
+          betaShares[j][i - 1] = betaShare;
+        }
+        deltaShares.add(deltaShare);
       }
-      deltaShares.add(deltaShare);
-      betaShares.add(internalBetaShares);
-    }
-    // TODO interpolate
-    return () -> new ServerInputModel(deltaShares.get(0), betaShares.get(0));
+      return () -> new Pair<List<DRes<SInt>>, DRes<SInt>[][]>(deltaShares, betaShares);
+    }).seq((seq, shares) -> {
+      DRes<SInt> delta = seq.seq(new Interpolate(shares.getFirst()));
+      List<DRes<SInt>> betas = new ArrayList<>();
+      for (int i = 0; i < shares.getSecond().length; i++) {
+        betas.add(seq.seq(new Interpolate(
+            Arrays.stream(shares.getSecond()[i]).collect(Collectors.toList()))));
+      }
+      return () -> new ServerInputModel(delta, betas);
+    });
   }
 }

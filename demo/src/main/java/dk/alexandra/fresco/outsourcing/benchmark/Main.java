@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValueServer;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.SameObject;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -49,9 +49,14 @@ public class Main {
     while (currentMap.size() >= 2 && myId <= currentMap.size()) {
       List<PPP> currentList = new ArrayList<>();
       if (mode.equals("c")) {
-        currentList.add(new ClientPPP(currentMap, 3, bitLength, basePort)); // 1 input and 2 MACs
-        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-//        currentList.add(new ClientPPP(currentMap, 256 / bitLength, bitLength, basePort));
+//        currentList.add(new ClientPPP(currentMap,
+//            // TODO mod fieldsize
+//            Arrays.asList(SameValueServer.REF_VALUE,
+//                SameValueServer.REF_VALUE.multiply(SameValueServer.DELTA).add(SameValueServer.BETAS.get(0)).mod(new BigInteger("79228162514264337593543950319")),
+//                SameValueServer.UID.multiply(SameValueServer.DELTA).add(SameValueServer.BETAS.get(1)).mod(new BigInteger("79228162514264337593543950319"))),
+//            bitLength, basePort)); // 1 input and 2 MACs
+//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+        currentList.add(new ClientPPP(currentMap, 256 / bitLength, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
@@ -65,10 +70,10 @@ public class Main {
 //        currentList.add(new MascotServer(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 
-        currentList.add(new SameValueServer(myId, currentMap, bitLength, basePort));
+//        currentList.add(new SameValueServer(myId, currentMap, bitLength, basePort));
+//        basePort += currentMap.size() * (Benchmark.WARMUP + Benchmark.ITERATIONS);
+        currentList.add(new SameObject(myId, currentMap, bitLength, basePort));
         basePort += currentMap.size() * (Benchmark.WARMUP + Benchmark.ITERATIONS);
-//        currentList.add(new SameObject(myId, currentMap, bitLength, basePort));
-//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new Age(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new SetMembership(200, myId, currentMap, bitLength, basePort));
