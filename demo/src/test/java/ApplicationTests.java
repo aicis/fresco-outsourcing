@@ -7,7 +7,7 @@ public class ApplicationTests extends AbstractDummyArithmeticTest {
 
   private static TestParameters params = new TestParameters().
       numParties(3).
-      maxBitLength(64).
+      maxBitLength(96).
       evaluationStrategy(SEQUENTIAL_BATCHED).
       performanceLogging(true);
 
@@ -30,6 +30,11 @@ public class ApplicationTests extends AbstractDummyArithmeticTest {
   @Test
   public void sameValueTest() {
     runTest(new CasesTests.SameValueTest<>(), params);
+  }
+
+  @Test
+  public void sameObjectTest() {
+    runTest(new CasesTests.SameObjectTest<>(), params);
   }
 
   @Test

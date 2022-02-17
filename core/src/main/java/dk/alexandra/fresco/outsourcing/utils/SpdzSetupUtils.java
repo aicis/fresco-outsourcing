@@ -150,6 +150,7 @@ public class SpdzSetupUtils {
       Map<Integer, String> partiesToIp, int bitLength) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
     FieldDefinition definition = getDefaultFieldDefinition(bitLength);
+    BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(serverId, definition.getModulus());
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,

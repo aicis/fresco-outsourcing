@@ -1,13 +1,15 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
-import dk.alexandra.fresco.outsourcing.benchmark.applications.SameObject;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.SameObjectServer;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,8 +38,9 @@ public class Main {
     for (int id = 1; id <= maxServers; id++) {
       serverIdIpMap.put(id, args[id + 1]);
     }
-    int bitLength = 32;
-    Map<Integer, List<PPP>> amountOfServersToBenchmarks = setupBenchmark(myId, mode, serverIdIpMap, bitLength);
+    int bitLength = 64;
+    Map<Integer, List<PPP>> amountOfServersToBenchmarks = setupBenchmark(myId, mode, serverIdIpMap,
+        bitLength);
     List<String> results = runBenchmark(amountOfServersToBenchmarks);
     writeResults(reportFileDir + "/" + mode + "/" + myId, results);
   }
@@ -46,18 +49,32 @@ public class Main {
     int basePort = PPP.BASE_PORT;
     Map<Integer, String> currentMap = serverIdIpMap;
     Map<Integer, List<PPP>> amountOfServersToBenchmarks = new HashMap<>();
-    while (currentMap.size() >= 2 && myId <= currentMap.size()) {
+//    while (currentMap.size() >= 2 && myId <= currentMap.size()) {
       List<PPP> currentList = new ArrayList<>();
       if (mode.equals("c")) {
-//        currentList.add(new ClientPPP(currentMap,
-//            // TODO mod fieldsize
-//            Arrays.asList(SameValueServer.REF_VALUE,
-//                SameValueServer.REF_VALUE.multiply(SameValueServer.DELTA).add(SameValueServer.BETAS.get(0)).mod(new BigInteger("79228162514264337593543950319")),
-//                SameValueServer.UID.multiply(SameValueServer.DELTA).add(SameValueServer.BETAS.get(1)).mod(new BigInteger("79228162514264337593543950319"))),
-//            bitLength, basePort)); // 1 input and 2 MACs
-//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-        currentList.add(new ClientPPP(currentMap, 256 / bitLength, bitLength, basePort));
-//        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
+        currentList.add(new ClientPPP(currentMap,
+            // TODO mod fieldsize
+            Arrays.asList(BigInteger.ONE,
+                BigInteger.ONE.multiply(SameObjectServer.DELTA_SHARE).add(BigInteger.valueOf(101)),
+                SameObjectServer.UID.multiply(SameObjectServer.DELTA_SHARE)
+                    .add(BigInteger.valueOf(102))),
+            bitLength, basePort)); // 1 input and 2 MACs
+        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
+        currentList.add(new ClientPPP(currentMap,
+            // TODO mod fieldsize
+            Arrays.asList(BigInteger.ONE, BigInteger.valueOf(2), BigInteger.valueOf(3),
+                BigInteger.valueOf(4),
+                BigInteger.ONE.multiply(SameObjectServer.DELTA_SHARE).add(BigInteger.valueOf(101)),
+                BigInteger.valueOf(2).multiply(SameObjectServer.DELTA_SHARE)
+                    .add(BigInteger.valueOf(102)),
+                BigInteger.valueOf(3).multiply(SameObjectServer.DELTA_SHARE)
+                    .add(BigInteger.valueOf(103)),
+                BigInteger.valueOf(4).multiply(SameObjectServer.DELTA_SHARE)
+                    .add(BigInteger.valueOf(104)),
+                SameObjectServer.UID.multiply(SameObjectServer.DELTA_SHARE)
+                    .add(BigInteger.valueOf(105))),
+            bitLength, basePort)); // 1 input and 2 MACs
+        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new ClientPPP(currentMap, 1, bitLength, basePort));
@@ -70,10 +87,10 @@ public class Main {
 //        currentList.add(new MascotServer(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 
-//        currentList.add(new SameValueServer(myId, currentMap, bitLength, basePort));
-//        basePort += currentMap.size() * (Benchmark.WARMUP + Benchmark.ITERATIONS);
-        currentList.add(new SameObject(myId, currentMap, bitLength, basePort));
-        basePort += currentMap.size() * (Benchmark.WARMUP + Benchmark.ITERATIONS);
+        currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 1));
+        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
+        currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 4));
+        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
 //        currentList.add(new Age(myId, currentMap, bitLength, basePort));
 //        basePort += currentMap.size()*(Benchmark.WARMUP+Benchmark.ITERATIONS);
 //        currentList.add(new SetMembership(200, myId, currentMap, bitLength, basePort));
@@ -85,11 +102,11 @@ public class Main {
       } else {
         throw new IllegalArgumentException();
       }
-      amountOfServersToBenchmarks.put(currentMap.size(), currentList);
-      // Make a new map, excluding the last server
-      currentMap = new HashMap<>(currentMap);
-      currentMap.remove(currentMap.size());
-    }
+    amountOfServersToBenchmarks.put(currentMap.size(), currentList);
+    // Make a new map, excluding the last server
+    currentMap = new HashMap<>(currentMap);
+//      currentMap.remove(currentMap.size());
+//    }
     return amountOfServersToBenchmarks;
   }
 

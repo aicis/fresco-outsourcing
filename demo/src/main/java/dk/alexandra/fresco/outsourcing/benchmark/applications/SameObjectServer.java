@@ -10,25 +10,33 @@ import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import java.math.BigInteger;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-public class SameValueServer extends ServerPPP {
+public class SameObjectServer extends ServerPPP {
 
   private Map<Integer, List<SInt>> clientsInputs;
-  public static final BigInteger REF_VALUE = BigInteger.valueOf(42);
+  public final List<BigInteger> REF_VALUES;
   public static final BigInteger UID = BigInteger.valueOf(10);
-  private static final BigInteger DELTA_SHARE = BigInteger.valueOf(100);
-  private static final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101),
-      BigInteger.valueOf(102));
-  public static final BigInteger DELTA = DELTA_SHARE; // The sharing is a linear function
-  public static final List<BigInteger> BETAS = BETA_SHARE;
+  public static final BigInteger DELTA_SHARE = BigInteger.valueOf(100);
+  public final List<BigInteger> BETA_SHARE;// = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
 
-  public SameValueServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort) {
+  private final int amountOfElements;
+
+  public SameObjectServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
+      int basePort, int amountOfElements) {
     super(myId, serverIdIpMap, bitLength, basePort);
+    this.amountOfElements = amountOfElements;
+    this.REF_VALUES = IntStream.range(1, amountOfElements + 1).mapToObj(i -> BigInteger.valueOf(i))
+        .collect(
+            Collectors.toList());
+    this.BETA_SHARE = IntStream.range(1, amountOfElements + 2)
+        .mapToObj(i -> BigInteger.valueOf(100 + i)).collect(
+            Collectors.toList());
   }
 
   @Override
@@ -43,22 +51,30 @@ public class SameValueServer extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      System.out.printf("Field mod " + builder.getBasicNumericContext().getModulus().toString());
-      DRes<SInt> refValue = input.known(REF_VALUE); // Value to verify against
+      List<DRes<SInt>> refValues = new ArrayList<>();
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> atts = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), uid);
+      List<DRes<SInt>> attributes = new ArrayList<>();
+      for (int i = 0; i < amountOfElements; i++) {
+        attributes.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(i));
+        refValues.add(input.known(REF_VALUES.get(i)));
+      }
+      attributes.add(uid);
+      List<DRes<SInt>> macs = new ArrayList<>();
+      // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
-      List<DRes<SInt>> macs = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(1),
-          clientsInputs.get(ClientPPP.CLIENT_ID).get(2));
+      for (int i = 0; i < amountOfElements + 1; i++) {
+        macs.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(amountOfElements + i));
+      }
       int servers = serverIdIpMap.keySet().size();
       DRes<ServerInputModel> serverInput = builder.par(
           new ServerInputs(myId, DELTA_SHARE, BETA_SHARE, servers));
       return builder.seq((seq) -> {
         DRes<Boolean> checkAtt = seq.seq(
-            new CheckAtt(atts, macs, serverInput.out().getBetas(), serverInput.out()
+            new CheckAtt(attributes, macs, serverInput.out().getBetas(), serverInput.out()
                 .getDelta()));
+        // Compare, but excluding the uid
         DRes<SInt> comparisonRes = seq.seq(
-            new SameValue(refValue, clientsInputs.get(ClientPPP.CLIENT_ID).get(0)));
+            new SameObject(refValues, attributes.subList(0, amountOfElements)));
         return seq.seq((seq2) -> {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");

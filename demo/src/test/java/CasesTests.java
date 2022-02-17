@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.sce.resources.ResourcePool;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.benchmark.applications.Interpolate;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.SameObject;
 import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValue;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -27,6 +28,31 @@ public class CasesTests {
             Numeric input = builder.numeric();
             DRes<SInt> x = input.input(BigInteger.valueOf(42), 1);
             DRes<SInt> comparisonRes = builder.seq(new SameValue(x, x));
+            DRes<BigInteger> res = builder.numeric().open(comparisonRes);
+            return () -> res.out();
+          };
+          BigInteger output = runApplication(app);
+          Assert.assertEquals(BigInteger.ONE, output);
+        }
+      };
+    }
+  }
+
+  public static class SameObjectTest<ResourcePoolT extends ResourcePool>
+      extends TestThreadFactory<ResourcePoolT, ProtocolBuilderNumeric> {
+
+    @Override
+    public TestThread<ResourcePoolT, ProtocolBuilderNumeric> next() {
+      return new TestThread<ResourcePoolT, ProtocolBuilderNumeric>() {
+
+        @Override
+        public void test() throws Exception {
+          Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
+            Numeric input = builder.numeric();
+            DRes<SInt> x1 = input.input(BigInteger.valueOf(42), 1);
+            DRes<SInt> x2 = input.input(BigInteger.valueOf(43), 1);
+            DRes<SInt> comparisonRes = builder.seq(
+                new SameObject(Arrays.asList(x1, x2), Arrays.asList(x1, x2)));
             DRes<BigInteger> res = builder.numeric().open(comparisonRes);
             return () -> res.out();
           };
