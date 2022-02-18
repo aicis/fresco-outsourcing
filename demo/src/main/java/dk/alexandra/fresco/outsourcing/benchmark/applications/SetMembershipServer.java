@@ -10,29 +10,26 @@ import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class SameObjectServer extends ServerPPP {
+public class SetMembershipServer extends ServerPPP {
 
   private Map<Integer, List<SInt>> clientsInputs;
-  public final List<BigInteger> REF_VALUES;
-  public final List<BigInteger> BETA_SHARE;// = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
+  public final Set<BigInteger> SET;
+  public final List<BigInteger> BETA_SHARE;
 
-  private final int amountOfElements;
-
-  public SameObjectServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort, int amountOfElements) {
+  public SetMembershipServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
+      int basePort, int setSize) {
     super(myId, serverIdIpMap, bitLength, basePort);
-    this.amountOfElements = amountOfElements;
-    this.REF_VALUES = IntStream.range(1, amountOfElements + 1).mapToObj(i -> BigInteger.valueOf(i))
-        .collect(
-            Collectors.toList());
-    this.BETA_SHARE = IntStream.range(1, amountOfElements + 2)
+    this.SET = IntStream.range(1, setSize + 1).mapToObj(i -> BigInteger.valueOf(i))
+        .collect(Collectors.toSet());
+    this.BETA_SHARE = IntStream.range(1, setSize + 2)
         .mapToObj(i -> BigInteger.valueOf(100 + i)).collect(
             Collectors.toList());
   }
@@ -49,20 +46,15 @@ public class SameObjectServer extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      List<DRes<SInt>> refValues = new ArrayList<>();
+      Set<DRes<SInt>> hiddenSet = SET.stream().map(i -> input.known(i)).collect(Collectors.toSet());
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> attributes = new ArrayList<>();
-      for (int i = 0; i < amountOfElements; i++) {
-        attributes.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(i));
-        refValues.add(input.known(REF_VALUES.get(i)));
-      }
-      attributes.add(uid);
-      List<DRes<SInt>> macs = new ArrayList<>();
+      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0),
+          uid);
       // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
-      for (int i = 0; i < amountOfElements + 1; i++) {
-        macs.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(amountOfElements + i));
-      }
+      List<DRes<SInt>> macs = Arrays.asList(
+          clientsInputs.get(ClientPPP.CLIENT_ID).get(1),
+          clientsInputs.get(ClientPPP.CLIENT_ID).get(2));
       int servers = serverIdIpMap.keySet().size();
       DRes<ServerInputModel> serverInput = builder.par(
           new ServerInputs(myId, DELTA_SHARE, BETA_SHARE, servers));
@@ -70,9 +62,8 @@ public class SameObjectServer extends ServerPPP {
         DRes<Boolean> checkAtt = seq.seq(
             new CheckAtt(attributes, macs, serverInput.out().getBetas(), serverInput.out()
                 .getDelta()));
-        // Compare, but excluding the uid
         DRes<SInt> comparisonRes = seq.seq(
-            new SameObject(refValues, attributes.subList(0, amountOfElements)));
+            new SetMembership(hiddenSet.stream().collect(Collectors.toList()), attributes.get(0)));
         return seq.seq((seq2) -> {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");
@@ -81,6 +72,6 @@ public class SameObjectServer extends ServerPPP {
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID+1, spdz.run(app));
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, spdz.run(app));
   }
 }

@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.sce.resources.ResourcePool;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.benchmark.applications.Interpolate;
+import dk.alexandra.fresco.outsourcing.benchmark.applications.Range;
 import dk.alexandra.fresco.outsourcing.benchmark.applications.SameObject;
 import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValue;
 import java.math.BigInteger;
@@ -53,6 +54,58 @@ public class CasesTests {
             DRes<SInt> x2 = input.input(BigInteger.valueOf(43), 1);
             DRes<SInt> comparisonRes = builder.seq(
                 new SameObject(Arrays.asList(x1, x2), Arrays.asList(x1, x2)));
+            DRes<BigInteger> res = builder.numeric().open(comparisonRes);
+            return () -> res.out();
+          };
+          BigInteger output = runApplication(app);
+          Assert.assertEquals(BigInteger.ONE, output);
+        }
+      };
+    }
+  }
+
+  public static class RangeTest<ResourcePoolT extends ResourcePool>
+      extends TestThreadFactory<ResourcePoolT, ProtocolBuilderNumeric> {
+
+    @Override
+    public TestThread<ResourcePoolT, ProtocolBuilderNumeric> next() {
+      return new TestThread<ResourcePoolT, ProtocolBuilderNumeric>() {
+
+        @Override
+        public void test() throws Exception {
+          Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
+            Numeric input = builder.numeric();
+            DRes<SInt> x = input.input(BigInteger.valueOf(42), 1);
+            DRes<SInt> lower = input.input(BigInteger.valueOf(18), 1);
+            DRes<SInt> upper = input.input(BigInteger.valueOf(60), 1);
+            DRes<SInt> comparisonRes = builder.seq(
+                new Range(lower, upper, x, 7));
+            DRes<BigInteger> res = builder.numeric().open(comparisonRes);
+            return () -> res.out();
+          };
+          BigInteger output = runApplication(app);
+          Assert.assertEquals(BigInteger.ONE, output);
+        }
+      };
+    }
+  }
+
+  public static class LargeRangeTest<ResourcePoolT extends ResourcePool>
+      extends TestThreadFactory<ResourcePoolT, ProtocolBuilderNumeric> {
+
+    @Override
+    public TestThread<ResourcePoolT, ProtocolBuilderNumeric> next() {
+      return new TestThread<ResourcePoolT, ProtocolBuilderNumeric>() {
+
+        @Override
+        public void test() throws Exception {
+          Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
+            Numeric input = builder.numeric();
+            DRes<SInt> x = input.input(BigInteger.valueOf(420000), 1);
+            DRes<SInt> lower = input.input(BigInteger.valueOf(18), 1);
+            DRes<SInt> upper = input.input(BigInteger.valueOf(600000), 1);
+            DRes<SInt> comparisonRes = builder.seq(
+                new Range(lower, upper, x, 20));
             DRes<BigInteger> res = builder.numeric().open(comparisonRes);
             return () -> res.out();
           };

@@ -38,6 +38,16 @@ public class ApplicationTests extends AbstractDummyArithmeticTest {
   }
 
   @Test
+  public void rangeTest() {
+    runTest(new CasesTests.RangeTest<>(), params);
+  }
+
+  @Test
+  public void largeRangeTest() {
+    runTest(new CasesTests.LargeRangeTest<>(), params);
+  }
+
+  @Test
   public void interpolateTest() {
     runTest(new CasesTests.InterpolateTest<>(), params);
   }

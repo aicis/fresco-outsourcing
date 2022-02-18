@@ -3,7 +3,7 @@ package dk.alexandra.fresco.outsourcing.benchmark;
 import java.util.Map;
 
 public abstract class PPP implements Benchmarkable {
-  public static final int BASE_PORT = 8042;
+  public static final int BASE_PORT = 60000;
   public final int maxServers;
   public final Map<Integer, String> serverIdIpMap;
   public final int bitLength;

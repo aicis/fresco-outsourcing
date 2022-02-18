@@ -10,38 +10,31 @@ import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-public class SameObjectServer extends ServerPPP {
+public class RangeServer extends ServerPPP {
 
   private Map<Integer, List<SInt>> clientsInputs;
-  public final List<BigInteger> REF_VALUES;
-  public final List<BigInteger> BETA_SHARE;// = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
+  private final int maxBitlength;
+  public final BigInteger lower;
+  public final BigInteger upper;
+  public final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101),
+      BigInteger.valueOf(102));
 
-  private final int amountOfElements;
-
-  public SameObjectServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort, int amountOfElements) {
+  public RangeServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort,
+      BigInteger lower, BigInteger upper, int maxBitlength) {
     super(myId, serverIdIpMap, bitLength, basePort);
-    this.amountOfElements = amountOfElements;
-    this.REF_VALUES = IntStream.range(1, amountOfElements + 1).mapToObj(i -> BigInteger.valueOf(i))
-        .collect(
-            Collectors.toList());
-    this.BETA_SHARE = IntStream.range(1, amountOfElements + 2)
-        .mapToObj(i -> BigInteger.valueOf(100 + i)).collect(
-            Collectors.toList());
+    this.maxBitlength = maxBitlength;
+    this.lower = lower;
+    this.upper = upper;
   }
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
-        Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
     clientsInputs = spdz.receiveInputs();
   }
 
@@ -49,20 +42,16 @@ public class SameObjectServer extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      List<DRes<SInt>> refValues = new ArrayList<>();
+      DRes<SInt> hiddenLower = input.known(lower);
+      DRes<SInt> hiddenUpper = input.known(upper);
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> attributes = new ArrayList<>();
-      for (int i = 0; i < amountOfElements; i++) {
-        attributes.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(i));
-        refValues.add(input.known(REF_VALUES.get(i)));
-      }
-      attributes.add(uid);
-      List<DRes<SInt>> macs = new ArrayList<>();
+      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0),
+          uid);
       // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
-      for (int i = 0; i < amountOfElements + 1; i++) {
-        macs.add(clientsInputs.get(ClientPPP.CLIENT_ID).get(amountOfElements + i));
-      }
+      List<DRes<SInt>> macs = Arrays.asList(
+          clientsInputs.get(ClientPPP.CLIENT_ID).get(1),
+          clientsInputs.get(ClientPPP.CLIENT_ID).get(2));
       int servers = serverIdIpMap.keySet().size();
       DRes<ServerInputModel> serverInput = builder.par(
           new ServerInputs(myId, DELTA_SHARE, BETA_SHARE, servers));
@@ -70,9 +59,8 @@ public class SameObjectServer extends ServerPPP {
         DRes<Boolean> checkAtt = seq.seq(
             new CheckAtt(attributes, macs, serverInput.out().getBetas(), serverInput.out()
                 .getDelta()));
-        // Compare, but excluding the uid
         DRes<SInt> comparisonRes = seq.seq(
-            new SameObject(refValues, attributes.subList(0, amountOfElements)));
+            new Range(hiddenLower, hiddenUpper, attributes.get(0), maxBitlength));
         return seq.seq((seq2) -> {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");

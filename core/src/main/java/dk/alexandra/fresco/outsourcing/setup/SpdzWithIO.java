@@ -166,7 +166,7 @@ public class SpdzWithIO {
    * servers.
    */
   public SpdzWithIO(int serverId, List<Integer> inputParties, List<Integer> outputParties) {
-    this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, inputParties, outputParties);
+    this(serverId, 3, DEFAULT_FRESCO_BASE_PORT, inputParties, outputParties);
   }
 
   /**

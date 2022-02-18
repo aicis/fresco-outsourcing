@@ -2,11 +2,14 @@ package dk.alexandra.fresco.outsourcing.benchmark;
 
 
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
 
 public abstract class ServerPPP extends PPP {
 
+  public static final BigInteger UID = BigInteger.valueOf(10);
+  public static final BigInteger DELTA_SHARE = BigInteger.valueOf(100);
   protected final int myId;
 
   protected int currentBasePort;

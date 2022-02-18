@@ -54,7 +54,7 @@ public class Demo {
 
     if (mode.equals("c")) {
       // Make sure to update the port here if you change the port your SPDZ servers are running on
-      runAsClient(id, SpdzSetupUtils.getServerParties(8042, 2));
+      runAsClient(id, SpdzSetupUtils.getServerParties(8042, 3));
     } else if (mode.equals("s")) {
       runAsServer(id);
     } else {
