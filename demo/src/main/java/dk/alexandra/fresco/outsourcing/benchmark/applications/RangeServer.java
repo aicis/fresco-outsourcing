@@ -15,17 +15,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class RangeServer extends ServerPPP {
-
+public class RangeServer extends ServerPPP  {
   private Map<Integer, List<SInt>> clientsInputs;
   private final int maxBitlength;
   public final BigInteger lower;
   public final BigInteger upper;
-  public final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101),
-      BigInteger.valueOf(102));
+  public final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
 
-  public RangeServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort,
-      BigInteger lower, BigInteger upper, int maxBitlength) {
+  public RangeServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort, BigInteger lower, BigInteger upper,  int maxBitlength) {
     super(myId, serverIdIpMap, bitLength, basePort);
     this.maxBitlength = maxBitlength;
     this.lower = lower;
@@ -45,8 +42,7 @@ public class RangeServer extends ServerPPP {
       DRes<SInt> hiddenLower = input.known(lower);
       DRes<SInt> hiddenUpper = input.known(upper);
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0),
-          uid);
+      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), uid);
       // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
       List<DRes<SInt>> macs = Arrays.asList(

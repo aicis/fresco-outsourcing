@@ -3,12 +3,13 @@ package dk.alexandra.fresco.outsourcing.server.ddnnt;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.server.ClientSession;
 
 /**
  * Represents a session between a client and the server where the client provides an MPC input to
  * the servers using the DDNNT protocol.
  */
-public interface DdnntClientInputSession extends DdnntClientSession {
+public interface DdnntClientInputSession extends ClientSession {
 
   /**
    * Gives the id of the client giving id.

@@ -28,7 +28,7 @@ import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientInputSessionEndpoi
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientOutputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;

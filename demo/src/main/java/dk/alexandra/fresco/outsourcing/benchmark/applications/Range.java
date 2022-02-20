@@ -8,7 +8,6 @@ import dk.alexandra.fresco.lib.common.compare.Comparison;
 import java.util.Arrays;
 
 public class Range implements Computation<SInt, ProtocolBuilderNumeric> {
-
   private final int maxBitlength;
   private final DRes<SInt> clientVal;
   private final DRes<SInt> lower;
@@ -28,7 +27,7 @@ public class Range implements Computation<SInt, ProtocolBuilderNumeric> {
       DRes<SInt> first = Comparison.using(par).compareLEQ(lower, clientVal);
       DRes<SInt> second = Comparison.using(par).compareLEQ(clientVal, upper);
       return () -> Arrays.asList(first.out(), second.out());
-    }).par((par, comparisons) -> {
+    }).par( (par, comparisons) -> {
       return par.numeric().mult(comparisons.get(0), comparisons.get(1));
     });
   }

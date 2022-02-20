@@ -1,11 +1,11 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.server;
 
 /**
  * Produces new client sessions.
  *
  * @param <SessionT> the session type (input or output) this handler can process
  */
-public interface ClientSessionProducer<SessionT extends DdnntClientSession> {
+public interface ClientSessionProducer<SessionT extends ClientSession> {
 
   /**
    * Gets the next fresh {@link SessionT} produced by this producer.

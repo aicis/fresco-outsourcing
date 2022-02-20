@@ -5,6 +5,7 @@ import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromB
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.util.Arrays;
 import java.util.Objects;

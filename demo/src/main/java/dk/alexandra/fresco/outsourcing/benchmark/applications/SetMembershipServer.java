@@ -19,15 +19,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SetMembershipServer extends ServerPPP {
-
   private Map<Integer, List<SInt>> clientsInputs;
-  public final Set<BigInteger> SET;
+  public final Set<BigInteger> set;
   public final List<BigInteger> BETA_SHARE;
 
   public SetMembershipServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
       int basePort, int setSize) {
     super(myId, serverIdIpMap, bitLength, basePort);
-    this.SET = IntStream.range(1, setSize + 1).mapToObj(i -> BigInteger.valueOf(i))
+    this.set = IntStream.range(1, setSize + 1).mapToObj(i -> BigInteger.valueOf(i))
         .collect(Collectors.toSet());
     this.BETA_SHARE = IntStream.range(1, setSize + 2)
         .mapToObj(i -> BigInteger.valueOf(100 + i)).collect(
@@ -36,9 +35,7 @@ public class SetMembershipServer extends ServerPPP {
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
-        Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
     clientsInputs = spdz.receiveInputs();
   }
 
@@ -46,10 +43,9 @@ public class SetMembershipServer extends ServerPPP {
   public void run(Hole hole) {
     Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      Set<DRes<SInt>> hiddenSet = SET.stream().map(i -> input.known(i)).collect(Collectors.toSet());
+      Set<DRes<SInt>> hiddenSet = set.stream().map(i->input.known(i)).collect(Collectors.toSet());
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0),
-          uid);
+      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), uid);
       // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
       List<DRes<SInt>> macs = Arrays.asList(
@@ -72,6 +68,6 @@ public class SetMembershipServer extends ServerPPP {
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, spdz.run(app));
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID+1, spdz.run(app));
   }
 }

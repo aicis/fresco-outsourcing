@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.server;
 
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
@@ -7,7 +7,7 @@ import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 /**
  * Represents a generic session between a client and the server.
  */
-public interface DdnntClientSession {
+public interface ClientSession {
 
   /**
    * Gives the id of the client giving id.

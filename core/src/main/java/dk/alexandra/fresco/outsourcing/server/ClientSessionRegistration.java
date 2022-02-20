@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.server;
 
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 
@@ -7,7 +7,7 @@ import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
  *
  * @param <SessionT> the session type (input or output) this handler can process
  */
-public interface ClientSessionRegistration<SessionT extends DdnntClientSession> {
+public interface ClientSessionRegistration<SessionT extends ClientSession> {
 
   /**
    * Adds request to produce another session for given client.

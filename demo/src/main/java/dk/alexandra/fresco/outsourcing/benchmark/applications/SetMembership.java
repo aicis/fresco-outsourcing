@@ -28,7 +28,7 @@ public class SetMembership implements Computation<SInt, ProtocolBuilderNumeric> 
       }
       DRes<SInt> res = AdvancedNumeric.using(par).product(comparisons);
       return () -> res;
-    }).par((par, res) -> {
+    }).par( (par, res) -> {
       DRes<SInt> zeroChecked = Comparison.using(par).compareZero(res,
           builder.getBasicNumericContext().getMaxBitLength());
       return () -> zeroChecked.out();

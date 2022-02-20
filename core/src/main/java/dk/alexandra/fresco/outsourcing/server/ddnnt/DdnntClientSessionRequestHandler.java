@@ -1,5 +1,7 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
+import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
+
 /**
  * Handles input and output client session requests for the DDNNT protocol.
  */
