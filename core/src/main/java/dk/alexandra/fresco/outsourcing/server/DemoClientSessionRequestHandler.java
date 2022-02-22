@@ -1,11 +1,10 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.server;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.util.Arrays;
 import java.util.Objects;
@@ -39,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * clients input.
  * </p>
  */
-public class DemoClientSessionRequestHandler implements DdnntClientSessionRequestHandler {
+public class DemoClientSessionRequestHandler<T extends ClientSession, K extends ClientSession> implements ClientSessionRequestHandler<T, K> {
 
   private static final Logger logger = LoggerFactory
       .getLogger(DemoClientSessionRequestHandler.class);
@@ -47,8 +46,8 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
   private final int port;
   private final int expectedClients;
   private final Predicate<Integer> isInputClient;
-  private ClientSessionRegistration<DdnntClientInputSession> inputSessionRequestHandler;
-  private ClientSessionRegistration<DdnntClientOutputSession> outputSessionRequestHandler;
+  private ClientSessionRegistration<T> inputSessionRequestHandler;
+  private ClientSessionRegistration<K> outputSessionRequestHandler;
 
   /**
    * Constructs a new client session producer.
@@ -124,8 +123,7 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
   }
 
   @Override
-  public void setInputRegistrationHandler(
-      ClientSessionRegistration<DdnntClientInputSession> handler) {
+  public void setInputRegistrationHandler(ClientSessionRegistration<T> handler) {
     if (this.inputSessionRequestHandler != null) {
       throw new IllegalStateException("Input handler already set");
     }
@@ -133,8 +131,7 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
   }
 
   @Override
-  public void setOutputRegistrationHandler(
-      ClientSessionRegistration<DdnntClientOutputSession> handler) {
+  public void setOutputRegistrationHandler(ClientSessionRegistration<K> handler) {
     if (this.outputSessionRequestHandler != null) {
       throw new IllegalStateException("Output handler already set");
     }
@@ -149,33 +146,33 @@ public class DemoClientSessionRequestHandler implements DdnntClientSessionReques
     t.start();
   }
 
-  static class QueuedClient {
+  public static class QueuedClient {
 
     int priority;
     int clientId;
     int inputAmount;
     TwoPartyNetwork network;
 
-    QueuedClient(int priority, int clientId, int inputAmount, TwoPartyNetwork network) {
+    public QueuedClient(int priority, int clientId, int inputAmount, TwoPartyNetwork network) {
       this.clientId = clientId;
       this.inputAmount = inputAmount;
       this.network = network;
       this.priority = priority;
     }
 
-    int getClientId() {
+    public int getClientId() {
       return clientId;
     }
 
-    int getInputAmount() {
+    public int getInputAmount() {
       return inputAmount;
     }
 
-    TwoPartyNetwork getNetwork() {
+    public TwoPartyNetwork getNetwork() {
       return network;
     }
 
-    int getPriority() {
+    public int getPriority() {
       return priority;
     }
   }

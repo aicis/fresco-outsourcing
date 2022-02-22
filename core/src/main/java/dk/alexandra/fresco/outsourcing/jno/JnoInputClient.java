@@ -9,7 +9,6 @@ import dk.alexandra.fresco.outsourcing.client.ClientBase;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,7 +37,7 @@ public class JnoInputClient extends ClientBase implements InputClient {
     List<FieldElement> randomSharing = randomSharing(amount-1);
     FieldElement sum = definition.createElement(0);
     for (FieldElement cur : randomSharing) {
-      sum.add(cur);
+      sum = sum.add(cur);
     }
     // Make an additive sharing of the input by summing the random shares
     randomSharing.add(element.subtract(sum));
@@ -69,20 +68,6 @@ public class JnoInputClient extends ClientBase implements InputClient {
     }
     tag = tag.add(randomness.multiply(currentKeyPower));
     return tag.add(currentKeyPower.multiply(key).multiply(key));
-  }
-
-  private <T> List<List<T>> transpose(List<List<T>> input) {
-    List<List<T>> output = new ArrayList<>();
-    for (int j = 0; j <input.get(0).size(); j++) {
-      output.add(new ArrayList<>());
-    }
-    for (int i = 0; i < input.size(); i++) {
-      for (int j = 0; j <input.get(0).size(); j++) {
-        List<T> internalList = output.get(j);
-        internalList.set(i, input.get(i).get(j));
-      }
-    }
-    return output;
   }
 
   @Override

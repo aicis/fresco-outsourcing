@@ -8,6 +8,7 @@ import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,5 +119,18 @@ public abstract class ClientBase {
     System.arraycopy(ByteAndBitConverter.toByteArray(amount), 0, msg, Integer.BYTES * 2,
         Integer.BYTES);
     return msg;
+  }
+
+  public static <T> List<List<T>> transpose(List<List<T>> table) {
+    List<List<T>> ret = new ArrayList<List<T>>();
+    final int N = table.get(0).size();
+    for (int i = 0; i < N; i++) {
+      List<T> col = new ArrayList<T>();
+      for (List<T> row : table) {
+        col.add(row.get(i));
+      }
+      ret.add(col);
+    }
+    return ret;
   }
 }

@@ -9,7 +9,6 @@ import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSession;
 import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implements InputServer {
-  private static final Logger logger = LoggerFactory.getLogger(DdnntInputServer.class);
+  private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
   private static final String HASH_ALGO = "SHA-256";
   private final Future<Map<Integer, List<SInt>>> clientInputs;
-  private final ClientSessionProducer<JnoClientInputSession> clientSessionProducer;
+  private final ClientSessionProducer<JnoClientSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
 
-  public JnoInputServer(ClientSessionProducer<JnoClientInputSession> clientSessionProducer,
+  public JnoInputServer(ClientSessionProducer<JnoClientSession> clientSessionProducer,
       ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
@@ -59,7 +58,8 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implement
     ServerSession<ResourcePoolT> serverInputSession = serverSessionProducer.next();
     Network network = serverInputSession.getNetwork();
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
-    ReconstructClientInputApp app = new ReconstructClientInputApp(1, 1,clientPayload, resourcePool.getFieldDefinition());
+    ReconstructClientInputApp app = new ReconstructClientInputApp(resourcePool.getMyId(),
+        resourcePool.getNoOfParties(), clientPayload, resourcePool.getFieldDefinition());
     return serverInputSession.getSce().runApplication(app, resourcePool, network);
   }
 
@@ -72,7 +72,7 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implement
     ExecutorService es = Executors.newCachedThreadPool();
     HashMap<Integer, Future<ClientPayload<FieldElement>>> clientInputFutures = new HashMap<>();
     while (clientSessionProducer.hasNext()) {
-      JnoClientInputSession clientSession = clientSessionProducer.next();
+      JnoClientSession clientSession = clientSessionProducer.next();
       logger.info("Running client input session for C{}", clientSession.getClientId());
       Future<ClientPayload<FieldElement>> f = es.submit(new ClientCommunication(clientSession));
       clientInputFutures.put(clientSession.getClientId(), f);
@@ -89,9 +89,9 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implement
 
   private static class ClientCommunication implements Callable<ClientPayload<FieldElement>> {
 
-    private final JnoClientInputSession session;
+    private final JnoClientSession session;
 
-    public ClientCommunication(JnoClientInputSession session) {
+    public ClientCommunication(JnoClientSession session) {
       this.session = session;
     }
 

@@ -1,10 +1,13 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
 import dk.alexandra.fresco.framework.Party;
+import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
+import dk.alexandra.fresco.framework.util.AesCtrDrbg;
+import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.jno.JnoInputClient;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +51,8 @@ public class ClientPPP extends PPP {
   @Override
   public void beforeEach() {
     servers = getServers(amountOfServers);
-    InputClient client = new DemoDdnntInputClient(clientInputs.size(), CLIENT_ID, servers);
+    Drbg drbg = new AesCtrDrbg(new byte[32]);
+    InputClient client = new JnoInputClient(clientInputs.size(), CLIENT_ID, servers, BigIntegerFieldDefinition::new, drbg);
     client.putBigIntegerInputs(clientInputs);
     outputClient = new DemoDdnntOutputClient(CLIENT_ID + 1, servers);
   }

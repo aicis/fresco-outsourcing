@@ -6,10 +6,13 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionRequestHandler.QueuedClient;
+import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler.QueuedClient;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
+import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -19,12 +22,12 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO
  */
-public class DemoClientOutputSessionEndpoint implements
-    ClientSessionRegistration<DdnntClientOutputSession>,
-    ClientSessionProducer<DdnntClientOutputSession> {
+public class DdnntClientInputSessionEndpoint implements
+    ClientSessionRegistration<DdnntClientInputSession>,
+    ClientSessionProducer<DdnntClientInputSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(DemoClientOutputSessionEndpoint.class);
+      .getLogger(DdnntClientInputSessionEndpoint.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -34,16 +37,12 @@ public class DemoClientOutputSessionEndpoint implements
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
 
-  public DemoClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
+  public DdnntClientInputSessionEndpoint(SpdzResourcePool resourcePool,
       FieldDefinition definition,
       int expectedClients) {
     if (expectedClients < 0) {
       throw new IllegalArgumentException(
-          "Expected output clients cannot be negative, but was: " + expectedClients);
-    }
-    if (expectedClients > 1) {
-      throw new IllegalArgumentException(
-          "This producer does not support more than 1 output client: " + expectedClients);
+          "Expected input clients cannot be negative, but was: " + expectedClients);
     }
     this.resourcePool = resourcePool;
     this.definition = definition;
@@ -55,11 +54,19 @@ public class DemoClientOutputSessionEndpoint implements
   }
 
   @Override
-  public DdnntClientOutputSession next() {
+  public DdnntClientInputSession next() {
     try {
       QueuedClient client = processingQueue.take();
-      DdnntClientOutputSession session = new DdnntClientOutputSessionImpl(client.getClientId(),
-          client.getNetwork(), definition);
+      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
+      for (int i = 0; i < client.getInputAmount(); i++) {
+        SpdzTriple trip = resourcePool
+            .getDataSupplier()
+            .getNextTriple();
+        tripList.add(new SpdzDdnntTuple(trip));
+      }
+      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
+      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
+          client.getInputAmount(), client.getNetwork(), distributor, definition);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {
@@ -76,10 +83,13 @@ public class DemoClientOutputSessionEndpoint implements
   public int registerNewSessionRequest(byte[] handshakeMessage, TwoPartyNetwork network) {
     // Bytes 0-3: client priority, assigned by server 1 (big endian int)
     // Bytes 4-7: unique id for client (big endian int)
+    // Bytes 8-11: number of inputs (big endian int)
     int priority = intFromBytes(Arrays.copyOfRange(handshakeMessage, 0, Integer.BYTES * 1));
     int clientId =
         intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 1, Integer.BYTES * 2));
-    return registerNewSessionRequest(priority, clientId, network);
+    int numInputs =
+        intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 2, Integer.BYTES * 3));
+    return registerNewSessionRequest(priority, clientId, numInputs, network);
   }
 
   @Override
@@ -87,23 +97,25 @@ public class DemoClientOutputSessionEndpoint implements
     return expectedClients;
   }
 
-  private int registerNewSessionRequest(int suggestedPriority, int clientId,
+  private int registerNewSessionRequest(int suggestedPriority, int clientId, int inputAmount,
       TwoPartyNetwork network) {
     if (resourcePool.getMyId() == 1) {
       int priority = clientsReady++;
-      QueuedClient q = new QueuedClient(priority, clientId, 0, network);
+      QueuedClient q = new QueuedClient(priority, clientId, inputAmount, network);
       processingQueue.add(q);
-      return q.priority;
+      return q.getPriority();
     } else {
-      QueuedClient q = new QueuedClient(suggestedPriority, clientId, 0, network);
+      QueuedClient q = new QueuedClient(suggestedPriority, clientId, inputAmount, network);
       orderingQueue.add(q);
       while (!orderingQueue.isEmpty() && orderingQueue.peek().getPriority() == clientsReady) {
         clientsReady++;
         processingQueue.add(orderingQueue.remove());
       }
-      logger.info("S{}: Finished handskake for output client {} with priority {}.",
-          resourcePool.getMyId(), q.clientId, q.priority);
-      return q.priority;
+      logger.info(
+          "S{}: Finished handskake for input client {} with priority {}. Expecting {} inputs.",
+          resourcePool.getMyId(), q.getClientId(), q.getPriority(), q.getInputAmount());
+      return q.getPriority();
     }
   }
+
 }

@@ -19,16 +19,18 @@ import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.framework.util.Pair;
+import dk.alexandra.fresco.outsourcing.jno.JnoClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.jno.JnoInputServer;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
+import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientSessionRequestHandler;
+import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientOutputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientOutputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
@@ -63,13 +65,17 @@ public class SpdzSetupUtils {
     return new BigInteger(modulus.bitLength(), new Random(partyId)).mod(modulus);
   }
 
-  public static NetworkConfiguration getNetConf(int serverId,
-      Map<Integer, Integer> partiesToPorts) {
+  public static Map<Integer, String> getLocalhostMap(Map<Integer, Integer> partiesToPorts) {
     Map<Integer, String> partiesToIp = new HashMap<>();
     for (int id: partiesToPorts.keySet()) {
       partiesToIp.put(id, "localhost");
     }
-    return getNetConf(serverId, partiesToPorts, partiesToIp);
+    return partiesToIp;
+  }
+
+  public static NetworkConfiguration getNetConf(int serverId,
+      Map<Integer, Integer> partiesToPorts) {
+    return getNetConf(serverId, partiesToPorts, getLocalhostMap(partiesToPorts));
   }
 
   public static NetworkConfiguration getNetConf(int serverId,
@@ -90,11 +96,7 @@ public class SpdzSetupUtils {
   }
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
-    Map<Integer, String> partiesToIp = new HashMap<>();
-    for (int id : partiesToPorts.keySet()) {
-      partiesToIp.put(id, "localhost");
-    }
-    return getSetup(serverId, partiesToPorts, partiesToIp, 64);
+    return getSetup(serverId, partiesToPorts, getLocalhostMap(partiesToPorts), 64);
   }
 
   static Map<Integer, RotList> getSeedOts(int myId, int parties, int prgSeedLength, Drbg drbg,
@@ -169,17 +171,13 @@ public class SpdzSetupUtils {
   }
 
   // TODO probably needs the real IPs
-  public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
+  public static Pair<InputServer, OutputServer> initDdnntIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
       Map<Integer, Integer> partiesToPorts) {
-    Map<Integer, String> partiesToIp = new HashMap<>();
-    for (int id : partiesToPorts.keySet()) {
-      partiesToIp.put(id, "localhost");
-    }
-    return initIOServers(spdzSetup, inputClientIds, outputClientIds, partiesToPorts, partiesToIp);
+    return initDdnntIOServers(spdzSetup, inputClientIds, outputClientIds, partiesToPorts, getLocalhostMap(partiesToPorts));
   }
 
-  public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
+  public static Pair<InputServer, OutputServer> initDdnntIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
       Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
 
@@ -191,21 +189,21 @@ public class SpdzSetupUtils {
                 .getMyId(),
             partiesToPorts, partiesToIp));
 
-    DdnntClientSessionRequestHandler handler = new DemoClientSessionRequestHandler(
+    ClientSessionRequestHandler handler = new DemoClientSessionRequestHandler(
         spdzSetup.getRp(),
         spdzSetup
             .getNetConf()
             .getMe()
             .getPort(),
         inputClientIds.size() + outputClientIds.size(),
-        id -> (id <= inputClientIds.size())
+        id -> (inputClientIds.contains(id))
     );
     InputServer inputServer = null;
     OutputServer outputServer = null;
 
     if (!inputClientIds.isEmpty()) {
-      DemoClientInputSessionEndpoint inputSessionEndpoint =
-          new DemoClientInputSessionEndpoint(
+      DdnntClientInputSessionEndpoint inputSessionEndpoint =
+          new DdnntClientInputSessionEndpoint(
               spdzSetup.getRp(),
               spdzSetup.getRp().getFieldDefinition(),
               inputClientIds.size());
@@ -217,7 +215,60 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      DemoClientOutputSessionEndpoint outputSessionEndpoint = new DemoClientOutputSessionEndpoint(
+      DdnntClientOutputSessionEndpoint outputSessionEndpoint = new DdnntClientOutputSessionEndpoint(
+          spdzSetup.getRp(),
+          spdzSetup.getRp().getFieldDefinition(),
+          outputClientIds.size());
+      handler.setOutputRegistrationHandler(outputSessionEndpoint);
+      outputServer = new DdnntOutputServer<>(
+          outputSessionEndpoint,
+          serverSessionProducer
+      );
+    }
+
+    handler.launch();
+    return new Pair<>(inputServer, outputServer);
+  }
+
+  public static Pair<InputServer, OutputServer> initJnoIOServers(SpdzSetup spdzSetup,
+      List<Integer> inputClientIds, List<Integer> outputClientIds,
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
+
+    final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
+        spdzSetup.getRp(),
+        getNetConf(
+            spdzSetup
+                .getNetConf()
+                .getMyId(),
+            partiesToPorts, partiesToIp));
+
+    ClientSessionRequestHandler handler = new DemoClientSessionRequestHandler(
+        spdzSetup.getRp(),
+        spdzSetup
+            .getNetConf()
+            .getMe()
+            .getPort(),
+        inputClientIds.size() + outputClientIds.size(),
+        id -> (inputClientIds.contains(id))
+    );
+    InputServer inputServer = null;
+    OutputServer outputServer = null;
+
+    if (!inputClientIds.isEmpty()) {
+      JnoClientInputSessionEndpoint inputSessionEndpoint =
+          new JnoClientInputSessionEndpoint(
+              spdzSetup.getRp(),
+              spdzSetup.getRp().getFieldDefinition(),
+              inputClientIds.size());
+      handler.setInputRegistrationHandler(inputSessionEndpoint);
+      inputServer = new JnoInputServer<>(
+          inputSessionEndpoint,
+          serverSessionProducer
+      );
+    }
+
+    if (!outputClientIds.isEmpty()) {
+      DdnntClientOutputSessionEndpoint outputSessionEndpoint = new DdnntClientOutputSessionEndpoint(
           spdzSetup.getRp(),
           spdzSetup.getRp().getFieldDefinition(),
           outputClientIds.size());

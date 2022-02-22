@@ -9,6 +9,7 @@ import dk.alexandra.fresco.outsourcing.benchmark.ClientPPP;
 import dk.alexandra.fresco.outsourcing.benchmark.Hole;
 import dk.alexandra.fresco.outsourcing.benchmark.ServerPPP;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO.Protocol;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class SameObjectServer extends ServerPPP {
   public void beforeEach() {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true, Protocol.JNO);
     clientsInputs = spdz.receiveInputs();
   }
 
