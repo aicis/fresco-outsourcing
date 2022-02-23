@@ -27,7 +27,7 @@ public class SpdzWithIO {
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   public enum Protocol {
-    JNO,
+    PESTO,
     DDNNT
   }
 
@@ -87,8 +87,9 @@ public class SpdzWithIO {
     }
     Pair<InputServer, OutputServer> io;
     if (protocol == Protocol.DDNNT) {
-      io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts, partiesToIps);
-    } else if (protocol == Protocol.JNO) {
+      io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps);
+    } else if (protocol == Protocol.PESTO) {
       io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
           partiesToIps);
     } else {
@@ -124,7 +125,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        true, Protocol.JNO
+        true, Protocol.PESTO
     );
   }
 
@@ -196,7 +197,7 @@ public class SpdzWithIO {
   /**
    * Sends shares of secrets to specified output party.
    */
-  public void sendOutputsTo(int receiverId, List<SInt> outputs) {
+  public <T> void sendOutputsTo(int receiverId, List<T> outputs) {
     outputServer.putClientOutputs(receiverId, outputs);
   }
 

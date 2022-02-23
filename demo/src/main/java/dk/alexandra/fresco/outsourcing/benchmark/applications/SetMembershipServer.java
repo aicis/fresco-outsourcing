@@ -41,11 +41,12 @@ public class SetMembershipServer extends ServerPPP {
 
   @Override
   public void run(Hole hole) {
-    Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
+    Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
-      Set<DRes<SInt>> hiddenSet = set.stream().map(i->input.known(i)).collect(Collectors.toSet());
+      Set<DRes<SInt>> hiddenSet = set.stream().map(i -> input.known(i)).collect(Collectors.toSet());
       DRes<SInt> uid = input.known(UID);
-      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0), uid);
+      List<DRes<SInt>> attributes = Arrays.asList(clientsInputs.get(ClientPPP.CLIENT_ID).get(0),
+          uid);
       // MACs are stored in the list after attributes
       // First MAC is value MAC, second MAC is UID MAC
       List<DRes<SInt>> macs = Arrays.asList(
@@ -64,10 +65,10 @@ public class SetMembershipServer extends ServerPPP {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");
           }
-          return () -> Collections.singletonList(comparisonRes.out());
+          return seq2.numeric().open(comparisonRes.out());
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID+1, spdz.run(app));
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, Collections.singletonList(spdz.run(app)));
   }
 }

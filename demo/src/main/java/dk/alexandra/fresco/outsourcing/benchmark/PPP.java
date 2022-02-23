@@ -1,9 +1,11 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
+import dk.alexandra.fresco.outsourcing.setup.Spdz;
 import java.util.Map;
 
 public abstract class PPP implements Benchmarkable {
-  public static final int BASE_PORT = 60000;
+
+  public static final int BASE_PORT = Spdz.DEFAULT_FRESCO_BASE_PORT;
   public final int maxServers;
   public final Map<Integer, String> serverIdIpMap;
   public final int bitLength;

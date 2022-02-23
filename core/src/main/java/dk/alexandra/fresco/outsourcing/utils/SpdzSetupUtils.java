@@ -20,7 +20,9 @@ import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.outsourcing.jno.JnoClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.jno.JnoClientOutputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.jno.JnoInputServer;
+import dk.alexandra.fresco.outsourcing.jno.PestoOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
@@ -268,12 +270,12 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      DdnntClientOutputSessionEndpoint outputSessionEndpoint = new DdnntClientOutputSessionEndpoint(
+      JnoClientOutputSessionEndpoint outputSessionEndpoint = new JnoClientOutputSessionEndpoint(
           spdzSetup.getRp(),
           spdzSetup.getRp().getFieldDefinition(),
           outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
-      outputServer = new DdnntOutputServer<>(
+      outputServer = new PestoOutputServer<>(
           outputSessionEndpoint,
           serverSessionProducer
       );

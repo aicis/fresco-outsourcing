@@ -6,8 +6,8 @@ import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.jno.JnoInputClient;
+import dk.alexandra.fresco.outsourcing.jno.PestoOutputClient;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,7 @@ public class ClientPPP extends PPP {
   private List<BigInteger> clientInputs;
   private OutputClient outputClient;
   private int amountOfServers;
+  private final Drbg drbg;
 
   public ClientPPP(Map<Integer, String> serverIdIpMap, int inputs, int bitLength, int basePort) {
     this(serverIdIpMap,
@@ -38,6 +39,8 @@ public class ClientPPP extends PPP {
     this.clientInputs = clientInputs;
     this.amountOfServers = serverIdIpMap.size();
     this.currentBasePort = basePort;
+    // Static randomness for simplicity and debugging
+    this.drbg = new AesCtrDrbg(new byte[32]);
   }
 
   private List<Party> getServers(int amount) {
@@ -51,17 +54,18 @@ public class ClientPPP extends PPP {
   @Override
   public void beforeEach() {
     servers = getServers(amountOfServers);
-    Drbg drbg = new AesCtrDrbg(new byte[32]);
-    InputClient client = new JnoInputClient(clientInputs.size(), CLIENT_ID, servers, BigIntegerFieldDefinition::new, drbg);
-    client.putBigIntegerInputs(clientInputs);
-    outputClient = new DemoDdnntOutputClient(CLIENT_ID + 1, servers);
   }
 
   @Override
   public void run(Hole hole) {
+    InputClient client = new JnoInputClient(clientInputs.size(), CLIENT_ID, servers,
+        BigIntegerFieldDefinition::new, drbg);
+    client.putBigIntegerInputs(clientInputs);
+    outputClient = new PestoOutputClient(CLIENT_ID + 1, servers);
     List<Long> results = outputClient.getLongOutputs();
     for (long res : results) {
-      if (1L != res) {
+      // TODO output value
+      if (0L != res) {
         throw new RuntimeException("Incorrect result");
       }
     }

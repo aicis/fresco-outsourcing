@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class Spdz {
 
   private static final Logger logger = LoggerFactory.getLogger(Spdz.class);
-  private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
+  public static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   private final SpdzSetup spdzSetup;
 

@@ -42,13 +42,14 @@ public class SameObjectServer extends ServerPPP {
   public void beforeEach() {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true, Protocol.JNO);
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true,
+        Protocol.PESTO);
     clientsInputs = spdz.receiveInputs();
   }
 
   @Override
   public void run(Hole hole) {
-    Application<List<SInt>, ProtocolBuilderNumeric> app = builder -> {
+    Application<BigInteger, ProtocolBuilderNumeric> app = builder -> {
       Numeric input = builder.numeric();
       List<DRes<SInt>> refValues = new ArrayList<>();
       DRes<SInt> uid = input.known(UID);
@@ -78,10 +79,10 @@ public class SameObjectServer extends ServerPPP {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");
           }
-          return () -> Collections.singletonList(comparisonRes.out());
+          return seq2.numeric().open(comparisonRes.out());
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID+1, spdz.run(app));
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, Collections.singletonList(spdz.run(app)));
   }
 }

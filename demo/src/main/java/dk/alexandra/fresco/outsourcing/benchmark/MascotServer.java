@@ -19,6 +19,7 @@ public class MascotServer extends ServerPPP {
   public void run(Hole blackhole) {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, false, Protocol.JNO);
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, false,
+        Protocol.PESTO);
   }
 }
