@@ -1,3 +1,5 @@
+package dk.alexandra.fresco.outsourcing.benchmark;
+
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.TestThreadRunner.TestThread;

@@ -74,7 +74,7 @@ public class SameObjectServer extends ServerPPP {
                 .getDelta()));
         // Compare, but excluding the uid
         DRes<SInt> comparisonRes = seq.seq(
-            new SameObject(refValues, attributes.subList(0, amountOfElements)));
+            new SameObject(refValues, attributes.subList(0, amountOfElements), bitLength));
         return seq.seq((seq2) -> {
           if (checkAtt.out() != true) {
             throw new IllegalArgumentException("Invalid user MAC");

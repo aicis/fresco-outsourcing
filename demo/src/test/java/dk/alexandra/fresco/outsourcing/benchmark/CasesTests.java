@@ -1,3 +1,5 @@
+package dk.alexandra.fresco.outsourcing.benchmark;
+
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.TestThreadRunner.TestThread;
@@ -53,7 +55,7 @@ public class CasesTests {
             DRes<SInt> x1 = input.input(BigInteger.valueOf(42), 1);
             DRes<SInt> x2 = input.input(BigInteger.valueOf(43), 1);
             DRes<SInt> comparisonRes = builder.seq(
-                new SameObject(Arrays.asList(x1, x2), Arrays.asList(x1, x2)));
+                new SameObject(Arrays.asList(x1, x2), Arrays.asList(x1, x2), 16));
             DRes<BigInteger> res = builder.numeric().open(comparisonRes);
             return () -> res.out();
           };

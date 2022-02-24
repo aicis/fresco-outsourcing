@@ -1,3 +1,5 @@
+package dk.alexandra.fresco.outsourcing.benchmark;
+
 import static dk.alexandra.fresco.framework.sce.evaluator.EvaluationStrategy.SEQUENTIAL_BATCHED;
 
 import dk.alexandra.fresco.suite.dummy.arithmetic.AbstractDummyArithmeticTest;

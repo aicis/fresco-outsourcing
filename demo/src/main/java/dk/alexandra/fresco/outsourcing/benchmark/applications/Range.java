@@ -23,9 +23,8 @@ public class Range implements Computation<SInt, ProtocolBuilderNumeric> {
   @Override
   public DRes<SInt> buildComputation(ProtocolBuilderNumeric builder) {
     return builder.par(par -> {
-      // TODO no specific bitlength
-      DRes<SInt> first = Comparison.using(par).compareLEQ(lower, clientVal);
-      DRes<SInt> second = Comparison.using(par).compareLEQ(clientVal, upper);
+      DRes<SInt> first = Comparison.using(par).compareLT(lower, clientVal);
+      DRes<SInt> second = Comparison.using(par).compareLT(clientVal, upper);
       return () -> Arrays.asList(first.out(), second.out());
     }).par( (par, comparisons) -> {
       return par.numeric().mult(comparisons.get(0), comparisons.get(1));
