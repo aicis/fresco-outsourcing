@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import sweis.threshsig.KeyShare;
 
 /**
  * This is a facade for the SPDZ suite functionality that allows receiving inputs from clients,
@@ -33,6 +34,7 @@ public class SpdzWithIO {
 
 
   private final Map<Integer, Integer> applicationPorts;
+  private final Map<Integer, String> partiesToIps;
   private final SpdzSetup spdzSetup;
   private final InputServer inputServer;
   private final OutputServer outputServer;
@@ -64,6 +66,7 @@ public class SpdzWithIO {
     Pair<InputServer, OutputServer> io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts);
     this.inputServer = io.getFirst();
     this.outputServer = io.getSecond();
+    this.partiesToIps = SpdzSetupUtils.getLocalhostMap(internalPorts);
   }
 
   public SpdzWithIO(
@@ -76,7 +79,8 @@ public class SpdzWithIO {
       Map<Integer, String> partiesToIps,
       int bitLength,
       boolean dummy,
-      Protocol protocol) {
+      Protocol protocol, KeyShare keyShare) {
+    this.partiesToIps = partiesToIps;
     this.applicationPorts = applicationPorts;
     if (dummy) {
       this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps,
@@ -91,7 +95,7 @@ public class SpdzWithIO {
           partiesToIps);
     } else if (protocol == Protocol.PESTO) {
       io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps);
+          partiesToIps, keyShare);
     } else {
       throw new IllegalArgumentException("Unimplemented protocol version");
     }
@@ -116,7 +120,7 @@ public class SpdzWithIO {
       List<Integer> inputParties,
       List<Integer> outputParties,
       Map<Integer, String> partiesToIps,
-      int bitLength) {
+      int bitLength, KeyShare keyShare) {
     this(serverId,
         SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
         SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
@@ -125,7 +129,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        true, Protocol.PESTO
+        true, Protocol.PESTO, keyShare
     );
   }
 
@@ -138,7 +142,7 @@ public class SpdzWithIO {
       Map<Integer, String> partiesToIps,
       int bitLength,
       boolean dummy,
-      Protocol protocol) {
+      Protocol protocol, KeyShare keyShare) {
     this(serverId,
         SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
         SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
@@ -147,7 +151,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        dummy, protocol
+        dummy, protocol, keyShare
     );
   }
 
@@ -211,7 +215,7 @@ public class SpdzWithIO {
   public <T> T run(Application<T, ProtocolBuilderNumeric> app) {
     SocketNetwork network = new SocketNetwork(
         SpdzSetupUtils
-            .getNetConf(getServerId(), applicationPorts));
+            .getNetConf(getServerId(), applicationPorts, partiesToIps));
     T res = spdzSetup
         .getSce()
         .runApplication(

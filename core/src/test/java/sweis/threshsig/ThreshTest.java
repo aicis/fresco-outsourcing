@@ -20,7 +20,7 @@ public class ThreshTest {
   private static byte[] b;
   private static final SigShare[] sigs = new SigShare[K];
 
-  @Before
+//  @Before
   public void setUp() {
     (new Random()).nextBytes(data);
     try {
@@ -57,7 +57,7 @@ public class ThreshTest {
     }
   }
 
-  @Test
+//  @Test
   public void testVerifySignatures() {
     // Pick a set of shares to attempt to verify
     // These are the indices of the shares

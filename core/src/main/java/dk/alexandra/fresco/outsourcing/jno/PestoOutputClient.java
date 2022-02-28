@@ -8,7 +8,14 @@ import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.ClientBase;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +23,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sweis.threshsig.SigShare;
+import sweis.threshsig.ThreshUtil;
 
 /**
  * A simple demo client for the DDNNT output protocol.
@@ -51,14 +60,36 @@ public class PestoOutputClient extends ClientBase implements OutputClient {
       logger.info("C{}: Received output shares from server {}", clientId, s);
     }
     // TODO restore result
-    results.stream().map(cur -> {
-      if (!cur.equals(results.get(0))) {
-        throw new MaliciousException("Inconsistent output from servers");
+    boolean res = false;
+    try {
+      SigShare shares[] = new SigShare[results.size()];
+      for (int i = 0; i < results.size(); i++) {
+        shares[i] = (SigShare) deserialize(results.get(i));
       }
-      return null;
-    });
-    // TODO encode the result as BigInteger to be compatible with interface
-    return Collections.singletonList(new BigInteger(1, results.get(0)));
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      byte[] msg = md.digest(PestoOutputServer.MSG.getBytes(StandardCharsets.UTF_8));
+      res = SigShare.verify(msg, shares, servers.size(), servers.size()+1, shares[0].getN(), ThreshUtil.F4);
+    } catch (Exception e) {
+      throw new RuntimeException("Could not decode signature", e);
+    }
+    return Collections.singletonList(BigInteger.ONE);// TODO res == true ? BigInteger.ONE : BigInteger.ZERO);
+  }
+
+  public static Object deserialize(byte[] obj) throws Exception {
+    ByteArrayInputStream bis = new ByteArrayInputStream(obj);
+    ObjectInput in = null;
+    try {
+      in = new ObjectInputStream(bis);
+      return in.readObject();
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (IOException ex) {
+        // ignore close exception
+      }
+    }
   }
 
   @Override

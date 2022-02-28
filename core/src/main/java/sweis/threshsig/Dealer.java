@@ -67,7 +67,6 @@ public class Dealer {
     // qr = generateSophieGermainPrime();
     p = SafePrimeGen.generateStrongPrime(keysize, ThreshUtil.getRandom());
     q = SafePrimeGen.generateStrongPrime(keysize, ThreshUtil.getRandom());
-
     pr = (p.subtract(ThreshUtil.ONE)).divide(ThreshUtil.TWO);
     qr = (q.subtract(ThreshUtil.ONE)).divide(ThreshUtil.TWO);
 
@@ -101,7 +100,6 @@ public class Dealer {
     // Create Secret KeyShares and KeyShare Verifiers
     // Note: We don't use the private exponent 'd' after this
     shares = generateKeyShares(d, m, k, l, n);
-
     // Create verification shares
     vk = generateVerifiers(n, shares);
 

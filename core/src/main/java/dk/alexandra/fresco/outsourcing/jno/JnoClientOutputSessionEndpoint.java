@@ -15,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sweis.threshsig.KeyShare;
 
 /**
  * TODO
@@ -33,10 +34,11 @@ public class JnoClientOutputSessionEndpoint implements
   private final PriorityQueue<QueuedClient> orderingQueue;
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
+  private final KeyShare keyShare;
 
   public JnoClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
       FieldDefinition definition,
-      int expectedClients) {
+      int expectedClients, KeyShare keyshare) {
     if (expectedClients < 0) {
       throw new IllegalArgumentException(
           "Expected output clients cannot be negative, but was: " + expectedClients);
@@ -52,6 +54,7 @@ public class JnoClientOutputSessionEndpoint implements
     this.orderingQueue = new PriorityQueue<>(expectedClients,
         Comparator.comparingInt(QueuedClient::getPriority));
     this.clientsReady = 0;
+    this.keyShare = keyshare;
   }
 
   @Override
@@ -59,7 +62,7 @@ public class JnoClientOutputSessionEndpoint implements
     try {
       QueuedClient client = processingQueue.take();
       JnoClientSession session = new JnoClientSession(client.getClientId(), client.getInputAmount(),
-          client.getNetwork(), definition);
+          client.getNetwork(), definition, keyShare);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {

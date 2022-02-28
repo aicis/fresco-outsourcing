@@ -45,11 +45,11 @@ public class ServerInputs implements ComputationParallel<ServerInputModel, Proto
         deltaShares.add(deltaShare);
       }
       return () -> new Pair<List<DRes<SInt>>, DRes<SInt>[][]>(deltaShares, betaShares);
-    }).seq((seq, shares) -> {
-      DRes<SInt> delta = seq.seq(new Interpolate(shares.getFirst()));
+    }).par((par, shares) -> {
+      DRes<SInt> delta = par.seq(new Interpolate(shares.getFirst()));
       List<DRes<SInt>> betas = new ArrayList<>();
       for (int i = 0; i < shares.getSecond().length; i++) {
-        betas.add(seq.seq(new Interpolate(
+        betas.add(par.seq(new Interpolate(
             Arrays.stream(shares.getSecond()[i]).collect(Collectors.toList()))));
       }
       return () -> new ServerInputModel(delta, betas);

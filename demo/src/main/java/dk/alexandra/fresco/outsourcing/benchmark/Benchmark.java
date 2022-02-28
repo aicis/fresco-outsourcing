@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Benchmark {
-  public static final int ITERATIONS = 1;
-  public static final int WARMUP = 1;
+  public static final int ITERATIONS = 20;
+  public static final int WARMUP = 10;
 
   public static List<Long> runBenchmark(Benchmarkable toRun) {
     try {

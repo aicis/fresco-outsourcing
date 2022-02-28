@@ -8,7 +8,15 @@ import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSession;
 import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,29 +24,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sweis.threshsig.KeyShare;
+import sweis.threshsig.SigShare;
 
 public class PestoOutputServer<ResourcePoolT extends NumericResourcePool> implements
     OutputServer<BigInteger> {
 
   private static final Logger logger = LoggerFactory.getLogger(PestoOutputServer.class);
+  public static final  String MSG = "test message";
   private final ClientSessionProducer<JnoClientSession> clientSessionProducer;
-  private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final List<SInt> hiddenOutputs;
   private final List<BigInteger> publicOutput;
 
-  public PestoOutputServer(ClientSessionProducer<JnoClientSession> clientSessionProducer,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+  public PestoOutputServer(ClientSessionProducer<JnoClientSession> clientSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
-    this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     this.hiddenOutputs = new ArrayList<>();
     this.publicOutput = new ArrayList<>();
   }
 
   private void runOutputSession() {
-    logger.info("Running output session");
-    ServerSession<ResourcePoolT> serverOutputSession = serverSessionProducer.next();
-    Network network = serverOutputSession.getNetwork();
-    ResourcePoolT resourcePool = serverOutputSession.getResourcePool();
     ExecutorService es = Executors.newCachedThreadPool();
     while (clientSessionProducer.hasNext()) {
       JnoClientSession clientSession = clientSessionProducer.next();
@@ -50,8 +54,32 @@ public class PestoOutputServer<ResourcePoolT extends NumericResourcePool> implem
   }
 
   private byte[] computeClientToken(JnoClientSession session) {
-    // TODO
-    return new byte[32];
+    try {
+      KeyShare keyShare = session.getKeyShare();
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      byte[] msg = md.digest(MSG.getBytes(StandardCharsets.UTF_8));
+      SigShare sig =  keyShare.sign(msg);
+      return serializeObject(sig);
+    } catch (Exception e) {
+      throw new RuntimeException("Could not initialize hash digest", e);
+    }
+  }
+
+  public static byte[] serializeObject(Serializable obj) throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutputStream out = null;
+    try {
+      out = new ObjectOutputStream(bos);
+      out.writeObject(obj);
+      out.flush();
+      return bos.toByteArray();
+    } finally {
+      try {
+        bos.close();
+      } catch (IOException ex) {
+        // ignore close exception
+      }
+    }
   }
 
   @Override

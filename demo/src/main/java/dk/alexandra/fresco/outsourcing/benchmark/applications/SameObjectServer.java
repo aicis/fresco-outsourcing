@@ -17,18 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import sweis.threshsig.KeyShare;
 
 public class SameObjectServer extends ServerPPP {
 
-  private Map<Integer, List<SInt>> clientsInputs;
+  protected Map<Integer, List<SInt>> clientsInputs;
   public final List<BigInteger> REF_VALUES;
   public final List<BigInteger> BETA_SHARE;// = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
 
   private final int amountOfElements;
+  private List<BigInteger> res;
 
   public SameObjectServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort, int amountOfElements) {
-    super(myId, serverIdIpMap, bitLength, basePort);
+      int basePort, int amountOfElements, KeyShare keyShare) {
+    super(myId, serverIdIpMap, bitLength, basePort, keyShare);
     this.amountOfElements = amountOfElements;
     this.REF_VALUES = IntStream.range(1, amountOfElements + 1).mapToObj(i -> BigInteger.valueOf(i))
         .collect(
@@ -43,7 +45,7 @@ public class SameObjectServer extends ServerPPP {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
         Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true,
-        Protocol.PESTO);
+        Protocol.PESTO, keyShare);
     clientsInputs = spdz.receiveInputs();
   }
 
@@ -83,6 +85,14 @@ public class SameObjectServer extends ServerPPP {
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, Collections.singletonList(spdz.run(app)));
+    res = Collections.singletonList(spdz.run(app));
+  }
+
+  @Override
+  public void afterEach() {
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, res);
+    // Move base ports up
+    currentBasePort += maxServers;
+    spdz.shutdown();
   }
 }

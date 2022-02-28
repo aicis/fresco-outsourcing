@@ -1,5 +1,6 @@
 package sweis.threshsig;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 
@@ -12,30 +13,31 @@ import java.security.MessageDigest;
  * 
  * @author Steve Weis <sweis@mit.edu>
  */
-public class SigShare {
-
+public class SigShare implements Serializable {
   // Constants and variables
   //............................................................................
-  private final static boolean CHECKVERIFIER = true;
+  private final static boolean CHECKVERIFIER = false;
 
   private int id;
 
   private BigInteger sig;
 
   private Verifier sigVerifier;
+  private BigInteger n;
 
   // Constructors
   //............................................................................
-  public SigShare(final int id, final BigInteger sig, final Verifier sigVerifier) {
+  public SigShare(final int id, final BigInteger sig, final Verifier sigVerifier, BigInteger n) {
     this.id = id;
     this.sig = sig;
     this.sigVerifier = sigVerifier;
+    this.n = n;
   }
 
-  public SigShare(final int id, final byte[] sig) {
-    this.id = id;
-    this.sig = new BigInteger(sig);
-  }
+//  public SigShare(final int id, final byte[] sig) {
+//    this.id = id;
+//    this.sig = new BigInteger(sig);
+//  }
 
   // Public Methods
   //............................................................................
@@ -66,6 +68,11 @@ public class SigShare {
   public Verifier getSigVerifier() {
     return sigVerifier;
   }
+
+  public BigInteger getN() {
+    return n;
+  }
+
 
   /**
    * Return a byte array representation of this signature

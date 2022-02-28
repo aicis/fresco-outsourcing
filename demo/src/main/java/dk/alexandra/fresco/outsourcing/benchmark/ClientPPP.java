@@ -65,7 +65,7 @@ public class ClientPPP extends PPP {
     List<Long> results = outputClient.getLongOutputs();
     for (long res : results) {
       // TODO output value
-      if (0L != res) {
+      if (1L != res) {
         throw new RuntimeException("Incorrect result");
       }
     }
@@ -73,6 +73,7 @@ public class ClientPPP extends PPP {
 
   @Override
   public void afterEach() {
+    System.gc();
     // Move base ports up
     currentBasePort += maxServers;
   }

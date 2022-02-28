@@ -41,6 +41,7 @@ import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzMascotDataSupplier;
 import dk.alexandra.fresco.tools.ot.base.DhParameters;
+import dk.alexandra.fresco.tools.ot.base.DummyOt;
 import dk.alexandra.fresco.tools.ot.base.NaorPinkasOt;
 import dk.alexandra.fresco.tools.ot.base.Ot;
 import dk.alexandra.fresco.tools.ot.otextension.RotList;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import javax.crypto.spec.DHParameterSpec;
+import sweis.threshsig.KeyShare;
 
 public class SpdzSetupUtils {
 
@@ -60,7 +62,7 @@ public class SpdzSetupUtils {
 
   public static FieldDefinition getDefaultFieldDefinition(int bitLength) {
     return new BigIntegerFieldDefinition(
-        ModulusFinder.findSuitableModulus(bitLength+64));
+        ModulusFinder.findSuitableModulus(bitLength+40));
   }
 
   public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {
@@ -106,8 +108,7 @@ public class SpdzSetupUtils {
     Map<Integer, RotList> seedOts = new HashMap<>();
     for (int otherId = 1; otherId <= parties; otherId++) {
       if (myId != otherId) {
-        DHParameterSpec dhSpec = DhParameters.getStaticDhParams();
-        Ot ot = new NaorPinkasOt(otherId, drbg, network, dhSpec);
+        Ot ot = new DummyOt(otherId, network);
         RotList currentSeedOts = new RotList(drbg, prgSeedLength);
         if (myId < otherId) {
           currentSeedOts.send(ot);
@@ -124,7 +125,7 @@ public class SpdzSetupUtils {
 
   static Drbg getDrbg(int myId, int prgSeedLength) {
     byte[] seed = new byte[prgSeedLength / 8];
-    new Random(myId).nextBytes(seed);
+    seed[0] = (byte) myId;
     return AesCtrDrbgFactory.fromDerivedSeed(seed);
   }
 
@@ -136,7 +137,7 @@ public class SpdzSetupUtils {
     Drbg drbg = getDrbg(serverId, 32);
     Network net = new SocketNetwork(netConf);
     Map<Integer, RotList> seedOts =
-        getSeedOts(serverId, partiesToIp.size(), 32, drbg, net);
+        getSeedOts(serverId, partiesToIp.size(), 256, drbg, net);
     SpdzDataSupplier supplier = new SpdzMascotDataSupplier(serverId, partiesToIp.size(), 1,
         () -> net, definition, bitLength, null, 256, 1024, ssk, seedOts, drbg);
 
@@ -154,7 +155,7 @@ public class SpdzSetupUtils {
       Map<Integer, String> partiesToIp, int bitLength) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
     FieldDefinition definition = getDefaultFieldDefinition(bitLength);
-    BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(serverId, definition.getModulus());
+//    BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(serverId, definition.getModulus());
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
             serverId,
@@ -234,7 +235,7 @@ public class SpdzSetupUtils {
 
   public static Pair<InputServer, OutputServer> initJnoIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp, KeyShare keyShare) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
@@ -273,11 +274,10 @@ public class SpdzSetupUtils {
       JnoClientOutputSessionEndpoint outputSessionEndpoint = new JnoClientOutputSessionEndpoint(
           spdzSetup.getRp(),
           spdzSetup.getRp().getFieldDefinition(),
-          outputClientIds.size());
+          outputClientIds.size(), keyShare);
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new PestoOutputServer<>(
-          outputSessionEndpoint,
-          serverSessionProducer
+          outputSessionEndpoint
       );
     }
 

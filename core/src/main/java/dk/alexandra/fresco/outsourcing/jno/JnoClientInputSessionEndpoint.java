@@ -55,7 +55,7 @@ public class JnoClientInputSessionEndpoint implements
     try {
       QueuedClient client = processingQueue.take();
       JnoClientSession session = new JnoClientSession(client.getClientId(),
-          client.getInputAmount(), client.getNetwork(), definition);
+          client.getInputAmount(), client.getNetwork(), definition, null);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {

@@ -17,15 +17,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import sweis.threshsig.KeyShare;
 
 public class SetMembershipServer extends ServerPPP {
   private Map<Integer, List<SInt>> clientsInputs;
   public final Set<BigInteger> set;
   public final List<BigInteger> BETA_SHARE;
+  private List<BigInteger> res;
 
   public SetMembershipServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort, int setSize) {
-    super(myId, serverIdIpMap, bitLength, basePort);
+      int basePort, int setSize, KeyShare keyShare) {
+    super(myId, serverIdIpMap, bitLength, basePort, keyShare);
     this.set = IntStream.range(1, setSize + 1).mapToObj(i -> BigInteger.valueOf(i))
         .collect(Collectors.toSet());
     this.BETA_SHARE = IntStream.range(1, setSize + 2)
@@ -35,7 +37,7 @@ public class SetMembershipServer extends ServerPPP {
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength, keyShare);
     clientsInputs = spdz.receiveInputs();
   }
 
@@ -69,6 +71,14 @@ public class SetMembershipServer extends ServerPPP {
         });
       });
     };
-    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, Collections.singletonList(spdz.run(app)));
+    res = Collections.singletonList(spdz.run(app));
+  }
+
+  @Override
+  public void afterEach() {
+    spdz.sendOutputsTo(ClientPPP.CLIENT_ID + 1, res);
+    // Move base ports up
+    currentBasePort += maxServers;
+    spdz.shutdown();
   }
 }

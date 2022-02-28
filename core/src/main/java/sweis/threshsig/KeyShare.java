@@ -1,9 +1,10 @@
 package sweis.threshsig;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Secret Key Share for an RSA (k,l) Threshold Scheme
@@ -13,7 +14,7 @@ import java.util.Random;
  * 
  * @author Steve Weis <sweis@mit.edu>
  */
-public class KeyShare {
+public class KeyShare implements Serializable {
   // Constants and variables
   //............................................................................
   /** Secret key value */
@@ -32,15 +33,22 @@ public class KeyShare {
   // TODO: Maybe get a better id scheme. Use verifier?
   private int id;
 
-  // TODO-Rand: This is klunky.
-  // Maybe use a utility class with a RNG for everyone
-  private static SecureRandom random;
-  private MessageDigest md;
-  static {
-    final byte[] randSeed = new byte[20];
-    (new Random()).nextBytes(randSeed);
-    random = new SecureRandom(randSeed);
-  }
+//  static  SecureRandom random;
+//  static {
+//    try {
+//      random = SecureRandom.getInstance("SHA1PRNG");
+//      random.setSeed(42);
+//    } catch (Exception e) {
+//      throw new RuntimeException("Could not intialize static randomness");
+//    }
+//  }
+//  // TODO-Rand: This is klunky.
+//  // Maybe use a utility class with a RNG for everyone
+//  private static SecureRandom getRandom() {
+//    return random;
+//  }
+//  private MessageDigest md;
+
 
   // Constructors
   //............................................................................
@@ -101,49 +109,48 @@ public class KeyShare {
    */
   public SigShare sign(final byte[] b) {
     final BigInteger x = (new BigInteger(b)).mod(n);
-
-    final int randbits = n.bitLength() + 3 * ThreshUtil.L1;
+//    final int randbits = n.bitLength() + 3 * ThreshUtil.L1;
 
     // r \elt (0, 2^L(n)+3*l1)
-    final BigInteger r = (new BigInteger(randbits, random));
-    final BigInteger vprime = groupVerifier.modPow(r, n);
-    final BigInteger xtilde = x.modPow(ThreshUtil.FOUR.multiply(delta), n);
-    final BigInteger xprime = xtilde.modPow(r, n);
-
-    BigInteger c = null;
-    BigInteger z = null;
-    // Try to generate C and Z
-    try {
-      md = MessageDigest.getInstance("SHA");
-      md.reset();
-
-      // debug("v: " + groupVerifier.mod(n));
-      md.update(groupVerifier.mod(n).toByteArray());
-
-      // debug("xtilde: " + xtilde);
-      md.update(xtilde.toByteArray());
-
-      // debug("vi: " + verifier.mod(n));
-      md.update(verifier.mod(n).toByteArray());
-
-      // debug("xi^2: " + x.modPow(signVal,n).modPow(TWO,n));
-      md.update(x.modPow(signVal, n).modPow(ThreshUtil.TWO, n).toByteArray());
-
-      // debug("v': "+ vprime);
-      md.update(vprime.toByteArray());
-
-      // debug("x': " + xprime);
-      md.update(xprime.toByteArray());
-      c = new BigInteger(md.digest()).mod(n);
-      z = (c.multiply(secret)).add(r);
-    } catch (final java.security.NoSuchAlgorithmException e) {
-      debug("Provider could not locate SHA message digest .");
-      e.printStackTrace();
-    }
-
-    final Verifier ver = new Verifier(z, c, verifier, groupVerifier);
-
-    return new SigShare(id, x.modPow(signVal, n), ver);
+//    final BigInteger r = (new BigInteger(randbits, getRandom()));
+//    final BigInteger vprime = groupVerifier.modPow(r, n);
+//    final BigInteger xtilde = x.modPow(ThreshUtil.FOUR.multiply(delta), n);
+//    final BigInteger xprime = xtilde.modPow(r, n);
+//
+//    BigInteger c = null;
+//    BigInteger z = null;
+//    // Try to generate C and Z
+//    try {
+//      md = MessageDigest.getInstance("SHA");
+//      md.reset();
+//
+//      // debug("v: " + groupVerifier.mod(n));
+//      md.update(groupVerifier.mod(n).toByteArray());
+//
+//      // debug("xtilde: " + xtilde);
+//      md.update(xtilde.toByteArray());
+//
+//      // debug("vi: " + verifier.mod(n));
+//      md.update(verifier.mod(n).toByteArray());
+//
+//      // debug("xi^2: " + x.modPow(signVal,n).modPow(TWO,n));
+//      md.update(x.modPow(signVal, n).modPow(ThreshUtil.TWO, n).toByteArray());
+//
+//      // debug("v': "+ vprime);
+//      md.update(vprime.toByteArray());
+//
+//      // debug("x': " + xprime);
+//      md.update(xprime.toByteArray());
+//      c = new BigInteger(md.digest()).mod(n);
+//      z = (c.multiply(secret)).add(r);
+//    } catch (final java.security.NoSuchAlgorithmException e) {
+//      debug("Provider could not locate SHA message digest .");
+//      e.printStackTrace();
+//    }
+//
+//    final Verifier ver = new Verifier(z, c, verifier, groupVerifier);
+    BigInteger sig = x.modPow(signVal, n);
+    return new SigShare(id, sig, null, n);
   }
 
   @Override
