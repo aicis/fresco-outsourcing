@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Parts of the code contributed by Mathias Rahbek.</p>
  */
-public class DemoDdnntOutputClient extends DemoDdnntClientBase implements OutputClient {
+public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
 
   private static final int MASTER_SERVER_ID = 1;
 
-  private static final Logger logger = LoggerFactory.getLogger(DemoDdnntOutputClient.class);
+  private static final Logger logger = LoggerFactory.getLogger(DdnntOutputClient.class);
 
-  public DemoDdnntOutputClient(int clientId,
+  public DdnntOutputClient(int clientId,
       List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
     super(clientId, servers);
@@ -39,7 +39,7 @@ public class DemoDdnntOutputClient extends DemoDdnntClientBase implements Output
     }, "Failed client handshake");
   }
 
-  public DemoDdnntOutputClient(int clientId, List<Party> servers) {
+  public DdnntOutputClient(int clientId, List<Party> servers) {
     this(clientId, servers, BigIntegerFieldDefinition::new);
   }
 

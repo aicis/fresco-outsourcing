@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
  * </ol>
  * </p>
  */
-public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputClient {
+public class DdnntInputClient extends DdnntClientBase implements InputClient {
 
-  private static final Logger logger = LoggerFactory.getLogger(DemoDdnntInputClient.class);
+  private static final Logger logger = LoggerFactory.getLogger(DdnntInputClient.class);
 
   private final int numInputs;
 
@@ -57,7 +57,7 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
    * @param clientId the unique id of the client (should be unique among all clients)
    * @param servers a list of servers to deliver input to
    */
-  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers,
+  public DdnntInputClient(int numInputs, int clientId, List<Party> servers,
       Function<BigInteger, FieldDefinition> definitionSupplier) {
     super(clientId, servers);
     this.numInputs = numInputs;
@@ -129,7 +129,7 @@ public class DemoDdnntInputClient extends DemoDdnntClientBase implements InputCl
    * Default constructor that uses {@link BigIntegerFieldDefinition} for the default field
    * definition.
    */
-  public DemoDdnntInputClient(int numInputs, int clientId, List<Party> servers) {
+  public DdnntInputClient(int numInputs, int clientId, List<Party> servers) {
     this(numInputs, clientId, servers, BigIntegerFieldDefinition::new);
   }
 

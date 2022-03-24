@@ -1,9 +1,8 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import java.math.BigInteger;
 
 /**
  * Simple implementation of the DDNNT client session.

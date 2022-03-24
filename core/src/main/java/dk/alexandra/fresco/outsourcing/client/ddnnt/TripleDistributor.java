@@ -1,5 +1,6 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputTuple;
 import java.util.List;
 
 /**

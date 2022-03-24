@@ -19,17 +19,17 @@ import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
 import dk.alexandra.fresco.framework.util.Pair;
-import dk.alexandra.fresco.outsourcing.jno.JnoClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.jno.JnoClientOutputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.jno.JnoInputServer;
-import dk.alexandra.fresco.outsourcing.jno.PestoOutputServer;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoClientOutputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
+import dk.alexandra.fresco.outsourcing.server.jno.PestoOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntClientOutputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientOutputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
@@ -40,9 +40,7 @@ import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzMascotDataSupplier;
-import dk.alexandra.fresco.tools.ot.base.DhParameters;
 import dk.alexandra.fresco.tools.ot.base.DummyOt;
-import dk.alexandra.fresco.tools.ot.base.NaorPinkasOt;
 import dk.alexandra.fresco.tools.ot.base.Ot;
 import dk.alexandra.fresco.tools.ot.otextension.RotList;
 import java.math.BigInteger;
@@ -52,8 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import javax.crypto.spec.DHParameterSpec;
-import sweis.threshsig.KeyShare;
 
 public class SpdzSetupUtils {
 
@@ -235,7 +231,7 @@ public class SpdzSetupUtils {
 
   public static Pair<InputServer, OutputServer> initJnoIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp, KeyShare keyShare) {
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
@@ -274,7 +270,7 @@ public class SpdzSetupUtils {
       JnoClientOutputSessionEndpoint outputSessionEndpoint = new JnoClientOutputSessionEndpoint(
           spdzSetup.getRp(),
           spdzSetup.getRp().getFieldDefinition(),
-          outputClientIds.size(), keyShare);
+          outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new PestoOutputServer<>(
           outputSessionEndpoint

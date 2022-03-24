@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import sweis.threshsig.KeyShare;
 
 public class SameObjectServer extends ServerPPP {
 
@@ -29,8 +28,8 @@ public class SameObjectServer extends ServerPPP {
   private List<BigInteger> res;
 
   public SameObjectServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength,
-      int basePort, int amountOfElements, KeyShare keyShare) {
-    super(myId, serverIdIpMap, bitLength, basePort, keyShare);
+      int basePort, int amountOfElements) {
+    super(myId, serverIdIpMap, bitLength, basePort);
     this.amountOfElements = amountOfElements;
     this.REF_VALUES = IntStream.range(1, amountOfElements + 1).mapToObj(i -> BigInteger.valueOf(i))
         .collect(
@@ -45,7 +44,7 @@ public class SameObjectServer extends ServerPPP {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
         Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true,
-        Protocol.PESTO, keyShare);
+        Protocol.PESTO);
     clientsInputs = spdz.receiveInputs();
   }
 

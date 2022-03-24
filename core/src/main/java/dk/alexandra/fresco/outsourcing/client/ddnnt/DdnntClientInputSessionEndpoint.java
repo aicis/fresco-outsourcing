@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
@@ -7,9 +7,14 @@ import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler.QueuedClient;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputTuple;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.SpdzDdnntTuple;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
+import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -19,12 +24,12 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO
  */
-public class JnoClientInputSessionEndpoint implements
-    ClientSessionRegistration<JnoClientSession>,
-    ClientSessionProducer<JnoClientSession> {
+public class DdnntClientInputSessionEndpoint implements
+    ClientSessionRegistration<DdnntClientInputSession>,
+    ClientSessionProducer<DdnntClientInputSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(JnoClientInputSessionEndpoint.class);
+      .getLogger(DdnntClientInputSessionEndpoint.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -34,7 +39,7 @@ public class JnoClientInputSessionEndpoint implements
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
 
-  public JnoClientInputSessionEndpoint(SpdzResourcePool resourcePool,
+  public DdnntClientInputSessionEndpoint(SpdzResourcePool resourcePool,
       FieldDefinition definition,
       int expectedClients) {
     if (expectedClients < 0) {
@@ -51,11 +56,19 @@ public class JnoClientInputSessionEndpoint implements
   }
 
   @Override
-  public JnoClientSession next() {
+  public DdnntClientInputSession next() {
     try {
       QueuedClient client = processingQueue.take();
-      JnoClientSession session = new JnoClientSession(client.getClientId(),
-          client.getInputAmount(), client.getNetwork(), definition, null);
+      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
+      for (int i = 0; i < client.getInputAmount(); i++) {
+        SpdzTriple trip = resourcePool
+            .getDataSupplier()
+            .getNextTriple();
+        tripList.add(new SpdzDdnntTuple(trip));
+      }
+      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
+      DdnntClientInputSession session = new DdnntClientInputSessionImpl(client.getClientId(),
+          client.getInputAmount(), client.getNetwork(), distributor, definition);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {

@@ -1,22 +1,16 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.server.jno;
 
 import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
-import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSession;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,8 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sweis.threshsig.KeyShare;
-import sweis.threshsig.SigShare;
 
 public class PestoOutputServer<ResourcePoolT extends NumericResourcePool> implements
     OutputServer<BigInteger> {
@@ -55,11 +47,11 @@ public class PestoOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
   private byte[] computeClientToken(JnoClientSession session) {
     try {
-      KeyShare keyShare = session.getKeyShare();
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
-      byte[] msg = md.digest(MSG.getBytes(StandardCharsets.UTF_8));
-      SigShare sig =  keyShare.sign(msg);
-      return serializeObject(sig);
+//      KeyShare keyShare = session.getKeyShare();
+//      MessageDigest md = MessageDigest.getInstance("SHA-256");
+//      byte[] msg = md.digest(MSG.getBytes(StandardCharsets.UTF_8));
+//      SigShare sig =  keyShare.sign(msg);
+      return null;//serializeObject(sig);
     } catch (Exception e) {
       throw new RuntimeException("Could not initialize hash digest", e);
     }

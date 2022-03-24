@@ -12,6 +12,7 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;

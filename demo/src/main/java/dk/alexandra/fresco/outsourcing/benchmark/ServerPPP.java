@@ -5,7 +5,6 @@ import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
-import sweis.threshsig.KeyShare;
 
 public abstract class ServerPPP extends PPP {
 
@@ -15,14 +14,12 @@ public abstract class ServerPPP extends PPP {
 
   protected int currentBasePort;
   protected SpdzWithIO spdz;
-  protected KeyShare keyShare;
 
 
-  public ServerPPP(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort, KeyShare keyShare) {
+  public ServerPPP(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort) {
     super(serverIdIpMap, bitLength);
     this.myId = myId;
     this.currentBasePort = basePort;
-    this.keyShare = keyShare;
   }
 
 
@@ -30,7 +27,7 @@ public abstract class ServerPPP extends PPP {
   public void beforeEach() {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
-        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, keyShare);
+        Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength);
   }
 
   @Override

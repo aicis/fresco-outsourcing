@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntInputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.math.BigInteger;
@@ -72,7 +72,7 @@ public class DdnntInputAndOutputServerTest {
     for (int i = 0; i < numClients; i++) {
       final int id = i + 1;
       es.submit(() -> {
-        DemoDdnntInputClient client = new DemoDdnntInputClient(INPUTS_PER_CLIENT, id, servers);
+        DdnntInputClient client = new DdnntInputClient(INPUTS_PER_CLIENT, id, servers);
         List<BigInteger> inputs = computeInputs(id);
         client.putBigIntegerInputs(inputs);
       });
@@ -97,7 +97,7 @@ public class DdnntInputAndOutputServerTest {
     for (int i = 0; i < numClients; i++) {
       final int id = i + OUTPUT_CLIENT_ID;
       Future<Object> assertFuture = es.submit(() -> {
-        OutputClient client = new DemoDdnntOutputClient(id, servers);
+        OutputClient client = new DdnntOutputClient(id, servers);
         List<BigInteger> actual = client.getBigIntegerOutputs();
         assertEquals(expectedOutputs, actual);
         return null;

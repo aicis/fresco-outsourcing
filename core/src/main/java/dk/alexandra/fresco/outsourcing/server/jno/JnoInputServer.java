@@ -1,9 +1,12 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.server.jno;
 
 import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
+import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInputApp;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;

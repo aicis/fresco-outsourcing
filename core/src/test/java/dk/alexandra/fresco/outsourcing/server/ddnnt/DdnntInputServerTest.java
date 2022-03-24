@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntInputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import java.math.BigInteger;
@@ -83,7 +83,7 @@ public class DdnntInputServerTest {
     for (int i = 1; i <= numClients; i++) {
       final int id = i;
       es.submit(() -> {
-        DemoDdnntInputClient client = new DemoDdnntInputClient(INPUTS_PER_CLIENT, id, servers);
+        DdnntInputClient client = new DdnntInputClient(INPUTS_PER_CLIENT, id, servers);
         List<BigInteger> inputs = computeInputs(id);
         client.putBigIntegerInputs(inputs);
       });

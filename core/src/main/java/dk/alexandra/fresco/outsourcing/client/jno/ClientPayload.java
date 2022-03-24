@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.client.jno;
 
 import dk.alexandra.fresco.framework.network.serializers.ByteSerializer;
 import java.util.List;

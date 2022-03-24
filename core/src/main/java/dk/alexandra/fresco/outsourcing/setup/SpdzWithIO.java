@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import sweis.threshsig.KeyShare;
 
 /**
  * This is a facade for the SPDZ suite functionality that allows receiving inputs from clients,
@@ -79,7 +78,7 @@ public class SpdzWithIO {
       Map<Integer, String> partiesToIps,
       int bitLength,
       boolean dummy,
-      Protocol protocol, KeyShare keyShare) {
+      Protocol protocol) {
     this.partiesToIps = partiesToIps;
     this.applicationPorts = applicationPorts;
     if (dummy) {
@@ -95,7 +94,7 @@ public class SpdzWithIO {
           partiesToIps);
     } else if (protocol == Protocol.PESTO) {
       io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps, keyShare);
+          partiesToIps);
     } else {
       throw new IllegalArgumentException("Unimplemented protocol version");
     }
@@ -105,11 +104,10 @@ public class SpdzWithIO {
 
   /**
    * Construct new SPDZ server.
-   *
-   * @param serverId Id of this server
+   *  @param serverId Id of this server
    * @param numServers total number of servers
    * @param basePort the base FRESCO port, if running on same machine all ports in range {@code
-   * basePort} to {@code basePort} + 3 * {@code numServers} must be available
+ * basePort} to {@code basePort} + 3 * {@code numServers} must be available
    * @param inputParties all client parties that will contribute input
    * @param outputParties all client parties that will receive outputs
    */
@@ -120,7 +118,7 @@ public class SpdzWithIO {
       List<Integer> inputParties,
       List<Integer> outputParties,
       Map<Integer, String> partiesToIps,
-      int bitLength, KeyShare keyShare) {
+      int bitLength) {
     this(serverId,
         SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
         SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
@@ -129,7 +127,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        true, Protocol.PESTO, keyShare
+        true, Protocol.PESTO
     );
   }
 
@@ -142,7 +140,7 @@ public class SpdzWithIO {
       Map<Integer, String> partiesToIps,
       int bitLength,
       boolean dummy,
-      Protocol protocol, KeyShare keyShare) {
+      Protocol protocol) {
     this(serverId,
         SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
         SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
@@ -151,7 +149,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        dummy, protocol, keyShare
+        dummy, protocol
     );
   }
 

@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.server.ddnnt;
+package dk.alexandra.fresco.outsourcing.client.jno;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
@@ -19,12 +19,12 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO
  */
-public class DdnntClientOutputSessionEndpoint implements
-    ClientSessionRegistration<DdnntClientOutputSession>,
-    ClientSessionProducer<DdnntClientOutputSession> {
+public class JnoClientOutputSessionEndpoint implements
+    ClientSessionRegistration<JnoClientSession>,
+    ClientSessionProducer<JnoClientSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(DdnntClientOutputSessionEndpoint.class);
+      .getLogger(JnoClientOutputSessionEndpoint.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -34,7 +34,7 @@ public class DdnntClientOutputSessionEndpoint implements
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
 
-  public DdnntClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
+  public JnoClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
       FieldDefinition definition,
       int expectedClients) {
     if (expectedClients < 0) {
@@ -55,10 +55,10 @@ public class DdnntClientOutputSessionEndpoint implements
   }
 
   @Override
-  public DdnntClientOutputSession next() {
+  public JnoClientSession next() {
     try {
       QueuedClient client = processingQueue.take();
-      DdnntClientOutputSession session = new DdnntClientOutputSessionImpl(client.getClientId(),
+      JnoClientSession session = new JnoClientSession(client.getClientId(), client.getInputAmount(),
           client.getNetwork(), definition);
       sessionsProduced++;
       return session;

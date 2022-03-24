@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Forms base for {@link DemoDdnntInputClient} and {@link DemoDdnntOutputClient}.
+ * Forms base for {@link DdnntInputClient} and {@link DdnntOutputClient}.
  */
-public abstract class DemoDdnntClientBase extends ClientBase {
+public abstract class DdnntClientBase extends ClientBase {
 
   /**
    * Creates new {@link ClientBase}.
@@ -18,7 +18,7 @@ public abstract class DemoDdnntClientBase extends ClientBase {
    * @param clientId client ID
    * @param servers servers to connect to
    */
-  DemoDdnntClientBase(int clientId, List<Party> servers) {
+  DdnntClientBase(int clientId, List<Party> servers) {
     super(clientId, servers);
   }
 

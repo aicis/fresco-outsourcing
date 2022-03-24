@@ -1,4 +1,4 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
@@ -15,17 +15,16 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sweis.threshsig.KeyShare;
 
 /**
  * TODO
  */
-public class JnoClientOutputSessionEndpoint implements
-    ClientSessionRegistration<JnoClientSession>,
-    ClientSessionProducer<JnoClientSession> {
+public class DdnntClientOutputSessionEndpoint implements
+    ClientSessionRegistration<DdnntClientOutputSession>,
+    ClientSessionProducer<DdnntClientOutputSession> {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(JnoClientOutputSessionEndpoint.class);
+      .getLogger(DdnntClientOutputSessionEndpoint.class);
 
   private final SpdzResourcePool resourcePool;
   private int clientsReady;
@@ -34,11 +33,10 @@ public class JnoClientOutputSessionEndpoint implements
   private final PriorityQueue<QueuedClient> orderingQueue;
   private final BlockingQueue<QueuedClient> processingQueue;
   private final FieldDefinition definition;
-  private final KeyShare keyShare;
 
-  public JnoClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
+  public DdnntClientOutputSessionEndpoint(SpdzResourcePool resourcePool,
       FieldDefinition definition,
-      int expectedClients, KeyShare keyshare) {
+      int expectedClients) {
     if (expectedClients < 0) {
       throw new IllegalArgumentException(
           "Expected output clients cannot be negative, but was: " + expectedClients);
@@ -54,15 +52,14 @@ public class JnoClientOutputSessionEndpoint implements
     this.orderingQueue = new PriorityQueue<>(expectedClients,
         Comparator.comparingInt(QueuedClient::getPriority));
     this.clientsReady = 0;
-    this.keyShare = keyshare;
   }
 
   @Override
-  public JnoClientSession next() {
+  public DdnntClientOutputSession next() {
     try {
       QueuedClient client = processingQueue.take();
-      JnoClientSession session = new JnoClientSession(client.getClientId(), client.getInputAmount(),
-          client.getNetwork(), definition, keyShare);
+      DdnntClientOutputSession session = new DdnntClientOutputSessionImpl(client.getClientId(),
+          client.getNetwork(), definition);
       sessionsProduced++;
       return session;
     } catch (InterruptedException e) {

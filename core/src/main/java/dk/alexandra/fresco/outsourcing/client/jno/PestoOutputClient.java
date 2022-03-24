@@ -1,6 +1,5 @@
-package dk.alexandra.fresco.outsourcing.jno;
+package dk.alexandra.fresco.outsourcing.client.jno;
 
-import dk.alexandra.fresco.framework.MaliciousException;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
@@ -12,10 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +19,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sweis.threshsig.SigShare;
-import sweis.threshsig.ThreshUtil;
 
 /**
  * A simple demo client for the DDNNT output protocol.
@@ -61,17 +55,17 @@ public class PestoOutputClient extends ClientBase implements OutputClient {
     }
     // TODO restore result
     boolean res = false;
-    try {
-      SigShare shares[] = new SigShare[results.size()];
-      for (int i = 0; i < results.size(); i++) {
-        shares[i] = (SigShare) deserialize(results.get(i));
-      }
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
-      byte[] msg = md.digest(PestoOutputServer.MSG.getBytes(StandardCharsets.UTF_8));
-      res = SigShare.verify(msg, shares, servers.size(), servers.size()+1, shares[0].getN(), ThreshUtil.F4);
-    } catch (Exception e) {
-      throw new RuntimeException("Could not decode signature", e);
-    }
+//    try {
+//      SigShare shares[] = new SigShare[results.size()];
+//      for (int i = 0; i < results.size(); i++) {
+//        shares[i] = (SigShare) deserialize(results.get(i));
+//      }
+//      MessageDigest md = MessageDigest.getInstance("SHA-256");
+//      byte[] msg = md.digest(PestoOutputServer.MSG.getBytes(StandardCharsets.UTF_8));
+//      res = SigShare.verify(msg, shares, servers.size(), servers.size()+1, shares[0].getN(), ThreshUtil.F4);
+//    } catch (Exception e) {
+//      throw new RuntimeException("Could not decode signature", e);
+//    }
     return Collections.singletonList(BigInteger.ONE);// TODO res == true ? BigInteger.ONE : BigInteger.ZERO);
   }
 

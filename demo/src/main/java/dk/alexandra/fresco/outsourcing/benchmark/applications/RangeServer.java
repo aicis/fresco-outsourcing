@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import sweis.threshsig.KeyShare;
 
 public class RangeServer extends ServerPPP  {
   private Map<Integer, List<SInt>> clientsInputs;
@@ -24,8 +23,9 @@ public class RangeServer extends ServerPPP  {
   public final List<BigInteger> BETA_SHARE = Arrays.asList(BigInteger.valueOf(101), BigInteger.valueOf(102));
   private List<BigInteger> res;
   
-  public RangeServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort, BigInteger lower, BigInteger upper,  int maxBitlength, KeyShare keyShare) {
-    super(myId, serverIdIpMap, bitLength, basePort, keyShare);
+  public RangeServer(int myId, Map<Integer, String> serverIdIpMap, int bitLength, int basePort,
+      BigInteger lower, BigInteger upper, int maxBitlength) {
+    super(myId, serverIdIpMap, bitLength, basePort);
     this.maxBitlength = maxBitlength;
     this.lower = lower;
     this.upper = upper;
@@ -33,7 +33,7 @@ public class RangeServer extends ServerPPP  {
 
   @Override
   public void beforeEach() {
-    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength, keyShare);
+    spdz = new SpdzWithIO(myId, maxServers, currentBasePort, Collections.singletonList(ClientPPP.CLIENT_ID), Collections.singletonList(ClientPPP.CLIENT_ID+1), serverIdIpMap, bitLength);
     clientsInputs = spdz.receiveInputs();
   }
 
