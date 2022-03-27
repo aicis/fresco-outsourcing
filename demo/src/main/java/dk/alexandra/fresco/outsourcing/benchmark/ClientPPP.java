@@ -61,7 +61,7 @@ public class ClientPPP extends PPP {
     InputClient client = new JnoInputClient(clientInputs.size(), CLIENT_ID, servers,
         BigIntegerFieldDefinition::new, drbg);
     client.putBigIntegerInputs(clientInputs);
-    outputClient = new PestoOutputClient(CLIENT_ID + 1, servers);
+    outputClient = new PestoOutputClient(CLIENT_ID + 1, servers, drbg);
     List<Long> results = outputClient.getLongOutputs();
     for (long res : results) {
       // TODO output value

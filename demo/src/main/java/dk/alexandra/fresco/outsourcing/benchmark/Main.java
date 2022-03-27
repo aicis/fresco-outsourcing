@@ -17,17 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// Code from https://developpaper.com/how-to-benchmark-using-jmh-in-java/
 public class Main {
-  //Generated file path: {project root} / {reportfiledir} / {XXX. Class. Getsimplename()}. JSON
   // e.g. jmh-reports/EmptyMethod.json
   private static final String reportFileDir = "jmh-reports/";
-
-  /*
-   * ============================== HOW TO RUN THIS TEST: ====================================
-   *1. Modify class < integersumtests > targetclazz = integersumtests.class// Classes that need to run jmh tests
-   *2. Run the main method in the IDE
-   */
 
   // Arguments; c/s for client/ server, followed by id, then all IPs
   public static void main(String[] args) throws Exception {
@@ -87,24 +79,7 @@ public class Main {
                 ServerPPP.UID.multiply(ServerPPP.DELTA_SHARE).add(BigInteger.valueOf(102))),
             bitLength, basePort)); // 1 input and 2 MACs
         basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
-        currentList.add(new ClientPPP(currentMap,
-            // TODO mod fieldsize
-            Arrays.asList(BigInteger.valueOf(42),
-                BigInteger.valueOf(42).multiply(ServerPPP.DELTA_SHARE).add(BigInteger.valueOf(101)),
-                ServerPPP.UID.multiply(ServerPPP.DELTA_SHARE).add(BigInteger.valueOf(102))),
-            bitLength, basePort)); // 1 input and 2 MACs
-        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
-        currentList.add(new ClientPPP(currentMap,
-            // TODO mod fieldsize
-            Arrays.asList(BigInteger.valueOf(42),
-                BigInteger.valueOf(42).multiply(ServerPPP.DELTA_SHARE).add(BigInteger.valueOf(101)),
-                ServerPPP.UID.multiply(ServerPPP.DELTA_SHARE).add(BigInteger.valueOf(102))),
-            bitLength, basePort)); // 1 input and 2 MACs
-        basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
       } else if (mode.equals("s")) {
-//        currentList.add(new MascotServer(myId, currentMap, bitLength, basePort, shares[myId-1]));
-//        basePort += currentMap.size()*3*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-
         currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 1));
         basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
         currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 4));

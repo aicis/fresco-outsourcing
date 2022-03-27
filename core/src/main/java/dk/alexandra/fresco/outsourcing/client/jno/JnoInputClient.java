@@ -30,7 +30,7 @@ public class JnoInputClient extends ClientBase implements InputClient {
     ExceptionConverter.safe(() -> {
       this.handshake(definitionSupplier, numInputs);
       return null;
-    }, "Failed client handsha1ke");
+    }, "Failed client handshake");
   }
 
   private List<FieldElement> additivelyShare(FieldElement element, int amount) {
@@ -51,7 +51,7 @@ public class JnoInputClient extends ClientBase implements InputClient {
     return shares;
   }
 
-  private FieldElement randomElement() {
+  FieldElement randomElement() {
     // Amount of bytes is 2*modulus size to ensure that there is no bias for any statistical sec par up to the size of the modulus.
     int bytesToSample = 1+((2*definition.getBitLength()) / Byte.SIZE);
     byte[] bytes = new byte[bytesToSample];
