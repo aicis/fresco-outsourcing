@@ -44,7 +44,7 @@ public class SameObjectServer extends ServerPPP {
     spdz = new SpdzWithIO(myId, maxServers, currentBasePort,
         Collections.singletonList(ClientPPP.CLIENT_ID),
         Collections.singletonList(ClientPPP.CLIENT_ID + 1), serverIdIpMap, bitLength, true,
-        Protocol.PESTO);
+        Protocol.JNO);
     clientsInputs = spdz.receiveInputs();
   }
 

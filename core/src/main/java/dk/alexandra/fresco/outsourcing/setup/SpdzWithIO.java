@@ -27,7 +27,7 @@ public class SpdzWithIO {
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   public enum Protocol {
-    PESTO,
+    JNO,
     DDNNT
   }
 
@@ -92,7 +92,7 @@ public class SpdzWithIO {
     if (protocol == Protocol.DDNNT) {
       io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
           partiesToIps);
-    } else if (protocol == Protocol.PESTO) {
+    } else if (protocol == Protocol.JNO) {
       io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
           partiesToIps);
     } else {
@@ -127,7 +127,7 @@ public class SpdzWithIO {
         outputParties,
         partiesToIps,
         bitLength,
-        true, Protocol.PESTO
+        true, Protocol.JNO
     );
   }
 
@@ -231,7 +231,7 @@ public class SpdzWithIO {
     spdzSetup.getSce().close();
   }
 
-  private int getServerId() {
+  public int getServerId() {
     return spdzSetup
         .getNetConf()
         .getMyId();

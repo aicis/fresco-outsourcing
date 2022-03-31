@@ -4,8 +4,11 @@ import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -16,19 +19,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PestoOutputServer<ResourcePoolT extends NumericResourcePool> implements
     OutputServer<BigInteger> {
 
   private static final Logger logger = LoggerFactory.getLogger(PestoOutputServer.class);
   public static final  String MSG = "test message";
-  private final ClientSessionProducer<JnoClientSession> clientSessionProducer;
+  private final ClientSessionHandler<JnoClientSession> clientSessionProducer;
   private final List<SInt> hiddenOutputs;
   private final List<BigInteger> publicOutput;
 
-  public PestoOutputServer(ClientSessionProducer<JnoClientSession> clientSessionProducer) {
+  public PestoOutputServer(ClientSessionHandler<JnoClientSession> clientSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.hiddenOutputs = new ArrayList<>();
     this.publicOutput = new ArrayList<>();

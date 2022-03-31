@@ -11,7 +11,6 @@ import java.util.List;
 * </p>
 */
 public interface InputClient {
-
   /**
    * Inputs a list of values given as BigIntegers.
    *

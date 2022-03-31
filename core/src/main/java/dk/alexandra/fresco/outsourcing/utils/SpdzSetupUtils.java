@@ -52,6 +52,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 public class SpdzSetupUtils {
+  public static final int DEFAULT_BITLENGTH = 64;
 
   private SpdzSetupUtils() {
   }
@@ -96,7 +97,7 @@ public class SpdzSetupUtils {
   }
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
-    return getSetup(serverId, partiesToPorts, getLocalhostMap(partiesToPorts), 64);
+    return getSetup(serverId, partiesToPorts, getLocalhostMap(partiesToPorts), DEFAULT_BITLENGTH);
   }
 
   static Map<Integer, RotList> getSeedOts(int myId, int parties, int prgSeedLength, Drbg drbg,

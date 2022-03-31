@@ -1,27 +1,24 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import static org.junit.Assert.assertEquals;
-
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntInputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntOutputClient;
-import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import org.junit.Test;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of

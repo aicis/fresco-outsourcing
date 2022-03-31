@@ -1,27 +1,24 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import static org.junit.Assert.assertEquals;
-
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntInputClient;
-import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import org.junit.Test;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
@@ -32,8 +29,8 @@ public class DdnntInputServerTest {
   private static final int INPUTS_PER_CLIENT = 100;
   private static final int NUMBER_OF_SERVERS = 3;
   private static final int NUMBER_OF_INPUT_CLIENTS = 100;
-  private static final int NUMBER_OF_OUTPUT_CLIENTS = 1;
-  private static final int OUTPUT_CLIENT_ID = NUMBER_OF_INPUT_CLIENTS + NUMBER_OF_OUTPUT_CLIENTS;
+  private static final int NUMBER_OF_OUTPUT_CLIENTS = 5;
+  private static final int FIRST_OUTPUT_CLIENT_ID = NUMBER_OF_INPUT_CLIENTS + NUMBER_OF_OUTPUT_CLIENTS;
 
   @Test
   public void testInputsOnly() throws InterruptedException, ExecutionException {
@@ -130,7 +127,7 @@ public class DdnntInputServerTest {
         .collect(Collectors.toList());
 
     List<Integer> outputIds = IntStream
-        .range(OUTPUT_CLIENT_ID, OUTPUT_CLIENT_ID + numOutputClients).boxed()
+        .range(FIRST_OUTPUT_CLIENT_ID, FIRST_OUTPUT_CLIENT_ID + numOutputClients).boxed()
         .collect(Collectors.toList());
 
     Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(numServers);

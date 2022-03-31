@@ -8,13 +8,14 @@ import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.ClientBase;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JnoInputClient extends ClientBase implements InputClient {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
