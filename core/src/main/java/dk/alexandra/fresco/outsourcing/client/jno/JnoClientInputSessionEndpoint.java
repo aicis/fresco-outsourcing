@@ -1,27 +1,29 @@
 package dk.alexandra.fresco.outsourcing.client.jno;
 
-import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
-
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler.QueuedClient;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
 /**
  * TODO
  */
 public class JnoClientInputSessionEndpoint implements
     ClientSessionRegistration<JnoClientSession>,
-    ClientSessionProducer<JnoClientSession> {
+    ClientSessionProducer<JnoClientSession>, ClientSessionHandler<JnoClientSession> {
 
   private static final Logger logger = LoggerFactory
       .getLogger(JnoClientInputSessionEndpoint.class);

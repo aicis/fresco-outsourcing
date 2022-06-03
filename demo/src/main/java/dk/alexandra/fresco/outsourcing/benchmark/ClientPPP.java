@@ -7,7 +7,7 @@ import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoInputClient;
-import dk.alexandra.fresco.outsourcing.client.jno.PestoOutputClient;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoOutputClient;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ClientPPP extends PPP {
     InputClient client = new JnoInputClient(clientInputs.size(), CLIENT_ID, servers,
         BigIntegerFieldDefinition::new, drbg);
     client.putBigIntegerInputs(clientInputs);
-    outputClient = new PestoOutputClient(CLIENT_ID + 1, servers, drbg, 0);
+    outputClient = new JnoOutputClient(CLIENT_ID + 1, servers, drbg, 0);
     List<Long> results = outputClient.getLongOutputs();
     for (long res : results) {
       // TODO output value

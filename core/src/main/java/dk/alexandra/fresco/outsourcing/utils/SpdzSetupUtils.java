@@ -22,7 +22,7 @@ import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoClientInputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoClientOutputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
-import dk.alexandra.fresco.outsourcing.server.jno.PestoOutputServer;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
@@ -273,7 +273,7 @@ public class SpdzSetupUtils {
           spdzSetup.getRp().getFieldDefinition(),
           outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
-      outputServer = new PestoOutputServer<>(outputSessionEndpoint, serverSessionProducer);
+      outputServer = new JnoOutputServer<>(outputSessionEndpoint, serverSessionProducer);
     }
 
     handler.launch();

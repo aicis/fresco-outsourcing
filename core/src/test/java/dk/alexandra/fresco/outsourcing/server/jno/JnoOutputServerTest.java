@@ -6,7 +6,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefini
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
-import dk.alexandra.fresco.outsourcing.client.jno.PestoOutputClient;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoOutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
@@ -21,8 +21,9 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertEquals;
 
 public class JnoOutputServerTest {
-    private static final int NUMBER_OF_SERVERS = 2;
-    private static final int NUMBER_OF_CLIENTS = 1;
+    private static final int NUMBER_OF_SERVERS = 3;
+    // Fails for more clients with networking errors
+    private static final int NUMBER_OF_CLIENTS = 50;
     private static final int FIRST_OUTPUT_CLIENT_ID = 1;
 
     @Test
@@ -56,11 +57,11 @@ public class JnoOutputServerTest {
         for (int i = 1; i <= clientFacingPorts.size(); i++) {
             servers.add(new Party(i, "localhost", clientFacingPorts.get(i)));
         }
-        ExecutorService es = Executors.newFixedThreadPool(8);
+        ExecutorService es = Executors.newCachedThreadPool();
         List<Future<Object>> assertFutures = new ArrayList<>(expectedOutputs.size());
         for (int clientId : expectedOutputs.keySet()) {
             Future<Object> assertFuture = es.submit(() -> {
-                OutputClient client = new PestoOutputClient(clientId, servers, BigIntegerFieldDefinition::new, new AesCtrDrbg(new byte[32]), expectedOutputs.get(clientId).size());
+                OutputClient client = new JnoOutputClient(clientId, servers, BigIntegerFieldDefinition::new, new AesCtrDrbg(new byte[32]), expectedOutputs.get(clientId).size());
                 List<BigInteger> actual = client.getBigIntegerOutputs();
                 assertEquals(expectedOutputs.get(clientId), actual);
                 return null;
