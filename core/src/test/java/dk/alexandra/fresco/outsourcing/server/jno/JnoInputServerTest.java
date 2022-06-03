@@ -28,7 +28,7 @@ public class JnoInputServerTest {
     private static final int INPUTS_PER_CLIENT = 100;
     private static final int NUMBER_OF_SERVERS = 3;
     private static final int NUMBER_OF_INPUT_CLIENTS = 100;
-    private static final int NUMBER_OF_OUTPUT_CLIENTS = 1; // TODO only works with 1 output client
+    private static final int NUMBER_OF_OUTPUT_CLIENTS = 10;
     private static final int OUTPUT_CLIENT_ID = NUMBER_OF_INPUT_CLIENTS + NUMBER_OF_OUTPUT_CLIENTS;
 
     @Test

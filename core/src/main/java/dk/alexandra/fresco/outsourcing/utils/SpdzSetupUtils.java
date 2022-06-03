@@ -273,9 +273,7 @@ public class SpdzSetupUtils {
           spdzSetup.getRp().getFieldDefinition(),
           outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
-      outputServer = new PestoOutputServer<>(
-          outputSessionEndpoint
-      );
+      outputServer = new PestoOutputServer<>(outputSessionEndpoint, serverSessionProducer);
     }
 
     handler.launch();

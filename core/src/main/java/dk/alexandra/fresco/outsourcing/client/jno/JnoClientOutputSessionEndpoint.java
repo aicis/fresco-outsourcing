@@ -39,10 +39,6 @@ public class JnoClientOutputSessionEndpoint implements ClientSessionHandler<JnoC
       throw new IllegalArgumentException(
           "Expected output clients cannot be negative, but was: " + expectedClients);
     }
-    if (expectedClients > 1) {
-      throw new IllegalArgumentException(
-          "This producer does not support more than 1 output client: " + expectedClients);
-    }
     this.resourcePool = resourcePool;
     this.definition = definition;
     this.expectedClients = expectedClients;

@@ -12,20 +12,12 @@ import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSession;
 import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
@@ -90,7 +82,7 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> implement
     return clientPayloads;
   }
 
-  private static class ClientCommunication implements Callable<ClientPayload<FieldElement>> {
+  static class ClientCommunication implements Callable<ClientPayload<FieldElement>> {
 
     private final JnoClientSession session;
 
