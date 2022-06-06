@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 public class JnoOutputServerTest {
     private static final int NUMBER_OF_SERVERS = 3;
-    // Fails for more clients with networking errors
+    // TODO Fails for more clients with networking errors already in the handshake
     private static final int NUMBER_OF_CLIENTS = 50;
     private static final int FIRST_OUTPUT_CLIENT_ID = 1;
 

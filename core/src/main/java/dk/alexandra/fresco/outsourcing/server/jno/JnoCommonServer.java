@@ -44,7 +44,7 @@ public class JnoCommonServer<ResourcePoolT extends NumericResourcePool> {
             clientPayloads.put(e.getKey(), p);
             logger.info("Finished client input session for C{}", e.getKey());
         }
-        es.awaitTermination(1, TimeUnit.SECONDS);
+        es.shutdown();
         return new Pair<>(clientPayloads, sessions);
     }
 

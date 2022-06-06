@@ -1,13 +1,16 @@
 package dk.alexandra.fresco.outsourcing.server.jno;
 
+import dk.alexandra.fresco.framework.Application;
+import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
+import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
-import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInputApp;
+import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSession;
@@ -45,7 +48,7 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends J
     Network network = serverInputSession.getNetwork();
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
     ReconstructClientInputApp app = new ReconstructClientInputApp(resourcePool.getMyId(),
-            resourcePool.getNoOfParties(), clientPayload.getFirst(), resourcePool.getFieldDefinition());
+            resourcePool.getNoOfParties(), clientPayload.getFirst());
     return serverInputSession.getSce().runApplication(app, resourcePool, network);
   }
   @Override
@@ -57,4 +60,22 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends J
     return ft;
   }
 
+  private static class ReconstructClientInputApp implements
+          Application<Map<Integer, List<SInt>>, ProtocolBuilderNumeric> {
+
+    private final SortedMap<Integer, ClientPayload<FieldElement>> clientPayload;
+    private final int myId;
+    private final int amountOfServers;
+
+    public ReconstructClientInputApp(int myId, int amountOfServer, SortedMap<Integer, ClientPayload<FieldElement>> clientPayload) {
+      this.myId = myId;
+      this.amountOfServers = amountOfServer;
+      this.clientPayload = clientPayload;
+    }
+
+    @Override
+    public DRes<Map<Integer, List<SInt>>> buildComputation(ProtocolBuilderNumeric builder) {
+      return builder.seq(new ReconstructClientInput(myId, amountOfServers, clientPayload));
+    }
+  }
 }

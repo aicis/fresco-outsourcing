@@ -4,7 +4,6 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.ComputationParallel;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
-import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
@@ -23,15 +22,13 @@ public class ReconstructClientInputApp implements
     Application<Map<Integer, List<SInt>>, ProtocolBuilderNumeric> {
 
   private final SortedMap<Integer, ClientPayload<FieldElement>> clientPayload;
-  private final FieldDefinition definition;
   private final int myId;
   private final int amountOfServers;
 
-  public ReconstructClientInputApp(int myId, int amountOfServer, SortedMap<Integer, ClientPayload<FieldElement>> clientPayload, FieldDefinition definition) {
+  public ReconstructClientInputApp(int myId, int amountOfServer, SortedMap<Integer, ClientPayload<FieldElement>> clientPayload) {
     this.myId = myId;
     this.amountOfServers = amountOfServer;
     this.clientPayload = clientPayload;
-    this.definition = definition;
   }
 
   @Override
