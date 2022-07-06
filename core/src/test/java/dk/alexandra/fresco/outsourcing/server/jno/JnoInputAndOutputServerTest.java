@@ -25,7 +25,7 @@ public class JnoInputAndOutputServerTest extends GenericInputOutputTest {
 
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
-        return new JnoOutputClient(id, servers, new AesCtrDrbg(new byte[32]), INPUTS_PER_CLIENT);
+        return new JnoOutputClient(id, servers, new AesCtrDrbg(new byte[32]), testRunner.getOutputsPerClient());
     }
 
 }

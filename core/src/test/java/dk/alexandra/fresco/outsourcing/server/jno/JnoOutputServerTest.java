@@ -18,6 +18,6 @@ public class JnoOutputServerTest extends GenericOutputServerTest {
 
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
-        return new JnoOutputClient(id, servers, new AesCtrDrbg(new byte[32]), NUMBER_OF_OUTPUTS);
+        return new JnoOutputClient(id, servers, new AesCtrDrbg(new byte[32]), testRunner.getOutputsPerClient());
     }
 }

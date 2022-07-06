@@ -25,5 +25,4 @@ public class DdnntInputAndOutputServerTest extends GenericInputOutputTest {
   protected OutputClient getOutputClient(int id, List<Party> servers) {
     return new DdnntOutputClient(id, servers);
   }
-
 }
