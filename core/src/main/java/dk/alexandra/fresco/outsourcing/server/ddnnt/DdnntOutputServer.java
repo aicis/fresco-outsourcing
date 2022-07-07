@@ -27,15 +27,15 @@ import java.util.concurrent.Executors;
  * @param <ResourcePoolT> type of resource pool used to run the protocol
  * @see <a href="https://eprint.iacr.org/2015/1006">Protocol Description on ePrint</a>
  */
-public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implements
-    OutputServer<SInt> {
+public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> implements
+        OutputServer<SInt> {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
-  private final ClientSessionHandler<ClientSession> clientSessionHandler;
+  private final ClientSessionHandler<ClientSessionT> clientSessionHandler;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final Map<Integer, List<SInt>> idToOutputs;
 
-  public DdnntOutputServer(ClientSessionHandler<ClientSession> clientSessionHandler,
+  public DdnntOutputServer(ClientSessionHandler<ClientSessionT> clientSessionHandler,
                            ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionHandler = Objects.requireNonNull(clientSessionHandler);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);

@@ -14,6 +14,7 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.*;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.GenericClientSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.*;
@@ -201,7 +202,7 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      ClientSessionHandler<ClientSession> outputSessionEndpoint = new GenericClientSessionEndpoint(
+      ClientSessionHandler<GenericClientSession> outputSessionEndpoint = new GenericClientSessionEndpoint(
               spdzSetup.getRp(),
               spdzSetup.getRp().getFieldDefinition(),
               outputClientIds.size());

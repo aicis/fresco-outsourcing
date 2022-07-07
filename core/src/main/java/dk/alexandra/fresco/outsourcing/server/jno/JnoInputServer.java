@@ -21,10 +21,10 @@ import java.util.SortedMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends JnoCommonServer implements InputServer {
+public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> extends JnoCommonServer implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
 
-  public JnoInputServer(ClientSessionHandler<ClientSession> clientSessionProducer,
+  public JnoInputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                         ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }

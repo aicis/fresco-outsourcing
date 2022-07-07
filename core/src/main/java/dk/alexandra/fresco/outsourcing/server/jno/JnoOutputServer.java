@@ -24,13 +24,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-public class JnoOutputServer<ResourcePoolT extends NumericResourcePool> extends JnoCommonServer implements
-    OutputServer<SInt> {
+public class JnoOutputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> extends JnoCommonServer implements
+        OutputServer<SInt> {
 
   private static final Logger logger = LoggerFactory.getLogger(JnoOutputServer.class);
   private final Map<Integer, List<SInt>> idToOutputs = new HashMap<>();
 
-  public JnoOutputServer(ClientSessionHandler<ClientSession> clientSessionProducer,
+  public JnoOutputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }

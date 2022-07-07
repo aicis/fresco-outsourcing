@@ -3,6 +3,7 @@ package dk.alexandra.fresco.outsourcing.client;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSession;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import java.util.concurrent.BlockingQueue;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
-public abstract class AbstractSessionEndPoint<T extends ClientSession> {
+public abstract class AbstractSessionEndPoint<T extends ClientSession> implements ClientSessionHandler<T> {
     private static final Logger logger = LoggerFactory
             .getLogger(AbstractSessionEndPoint.class);
 
@@ -46,6 +47,7 @@ public abstract class AbstractSessionEndPoint<T extends ClientSession> {
 
     protected abstract T getClientSession(DemoClientSessionRequestHandler.QueuedClient client);
 
+    @Override
     public T next() {
         try {
             DemoClientSessionRequestHandler.QueuedClient client = processingQueue.take();
@@ -57,10 +59,12 @@ public abstract class AbstractSessionEndPoint<T extends ClientSession> {
         }
     }
 
+    @Override
     public boolean hasNext() {
         return expectedClients - sessionsProduced > 0;
     }
 
+    @Override
     public int registerNewSessionRequest(byte[] handshakeMessage, TwoPartyNetwork network) {
         // Bytes 0-3: client priority, assigned by server 1 (big endian int)
         // Bytes 4-7: unique id for client (big endian int)
@@ -73,6 +77,7 @@ public abstract class AbstractSessionEndPoint<T extends ClientSession> {
         return registerNewSessionRequest(priority, clientId, numInputs, network);
     }
 
+    @Override
     public int getExpectedClients() {
         return expectedClients;
     }

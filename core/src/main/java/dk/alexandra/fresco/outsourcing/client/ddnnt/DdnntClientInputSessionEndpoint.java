@@ -2,8 +2,6 @@ package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.client.AbstractSessionEndPoint;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionRegistration;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler.QueuedClient;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputTuple;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.SpdzDdnntTuple;
@@ -15,9 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DdnntClientInputSessionEndpoint extends AbstractSessionEndPoint<DdnntClientInputSession> implements
-        ClientSessionRegistration<DdnntClientInputSession>,
-        ClientSessionProducer<DdnntClientInputSession> {
+public class DdnntClientInputSessionEndpoint extends AbstractSessionEndPoint<DdnntClientInputSession> {
 
   private static final Logger logger = LoggerFactory
           .getLogger(DdnntClientInputSessionEndpoint.class);
