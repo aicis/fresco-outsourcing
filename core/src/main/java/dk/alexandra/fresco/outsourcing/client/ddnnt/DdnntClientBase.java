@@ -2,7 +2,8 @@ package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
-import dk.alexandra.fresco.outsourcing.client.ClientBase;
+import dk.alexandra.fresco.outsourcing.client.AbstractClientBase;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,13 +11,13 @@ import java.util.List;
 /**
  * Forms base for {@link DdnntInputClient} and {@link DdnntOutputClient}.
  */
-public abstract class DdnntClientBase extends ClientBase {
+public abstract class DdnntClientBase extends AbstractClientBase {
 
   /**
-   * Creates new {@link ClientBase}.
+   * Creates new {@link AbstractClientBase}.
    *
    * @param clientId client ID
-   * @param servers servers to connect to
+   * @param servers  servers to connect to
    */
   DdnntClientBase(int clientId, List<Party> servers) {
     super(clientId, servers);

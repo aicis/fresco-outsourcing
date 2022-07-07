@@ -8,7 +8,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.lib.common.math.AdvancedNumeric;
-import dk.alexandra.fresco.outsourcing.client.ClientBase;
+import dk.alexandra.fresco.outsourcing.client.AbstractClientBase;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -104,7 +104,7 @@ public class ReconstructClientInput implements Computation<Map<Integer, List<SIn
             List<DRes<SInt>> tShares = sharedPayloads.stream().map(cur -> cur.getT()).collect(Collectors.toList());
             List<DRes<SInt>> kShares = sharedPayloads.stream().map(cur -> cur.getK()).collect(Collectors.toList());
             List<DRes<SInt>> rShares = sharedPayloads.stream().map(cur -> cur.getR()).collect(Collectors.toList());
-            List<List<DRes<SInt>>> xShares = ClientBase.transpose(sharedPayloads.stream().map(cur -> cur.getX()).collect(Collectors.toList()));
+            List<List<DRes<SInt>>> xShares = AbstractClientBase.transpose(sharedPayloads.stream().map(cur -> cur.getX()).collect(Collectors.toList()));
             DRes<SInt> t = AdvancedNumeric.using(builder).sum(tShares);
             DRes<SInt> k = AdvancedNumeric.using(builder).sum(kShares);
             DRes<SInt> r = AdvancedNumeric.using(builder).sum(rShares);
@@ -120,7 +120,7 @@ public class ReconstructClientInput implements Computation<Map<Integer, List<SIn
             BigInteger currentKeyPower = key.out();
             for (DRes<SInt> current : inputs) {
                 tag = builder.numeric().add(tag, builder.numeric().mult(currentKeyPower, current));
-                currentKeyPower = currentKeyPower.multiply(key.out()).mod(builder.getBasicNumericContext().getModulus());;
+                currentKeyPower = currentKeyPower.multiply(key.out()).mod(builder.getBasicNumericContext().getModulus());
             }
             tag = builder.numeric().add(tag, builder.numeric().mult(currentKeyPower, randomness));
             return builder.numeric().add(currentKeyPower.multiply(key.out()).multiply(key.out()), tag);

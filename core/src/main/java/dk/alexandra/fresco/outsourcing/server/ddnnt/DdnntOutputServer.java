@@ -9,12 +9,8 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientOutputSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
-import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSession;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.*;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzSInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +31,12 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
     OutputServer<SInt> {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
-  private final ClientSessionHandler<DdnntClientOutputSession> clientSessionHandler;
+  private final ClientSessionHandler<ClientSession> clientSessionHandler;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final Map<Integer, List<SInt>> idToOutputs;
 
-  public DdnntOutputServer(ClientSessionHandler<DdnntClientOutputSession> clientSessionHandler,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+  public DdnntOutputServer(ClientSessionHandler<ClientSession> clientSessionHandler,
+                           ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionHandler = Objects.requireNonNull(clientSessionHandler);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     this.idToOutputs = new HashMap<>();
@@ -58,7 +54,7 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
     ExecutorService es = Executors.newCachedThreadPool();
     while (clientSessionHandler.hasNext()) {
-      DdnntClientOutputSession clientSession = clientSessionHandler.next();
+      ClientSession clientSession = clientSessionHandler.next();
       logger.info("Running client output session for C{}", clientSession.getClientId());
       AuthenticateOutput app = new AuthenticateOutput(idToOutputs.get(clientSession.getClientId()));
       List<Map<String, DRes<SInt>>> result =
@@ -116,10 +112,10 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
   private static class ClientCommunication implements Runnable {
 
-    private final DdnntClientOutputSession session;
-    private List<Map<String, DRes<SInt>>> outputs;
+    private final ClientSession session;
+    private final List<Map<String, DRes<SInt>>> outputs;
 
-    ClientCommunication(DdnntClientOutputSession session, List<Map<String, DRes<SInt>>> outputs) {
+    ClientCommunication(ClientSession session, List<Map<String, DRes<SInt>>> outputs) {
       this.outputs = outputs;
       this.session = session;
     }

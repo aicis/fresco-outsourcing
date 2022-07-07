@@ -13,26 +13,17 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
-import dk.alexandra.fresco.framework.util.AesCtrDrbg;
-import dk.alexandra.fresco.framework.util.AesCtrDrbgFactory;
-import dk.alexandra.fresco.framework.util.Drbg;
-import dk.alexandra.fresco.framework.util.ModulusFinder;
-import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
-import dk.alexandra.fresco.framework.util.Pair;
-import dk.alexandra.fresco.outsourcing.client.jno.JnoClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.client.jno.JnoClientOutputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
-import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
-import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
-import dk.alexandra.fresco.outsourcing.server.InputServer;
-import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import dk.alexandra.fresco.framework.util.*;
+import dk.alexandra.fresco.outsourcing.client.ClientOutputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientOutputSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSessionEndpoint;
+import dk.alexandra.fresco.outsourcing.server.*;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
@@ -43,13 +34,10 @@ import dk.alexandra.fresco.suite.spdz.storage.SpdzMascotDataSupplier;
 import dk.alexandra.fresco.tools.ot.base.DummyOt;
 import dk.alexandra.fresco.tools.ot.base.Ot;
 import dk.alexandra.fresco.tools.ot.otextension.RotList;
+
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
 
 public class SpdzSetupUtils {
   public static final int DEFAULT_BITLENGTH = 64;
@@ -215,10 +203,13 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      DdnntClientOutputSessionEndpoint outputSessionEndpoint = new DdnntClientOutputSessionEndpoint(
-          spdzSetup.getRp(),
-          spdzSetup.getRp().getFieldDefinition(),
-          outputClientIds.size());
+      ClientSessionHandler<ClientSession> outputSessionEndpoint = new ClientOutputSessionEndpoint(
+              spdzSetup.getRp(),
+              spdzSetup.getRp().getFieldDefinition(),
+              (clientId, network, fieldDefinition) -> {
+                return new GenericClientSession(clientId, network, fieldDefinition);
+              },
+              outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new DdnntOutputServer<>(
           outputSessionEndpoint,
@@ -255,23 +246,23 @@ public class SpdzSetupUtils {
     OutputServer outputServer = null;
 
     if (!inputClientIds.isEmpty()) {
-      JnoClientInputSessionEndpoint inputSessionEndpoint =
-          new JnoClientInputSessionEndpoint(
-              spdzSetup.getRp(),
-              spdzSetup.getRp().getFieldDefinition(),
-              inputClientIds.size());
+      JnoClientSessionEndpoint inputSessionEndpoint =
+              new JnoClientSessionEndpoint(
+                      spdzSetup.getRp(),
+                      spdzSetup.getRp().getFieldDefinition(),
+                      inputClientIds.size());
       handler.setInputRegistrationHandler(inputSessionEndpoint);
       inputServer = new JnoInputServer<>(
-          inputSessionEndpoint,
-          serverSessionProducer
+              inputSessionEndpoint,
+              serverSessionProducer
       );
     }
 
     if (!outputClientIds.isEmpty()) {
-      JnoClientOutputSessionEndpoint outputSessionEndpoint = new JnoClientOutputSessionEndpoint(
-          spdzSetup.getRp(),
-          spdzSetup.getRp().getFieldDefinition(),
-          outputClientIds.size());
+      JnoClientSessionEndpoint outputSessionEndpoint = new JnoClientSessionEndpoint(
+              spdzSetup.getRp(),
+              spdzSetup.getRp().getFieldDefinition(),
+              outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new JnoOutputServer<>(outputSessionEndpoint, serverSessionProducer);
     }

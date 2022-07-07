@@ -8,8 +8,8 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
-import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
@@ -26,7 +26,8 @@ import java.util.concurrent.FutureTask;
 
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends JnoCommonServer implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
-  public JnoInputServer(ClientSessionHandler<JnoClientSession> clientSessionProducer,
+
+  public JnoInputServer(ClientSessionHandler<GenericClientSession> clientSessionProducer,
                         ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }
@@ -43,7 +44,7 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends J
    */
   protected Map<Integer, List<SInt>> runInputProtocol() throws Exception {
     logger.info("Running input session");
-    Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<JnoClientSession>> clientPayload = getClientPayload();
+    Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
     ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
     Network network = serverInputSession.getNetwork();
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();

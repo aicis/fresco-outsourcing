@@ -5,7 +5,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
-import dk.alexandra.fresco.outsourcing.client.ClientBase;
+import dk.alexandra.fresco.outsourcing.client.AbstractClientBase;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,13 +16,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class JnoCommonClient extends ClientBase {
+public class JnoCommonClient extends AbstractClientBase {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final int amount;
     private final Drbg drbg;
 
     public JnoCommonClient(int amount, int clientId, List<Party> servers,
-                          Function<BigInteger, FieldDefinition> definitionSupplier, Drbg drbg) {
+                           Function<BigInteger, FieldDefinition> definitionSupplier, Drbg drbg) {
         super(clientId, servers);
         this.amount = amount;
         this.drbg = drbg;

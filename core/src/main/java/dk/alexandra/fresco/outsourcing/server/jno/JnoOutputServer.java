@@ -10,8 +10,8 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
-import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
@@ -33,14 +33,14 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool> extends 
   private static final Logger logger = LoggerFactory.getLogger(JnoOutputServer.class);
   private final Map<Integer, List<SInt>> idToOutputs = new HashMap<>();
 
-  public JnoOutputServer(ClientSessionHandler<JnoClientSession> clientSessionProducer,
+  public JnoOutputServer(ClientSessionHandler<GenericClientSession> clientSessionProducer,
                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }
 
   private void runSession() {
     ExceptionConverter.safe(()-> {
-      Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<JnoClientSession>> clientPayload = getClientPayload();
+      Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
       ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
       Network network = serverInputSession.getNetwork();
       ResourcePoolT resourcePool = serverInputSession.getResourcePool();
@@ -48,7 +48,7 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool> extends 
               resourcePool.getNoOfParties(), clientPayload.getFirst(), idToOutputs);
       Map<Integer, List<BigInteger>> res = serverInputSession.getSce().runApplication(app, resourcePool, network);
       ExecutorService es = Executors.newCachedThreadPool();
-      for (JnoClientSession session : clientPayload.getSecond()) {
+      for (GenericClientSession session : clientPayload.getSecond()) {
         es.submit(new ClientOutputCommunication(session, res.get(session.getClientId()), serverInputSession.getResourcePool().getFieldDefinition()));
       }
       es.shutdown();
@@ -71,11 +71,11 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool> extends 
 
   private static class ClientOutputCommunication implements Runnable {
 
-    private final JnoClientSession session;
-    private List<BigInteger> output;
+    private final GenericClientSession session;
+    private final List<BigInteger> output;
     private final FieldDefinition definition;
 
-    ClientOutputCommunication(JnoClientSession session, List<BigInteger> output, FieldDefinition definition) {
+    ClientOutputCommunication(GenericClientSession session, List<BigInteger> output, FieldDefinition definition) {
       this.output = output;
       this.session = session;
       this.definition = definition;

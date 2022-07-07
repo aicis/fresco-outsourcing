@@ -1,12 +1,13 @@
 package dk.alexandra.fresco.outsourcing.client;
 
-import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
-
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,24 +20,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public abstract class ClientBase {
-  private static final Logger logger = LoggerFactory.getLogger(ClientBase.class);
+import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+
+public abstract class AbstractClientBase {
+  private static final Logger logger = LoggerFactory.getLogger(AbstractClientBase.class);
 
   protected FieldDefinition definition;
   protected List<Party> servers;
   protected Map<Integer, TwoPartyNetwork> serverNetworks;
-  protected   int clientId;
+  protected int clientId;
 
   /**
-   * Creates new {@link ClientBase}.
+   * Creates new {@link AbstractClientBase}.
    *
    * @param clientId client ID
-   * @param servers servers to connect to
+   * @param servers  servers to connect to
    */
-  protected ClientBase(int clientId, List<Party> servers) {
+  protected AbstractClientBase(int clientId, List<Party> servers) {
     if (clientId < 1) {
       throw new IllegalArgumentException("Client ID must be 1 or higher");
     }
