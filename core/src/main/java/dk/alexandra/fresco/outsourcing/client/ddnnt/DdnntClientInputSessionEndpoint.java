@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DdnntClientInputSessionEndpoint extends AbstractSessionEndPoint implements
+public class DdnntClientInputSessionEndpoint extends AbstractSessionEndPoint<DdnntClientInputSession> implements
         ClientSessionRegistration<DdnntClientInputSession>,
         ClientSessionProducer<DdnntClientInputSession> {
 
@@ -29,23 +29,16 @@ public class DdnntClientInputSessionEndpoint extends AbstractSessionEndPoint imp
   }
 
   @Override
-  public DdnntClientInputSession next() {
-    try {
-      QueuedClient client = processingQueue.take();
-      List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
-      for (int i = 0; i < client.getInputAmount(); i++) {
-        SpdzTriple trip = resourcePool
-            .getDataSupplier()
-            .getNextTriple();
-        tripList.add(new SpdzDdnntTuple(trip));
-      }
-      TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
-      DdnntClientInputSession session = new DdnntClientInputSession(client.getClientId(),
-              client.getInputAmount(), client.getNetwork(), distributor, definition);
-      sessionsProduced++;
-      return session;
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+  protected DdnntClientInputSession getClientSession(QueuedClient client) {
+    List<DdnntInputTuple> tripList = new ArrayList<>(client.getInputAmount());
+    for (int i = 0; i < client.getInputAmount(); i++) {
+      SpdzTriple trip = resourcePool
+              .getDataSupplier()
+              .getNextTriple();
+      tripList.add(new SpdzDdnntTuple(trip));
     }
+    TripleDistributor distributor = new PreLoadedTripleDistributor(tripList);
+    return new DdnntClientInputSession(client.getClientId(),
+            client.getInputAmount(), client.getNetwork(), distributor, definition);
   }
 }

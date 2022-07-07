@@ -14,10 +14,8 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
 import dk.alexandra.fresco.framework.util.*;
-import dk.alexandra.fresco.outsourcing.client.ClientOutputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.client.jno.JnoClientSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.server.*;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
@@ -203,12 +201,9 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      ClientSessionHandler<ClientSession> outputSessionEndpoint = new ClientOutputSessionEndpoint(
+      ClientSessionHandler<ClientSession> outputSessionEndpoint = new GenericClientSessionEndpoint(
               spdzSetup.getRp(),
               spdzSetup.getRp().getFieldDefinition(),
-              (clientId, network, fieldDefinition) -> {
-                return new GenericClientSession(clientId, network, fieldDefinition);
-              },
               outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
       outputServer = new DdnntOutputServer<>(
@@ -246,8 +241,8 @@ public class SpdzSetupUtils {
     OutputServer outputServer = null;
 
     if (!inputClientIds.isEmpty()) {
-      JnoClientSessionEndpoint inputSessionEndpoint =
-              new JnoClientSessionEndpoint(
+      GenericClientSessionEndpoint inputSessionEndpoint =
+              new GenericClientSessionEndpoint(
                       spdzSetup.getRp(),
                       spdzSetup.getRp().getFieldDefinition(),
                       inputClientIds.size());
@@ -259,7 +254,7 @@ public class SpdzSetupUtils {
     }
 
     if (!outputClientIds.isEmpty()) {
-      JnoClientSessionEndpoint outputSessionEndpoint = new JnoClientSessionEndpoint(
+      GenericClientSessionEndpoint outputSessionEndpoint = new GenericClientSessionEndpoint(
               spdzSetup.getRp(),
               spdzSetup.getRp().getFieldDefinition(),
               outputClientIds.size());

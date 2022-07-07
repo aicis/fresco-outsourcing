@@ -2,6 +2,7 @@ package dk.alexandra.fresco.outsourcing.client;
 
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.server.ClientSession;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import java.util.concurrent.BlockingQueue;
 
 import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
 
-public abstract class AbstractSessionEndPoint {
+public abstract class AbstractSessionEndPoint<T extends ClientSession> {
     private static final Logger logger = LoggerFactory
             .getLogger(AbstractSessionEndPoint.class);
 
@@ -43,7 +44,18 @@ public abstract class AbstractSessionEndPoint {
         this.clientsReady = 0;
     }
 
-    public abstract GenericClientSession next();
+    protected abstract T getClientSession(DemoClientSessionRequestHandler.QueuedClient client);
+
+    public T next() {
+        try {
+            DemoClientSessionRequestHandler.QueuedClient client = processingQueue.take();
+            T session = getClientSession(client);
+            sessionsProduced++;
+            return session;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public boolean hasNext() {
         return expectedClients - sessionsProduced > 0;

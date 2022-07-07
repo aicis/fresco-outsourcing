@@ -14,10 +14,7 @@ import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
 import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
-import dk.alexandra.fresco.outsourcing.server.OutputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSession;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +30,7 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool> extends 
   private static final Logger logger = LoggerFactory.getLogger(JnoOutputServer.class);
   private final Map<Integer, List<SInt>> idToOutputs = new HashMap<>();
 
-  public JnoOutputServer(ClientSessionHandler<GenericClientSession> clientSessionProducer,
+  public JnoOutputServer(ClientSessionHandler<ClientSession> clientSessionProducer,
                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }

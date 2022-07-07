@@ -11,10 +11,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
 import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
-import dk.alexandra.fresco.outsourcing.server.InputServer;
-import dk.alexandra.fresco.outsourcing.server.ServerSession;
-import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import dk.alexandra.fresco.outsourcing.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +24,7 @@ import java.util.concurrent.FutureTask;
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool> extends JnoCommonServer implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
 
-  public JnoInputServer(ClientSessionHandler<GenericClientSession> clientSessionProducer,
+  public JnoInputServer(ClientSessionHandler<ClientSession> clientSessionProducer,
                         ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
   }

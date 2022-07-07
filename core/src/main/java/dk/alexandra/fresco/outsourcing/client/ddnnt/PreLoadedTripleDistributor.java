@@ -1,13 +1,14 @@
 package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputTuple;
+
 import java.util.List;
 
 /**
  * A simple implementation of the triple distributor, which is allocated some amount of
  * triples at construction, and will not be able to serve additional triples beyond this amount.
  */
-class PreLoadedTripleDistributor implements TripleDistributor {
+public class PreLoadedTripleDistributor implements TripleDistributor {
 
   private final List<DdnntInputTuple> preloaded;
   private int cursor = 0;

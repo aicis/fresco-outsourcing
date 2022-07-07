@@ -54,7 +54,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @param serverSessionProducer producer of server sessions
    */
   public DdnntInputServer(ClientSessionProducer<DdnntClientInputSession> clientSessionProducer,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputSession);
