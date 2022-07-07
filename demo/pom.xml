@@ -22,7 +22,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.9.0</version>
+        <version>3.10.1</version>
         <configuration>
           <encoding>UTF-8</encoding>
           <source>1.8</source>
@@ -76,25 +76,6 @@
       <groupId>dk.alexandra.fresco.outsourcing</groupId>
       <artifactId>outsourcing-core</artifactId>
       <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>dk.alexandra.fresco</groupId>
-      <artifactId>core</artifactId>
-      <version>1.3.3</version>
-    </dependency>
-
-    <dependency>
-      <groupId>dk.alexandra.fresco</groupId>
-      <artifactId>core</artifactId>
-      <version>1.3.3</version>
-      <type>test-jar</type>
-<!--      <scope>test</scope>-->
-    </dependency>
-
-    <dependency>
-      <groupId>dk.alexandra.fresco</groupId>
-      <artifactId>spdz</artifactId>
-      <version>1.3.3</version>
     </dependency>
   </dependencies>
 
