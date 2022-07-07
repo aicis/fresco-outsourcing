@@ -3,6 +3,11 @@ package dk.alexandra.fresco.outsourcing.network;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.network.socket.NetworkConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ServerSocketFactory;
+import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.ServerSocket;
@@ -11,24 +16,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.*;
 
 /**
  * THIS CLASS IS A DIRTY HACK SINCE THE CONNECTOR CLASS IN CORE DOES NOT HAVE PUBLIC CONSTRUCTORS.
  */
 public class OutsourcingConnector implements NetworkConnector {
-
+  // For how long should connection attempts to be made to any one client (approximately);
+  private static final int MAX_WAIT_TIME_SEC = 20;
   public static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.ofMinutes(1);
   private static final int PARTY_ID_BYTES = 1;
   private static final Logger logger = LoggerFactory.getLogger(OutsourcingConnector.class);
@@ -95,6 +90,7 @@ public class OutsourcingConnector implements NetworkConnector {
         Future<Map<Integer, Socket>> completed =
             connectionService.poll(remainingTime.toMillis(), TimeUnit.MILLISECONDS);
         if (completed == null) {
+          logger.error("Timed out waiting for client connections");
           throw new TimeoutException("Timed out waiting for client connections");
         } else {
           // Below, will either collect the connections made by the completed thread, or throw an
@@ -103,8 +99,10 @@ public class OutsourcingConnector implements NetworkConnector {
         }
       }
     } catch (ExecutionException e) {
+      logger.error("Failed to connect to network");
       throw new RuntimeException("Failed to connect network", e.getCause());
     } catch (Exception e) {
+      logger.error("Failed to connect to network");
       throw new RuntimeException("Failed to connect network", e);
     } finally {
       connectionExecutor.shutdownNow();
@@ -136,6 +134,11 @@ public class OutsourcingConnector implements NetworkConnector {
           socketMap.put(i, sock);
           logger.info("P{}: connected to {}", conf.getMyId(), p);
         } catch (ConnectException e) {
+          // Check that we have not been retrying for too long
+          if (1 << attempts > MAX_WAIT_TIME_SEC * 1000) {
+            logger.error("Failed to connect to party " + p.getPartyId() + " on" + p.getHostname() + ":" + p.getHostname());
+            throw e;
+          }
           // A connect exception is expected if the opposing side is not listening for our
           // connection attempt yet. We ignore this and try again.
           Thread.sleep(1 << ++attempts);
@@ -150,7 +153,7 @@ public class OutsourcingConnector implements NetworkConnector {
    *
    * @throws IOException thrown if an {@link IOException} occurs while listening.
    */
-  private Map<Integer, Socket> connectServer(final NetworkConfiguration conf) throws IOException {
+  private synchronized Map<Integer, Socket> connectServer(final NetworkConfiguration conf) throws IOException {
     Map<Integer, Socket> socketMap = new HashMap<>(conf.getMyId() - 1);
     if (conf.getMyId() > 1) {
       try (ServerSocket server = serverFactory.createServerSocket(conf.getMe().getPort())) {
@@ -165,6 +168,9 @@ public class OutsourcingConnector implements NetworkConnector {
           logger.info("P{}: accepted connection from P{}", conf.getMyId(), id);
           socketMap.put(id, sock);
         }
+      } catch (IOException e) {
+        logger.error("Could not bind socket " + conf.getMe().getPort());
+        throw e;
       }
     }
     return socketMap;
