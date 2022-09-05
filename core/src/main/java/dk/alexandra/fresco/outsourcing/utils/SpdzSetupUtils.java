@@ -81,7 +81,7 @@ public class SpdzSetupUtils {
         );
     SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
         new OpenedValueStoreImpl<>(),
-        supplier, new AesCtrDrbg(new byte[32]));
+        supplier, AesCtrDrbg::new);
     SpdzProtocolSuite suite = new SpdzProtocolSuite(64);
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,

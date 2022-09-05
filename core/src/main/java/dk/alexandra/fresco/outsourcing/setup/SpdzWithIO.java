@@ -136,7 +136,7 @@ public class SpdzWithIO {
    * Shuts down all underlying resources.
    */
   public void shutdown() {
-    spdzSetup.getSce().shutdownSCE();
+    spdzSetup.getSce().close();
   }
 
   private int getServerId() {

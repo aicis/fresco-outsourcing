@@ -65,7 +65,7 @@ public class Spdz {
    * Shuts down all underlying resources.
    */
   public void shutdown() {
-    spdzSetup.getSce().shutdownSCE();
+    spdzSetup.getSce().close();
   }
 
   /**
