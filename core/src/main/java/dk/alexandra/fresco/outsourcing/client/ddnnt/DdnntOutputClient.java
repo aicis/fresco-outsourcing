@@ -8,7 +8,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils;
+import dk.alexandra.fresco.outsourcing.utils.GenericUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +103,7 @@ public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
    */
   private int getNumOutputsFrom(int partyId) {
     TwoPartyNetwork network = serverNetworks.get(partyId);
-    return ByteConversionUtils.intFromBytes(network.receive());
+    return GenericUtils.intFromBytes(network.receive());
   }
 
   @Override

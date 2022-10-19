@@ -1,21 +1,20 @@
 package dk.alexandra.fresco.outsourcing.client;
 
+import static dk.alexandra.fresco.outsourcing.utils.GenericUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 import dk.alexandra.fresco.outsourcing.server.ClientSession;
 import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
 import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
-import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSessionEndPoint<T extends ClientSession> implements ClientSessionHandler<T> {
     private static final Logger logger = LoggerFactory

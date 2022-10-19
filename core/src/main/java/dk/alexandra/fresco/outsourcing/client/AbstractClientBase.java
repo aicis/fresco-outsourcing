@@ -1,15 +1,13 @@
 package dk.alexandra.fresco.outsourcing.client;
 
+import static dk.alexandra.fresco.outsourcing.utils.GenericUtils.intFromBytes;
+
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractClientBase {
   private static final Logger logger = LoggerFactory.getLogger(AbstractClientBase.class);
@@ -120,18 +118,5 @@ public abstract class AbstractClientBase {
     System.arraycopy(ByteAndBitConverter.toByteArray(amount), 0, msg, Integer.BYTES * 2,
         Integer.BYTES);
     return msg;
-  }
-
-  public static <T> List<List<T>> transpose(List<List<T>> table) {
-    List<List<T>> ret = new ArrayList<List<T>>();
-    final int N = table.get(0).size();
-    for (int i = 0; i < N; i++) {
-      List<T> col = new ArrayList<T>();
-      for (List<T> row : table) {
-        col.add(row.get(i));
-      }
-      ret.add(col);
-    }
-    return ret;
   }
 }

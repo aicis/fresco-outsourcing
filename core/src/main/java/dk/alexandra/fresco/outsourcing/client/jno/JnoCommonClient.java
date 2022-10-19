@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.util.Drbg;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.outsourcing.client.AbstractClientBase;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.utils.GenericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ public class JnoCommonClient extends AbstractClientBase {
             throw new IllegalArgumentException("Number of inputs does match");
         }
         List<FieldElement> inputsInField = inputs.stream().map(cur -> definition.createElement(cur)).collect(Collectors.toList());
-        List<List<FieldElement>> sharedInputs = transpose(inputsInField.stream()
+        List<List<FieldElement>> sharedInputs = GenericUtils.transpose(inputsInField.stream()
                 .map(input -> additivelyShare(input, servers.size()))
                 .collect(Collectors.toList()));
         FieldElement key = randomElement();

@@ -8,7 +8,7 @@ import java.util.List;
  * A simple implementation of the triple distributor, which is allocated some amount of
  * triples at construction, and will not be able to serve additional triples beyond this amount.
  */
-public class PreLoadedTripleDistributor implements TripleDistributor {
+class PreLoadedTripleDistributor implements TripleDistributor {
 
   private final List<DdnntInputTuple> preloaded;
   private int cursor = 0;

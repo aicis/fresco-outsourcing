@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server;
 
-import static dk.alexandra.fresco.outsourcing.utils.ByteConversionUtils.intFromBytes;
+import static dk.alexandra.fresco.outsourcing.utils.GenericUtils.intFromBytes;
 
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
