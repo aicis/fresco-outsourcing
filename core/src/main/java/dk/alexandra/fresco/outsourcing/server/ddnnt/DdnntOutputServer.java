@@ -10,17 +10,14 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.server.*;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzSInt;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Output server using the DDNNT output protocol to deliver output to clients.
@@ -30,32 +27,38 @@ import org.slf4j.LoggerFactory;
  * @param <ResourcePoolT> type of resource pool used to run the protocol
  * @see <a href="https://eprint.iacr.org/2015/1006">Protocol Description on ePrint</a>
  */
-public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implements OutputServer {
+public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> implements
+        OutputServer<SInt> {
 
   private static final Logger logger = LoggerFactory.getLogger(DdnntOutputServer.class);
-  private final ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer;
+  private final ClientSessionHandler<ClientSessionT> clientSessionHandler;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
-  private final List<SInt> outputs;
+  private final Map<Integer, List<SInt>> idToOutputs;
 
-  public DdnntOutputServer(ClientSessionProducer<DdnntClientOutputSession> clientSessionProducer,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
-    this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
+  public DdnntOutputServer(ClientSessionHandler<ClientSessionT> clientSessionHandler,
+                           ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+    this.clientSessionHandler = Objects.requireNonNull(clientSessionHandler);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
-    this.outputs = new ArrayList<>();
+    this.idToOutputs = new HashMap<>();
   }
 
   private void runOutputSession() {
+    if (idToOutputs.size() != clientSessionHandler.getExpectedClients()) {
+      // All output has not currently been added, so we wait with distributing the data
+      return;
+    }
     logger.info("Running output session");
     ServerSession<ResourcePoolT> serverOutputSession = serverSessionProducer.next();
     Network network = serverOutputSession.getNetwork();
     ResourcePoolT resourcePool = serverOutputSession.getResourcePool();
-    AuthenticateOutput app = new AuthenticateOutput(outputs);
-    List<Map<String, DRes<SInt>>> result =
-        serverOutputSession.getSce().runApplication(app, resourcePool, network);
+
     ExecutorService es = Executors.newCachedThreadPool();
-    while (clientSessionProducer.hasNext()) {
-      DdnntClientOutputSession clientSession = clientSessionProducer.next();
+    while (clientSessionHandler.hasNext()) {
+      ClientSession clientSession = clientSessionHandler.next();
       logger.info("Running client output session for C{}", clientSession.getClientId());
+      AuthenticateOutput app = new AuthenticateOutput(idToOutputs.get(clientSession.getClientId()));
+      List<Map<String, DRes<SInt>>> result =
+              serverOutputSession.getSce().runApplication(app, resourcePool, network);
       es.submit(new ClientCommunication(clientSession, result));
     }
     es.shutdown();
@@ -100,19 +103,19 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool> implem
 
   @Override
   public void putClientOutputs(int clientId, List<SInt> outputs) {
-    if (!this.outputs.isEmpty()) {
-      throw new UnsupportedOperationException("Currently only support output to at most one party");
+    if (this.idToOutputs.containsKey(clientId)) {
+      throw new UnsupportedOperationException("Output has already been set for party " + clientId);
     }
-    this.outputs.addAll(outputs);
+    this.idToOutputs.put(clientId, outputs);
     this.runOutputSession();
   }
 
   private static class ClientCommunication implements Runnable {
 
-    private final DdnntClientOutputSession session;
-    private List<Map<String, DRes<SInt>>> outputs;
+    private final ClientSession session;
+    private final List<Map<String, DRes<SInt>>> outputs;
 
-    ClientCommunication(DdnntClientOutputSession session, List<Map<String, DRes<SInt>>> outputs) {
+    ClientCommunication(ClientSession session, List<Map<String, DRes<SInt>>> outputs) {
       this.outputs = outputs;
       this.session = session;
     }

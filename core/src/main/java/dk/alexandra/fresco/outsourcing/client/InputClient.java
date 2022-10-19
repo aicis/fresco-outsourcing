@@ -11,7 +11,6 @@ import java.util.List;
 * </p>
 */
 public interface InputClient {
-
   /**
    * Inputs a list of values given as BigIntegers.
    *
@@ -31,6 +30,6 @@ public interface InputClient {
    *
    * @param inputs a list of input values
    */
-  void putIntInputs(List<Integer> inputs);
+  void  putIntInputs(List<Integer> inputs);
 
 }

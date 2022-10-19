@@ -22,7 +22,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.9.0</version>
+        <version>3.10.1</version>
         <configuration>
           <encoding>UTF-8</encoding>
           <source>1.8</source>
@@ -36,7 +36,7 @@
           <finalName>demo</finalName>
           <archive>
             <manifest>
-              <mainClass>dk.alexandra.fresco.outsourcing.demo.Demo</mainClass>
+              <mainClass>dk.alexandra.fresco.outsourcing.benchmark.Main</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -55,6 +55,18 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -65,7 +77,6 @@
       <artifactId>outsourcing-core</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
-
   </dependencies>
 
 </project>

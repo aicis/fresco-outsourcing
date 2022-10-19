@@ -19,6 +19,7 @@ import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePoolImpl;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDataSupplier;
 import dk.alexandra.fresco.suite.spdz.storage.SpdzDummyDataSupplier;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.ServerSocket;
@@ -78,6 +79,40 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
   }
 
   /**
+   * Finds {@code portsRequired} free ports and returns their port numbers.
+   * <p>
+   * NOTE: two subsequent calls to this method can return overlapping sets of free ports (same with
+   * parallel calls).
+   * </p>
+   *
+   * @param portsRequired number of free ports required
+   * @return list of port numbers of free ports
+   */
+  // TODO this does not work well in the multi-threaded or general system setting, since the port number that is free when calling this method might be used ones it gets initialized
+  public synchronized static List<Integer> getFreePorts(int portsRequired) {
+    List<ServerSocket> sockets = new ArrayList<>(portsRequired);
+    for (int i = 0; i < portsRequired; i++) {
+      try {
+        ServerSocket s = new ServerSocket(0);
+        sockets.add(s);
+        // we keep the socket open to ensure that the port is not re-used in a sub-sequent
+        // iteration
+      } catch (IOException e) {
+        throw new RuntimeException("No free ports", e);
+      }
+    }
+    return sockets.stream().map(socket -> {
+      int portNumber = socket.getLocalPort();
+      try {
+        socket.close();
+      } catch (IOException e) {
+        throw new RuntimeException("No free ports", e);
+      }
+      return portNumber;
+    }).collect(Collectors.toList());
+  }
+
+  /**
    * Builder class used to configure and build test setups for a set of parties.
    */
   public static class Builder {
@@ -87,7 +122,7 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
 
     private int maxLength = DEFAULT_MAX_BIT_LENGTH;
     private int modLength = DEFAULT_MOD_BIT_LENGTH;
-    private int parties;
+    private final int parties;
 
     Builder(int parties) {
       this.parties = parties;
@@ -144,39 +179,6 @@ public class SpdzSetup implements SuiteSetup<SpdzResourcePool, ProtocolBuilderNu
       return confs;
     }
 
-  }
-
-  /**
-   * Finds {@code portsRequired} free ports and returns their port numbers.
-   * <p>
-   * NOTE: two subsequent calls to this method can return overlapping sets of free ports (same with
-   * parallel calls).
-   * </p>
-   *
-   * @param portsRequired number of free ports required
-   * @return list of port numbers of free ports
-   */
-  public static List<Integer> getFreePorts(int portsRequired) {
-    List<ServerSocket> sockets = new ArrayList<>(portsRequired);
-    for (int i = 0; i < portsRequired; i++) {
-      try {
-        ServerSocket s = new ServerSocket(0);
-        sockets.add(s);
-        // we keep the socket open to ensure that the port is not re-used in a sub-sequent
-        // iteration
-      } catch (IOException e) {
-        throw new RuntimeException("No free ports", e);
-      }
-    }
-    return sockets.stream().map(socket -> {
-      int portNumber = socket.getLocalPort();
-      try {
-        socket.close();
-      } catch (IOException e) {
-        throw new RuntimeException("No free ports", e);
-      }
-      return portNumber;
-    }).collect(Collectors.toList());
   }
 
   /**

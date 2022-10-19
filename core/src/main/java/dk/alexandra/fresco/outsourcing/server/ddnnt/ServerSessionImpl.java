@@ -4,6 +4,7 @@ import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.network.CloseableNetwork;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
+import dk.alexandra.fresco.outsourcing.server.ServerSession;
 
 /**
  * Represents a session between the servers where the servers process input delivered by a client

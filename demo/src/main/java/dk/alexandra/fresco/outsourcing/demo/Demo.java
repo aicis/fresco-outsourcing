@@ -8,8 +8,8 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.lib.common.math.AdvancedNumeric;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntInputClient;
-import dk.alexandra.fresco.outsourcing.client.ddnnt.DemoDdnntOutputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntInputClient;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.ArrayList;
@@ -22,9 +22,9 @@ public class Demo {
 
   private static void runAsClient(int clientId, List<Party> servers) {
     final List<Integer> inputs = Arrays.asList(1, 2, 3, 4, 5);
-    InputClient inputClient = new DemoDdnntInputClient(inputs.size(), clientId, servers);
+    InputClient inputClient = new DdnntInputClient(inputs.size(), clientId, servers);
     inputClient.putIntInputs(inputs);
-    OutputClient outputClient = new DemoDdnntOutputClient(clientId + 1, servers);
+    OutputClient outputClient = new DdnntOutputClient(clientId + 1, servers);
     System.out.println("Outputs received " + outputClient.getBigIntegerOutputs());
   }
 
@@ -54,7 +54,7 @@ public class Demo {
 
     if (mode.equals("c")) {
       // Make sure to update the port here if you change the port your SPDZ servers are running on
-      runAsClient(id, SpdzSetupUtils.getServerParties(8042, 2));
+      runAsClient(id, SpdzSetupUtils.getServerParties(8042, 3));
     } else if (mode.equals("s")) {
       runAsServer(id);
     } else {

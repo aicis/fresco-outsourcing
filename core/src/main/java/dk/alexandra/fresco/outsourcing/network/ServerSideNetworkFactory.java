@@ -93,7 +93,7 @@ public class ServerSideNetworkFactory {
         Party client = new Party(Parties.CLIENT.id(), "", 0); // Note port and host irrelevant
         Map<Integer, Socket> socketMap = new HashMap<>(1);
         socketMap.put(Parties.CLIENT.id(), sock);
-        Party server = new Party(Parties.SERVER.id(), "localhost", port);
+        Party server = new Party(Parties.SERVER.id(), "", port);
         Map<Integer, Party> parties = new HashMap<>(2);
         parties.put(Parties.CLIENT.id(), client);
         parties.put(Parties.SERVER.id(), server);

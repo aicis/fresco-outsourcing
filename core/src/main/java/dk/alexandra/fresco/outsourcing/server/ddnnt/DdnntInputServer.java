@@ -12,27 +12,20 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.stream.Collectors;
+import dk.alexandra.fresco.outsourcing.server.ServerSession;
+import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.security.MessageDigest;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Input server using the DDNNT input protocol to provide input.
@@ -61,7 +54,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @param serverSessionProducer producer of server sessions
    */
   public DdnntInputServer(ClientSessionProducer<DdnntClientInputSession> clientSessionProducer,
-      ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
+                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputSession);

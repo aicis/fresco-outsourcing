@@ -26,7 +26,14 @@ public class SpdzWithIO {
 
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
+  public enum Protocol {
+    JNO,
+    DDNNT
+  }
+
+
   private final Map<Integer, Integer> applicationPorts;
+  private final Map<Integer, String> partiesToIps;
   private final SpdzSetup spdzSetup;
   private final InputServer inputServer;
   private final OutputServer outputServer;
@@ -55,10 +62,95 @@ public class SpdzWithIO {
     // TODO handle non-localhost addresses
     this.applicationPorts = applicationPorts;
     this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts);
-    Pair<InputServer, OutputServer> io = SpdzSetupUtils
-        .initIOServers(spdzSetup, inputParties, outputParties, internalPorts);
+    Pair<InputServer, OutputServer> io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts);
     this.inputServer = io.getFirst();
     this.outputServer = io.getSecond();
+    this.partiesToIps = SpdzSetupUtils.getLocalhostMap(internalPorts);
+  }
+
+  public SpdzWithIO(
+      int serverId,
+      Map<Integer, Integer> clientFacingPorts,
+      Map<Integer, Integer> internalPorts,
+      Map<Integer, Integer> applicationPorts,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength,
+      boolean dummy,
+      Protocol protocol) {
+    this.partiesToIps = partiesToIps;
+    this.applicationPorts = applicationPorts;
+    if (dummy) {
+      this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps,
+          bitLength);
+    } else {
+      this.spdzSetup = SpdzSetupUtils.getMascotSetup(serverId, clientFacingPorts, partiesToIps,
+          bitLength);
+    }
+    Pair<InputServer, OutputServer> io;
+    if (protocol == Protocol.DDNNT) {
+      io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps);
+    } else if (protocol == Protocol.JNO) {
+      io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps);
+    } else {
+      throw new IllegalArgumentException("Unimplemented protocol version");
+    }
+    this.inputServer = io.getFirst();
+    this.outputServer = io.getSecond();
+  }
+
+  /**
+   * Construct new SPDZ server.
+   *  @param serverId Id of this server
+   * @param numServers total number of servers
+   * @param basePort the base FRESCO port, if running on same machine all ports in range {@code
+ * basePort} to {@code basePort} + 3 * {@code numServers} must be available
+   * @param inputParties all client parties that will contribute input
+   * @param outputParties all client parties that will receive outputs
+   */
+  public SpdzWithIO(
+      int serverId,
+      int numServers,
+      int basePort,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength) {
+    this(serverId,
+        SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getApplicationPorts(contiguousPorts(basePort, numServers), numServers),
+        inputParties,
+        outputParties,
+        partiesToIps,
+        bitLength,
+        true, Protocol.JNO
+    );
+  }
+
+  public SpdzWithIO(
+      int serverId,
+      int numServers,
+      int basePort,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      int bitLength,
+      boolean dummy,
+      Protocol protocol) {
+    this(serverId,
+        SpdzSetup.getClientFacingPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getInternalPorts(contiguousPorts(basePort, numServers), numServers),
+        SpdzSetup.getApplicationPorts(contiguousPorts(basePort, numServers), numServers),
+        inputParties,
+        outputParties,
+        partiesToIps,
+        bitLength,
+        dummy, protocol
+    );
   }
 
   /**
@@ -91,7 +183,7 @@ public class SpdzWithIO {
    * servers.
    */
   public SpdzWithIO(int serverId, List<Integer> inputParties, List<Integer> outputParties) {
-    this(serverId, 2, DEFAULT_FRESCO_BASE_PORT, inputParties, outputParties);
+    this(serverId, 3, DEFAULT_FRESCO_BASE_PORT, inputParties, outputParties);
   }
 
   /**
@@ -107,7 +199,7 @@ public class SpdzWithIO {
   /**
    * Sends shares of secrets to specified output party.
    */
-  public void sendOutputsTo(int receiverId, List<SInt> outputs) {
+  public <T> void sendOutputsTo(int receiverId, List<T> outputs) {
     outputServer.putClientOutputs(receiverId, outputs);
   }
 
@@ -121,7 +213,7 @@ public class SpdzWithIO {
   public <T> T run(Application<T, ProtocolBuilderNumeric> app) {
     SocketNetwork network = new SocketNetwork(
         SpdzSetupUtils
-            .getNetConf(getServerId(), applicationPorts));
+            .getNetConf(getServerId(), applicationPorts, partiesToIps));
     T res = spdzSetup
         .getSce()
         .runApplication(
@@ -139,7 +231,7 @@ public class SpdzWithIO {
     spdzSetup.getSce().close();
   }
 
-  private int getServerId() {
+  public int getServerId() {
     return spdzSetup
         .getNetConf()
         .getMyId();
