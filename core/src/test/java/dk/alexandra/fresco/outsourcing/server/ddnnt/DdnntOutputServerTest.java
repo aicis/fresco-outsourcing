@@ -14,8 +14,21 @@ public class DdnntOutputServerTest extends GenericOutputServerTest {
         return SpdzWithIO.Protocol.DDNNT;
     }
 
+  // TODO handle thse methods
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
         return new DdnntOutputClient(id, servers);
+    }
+
+  private void serverSideProtocol(Future<SpdzWithIO> futureServer, List<BigInteger> toOutput) {
+    try {
+      SpdzWithIO server = futureServer.get();
+      List<SInt> out = server.run((builder) -> {
+        DRes<List<DRes<SInt>>> secretShares = dk.alexandra.fresco.lib.common.collections.Collections.using(builder).closeList(toOutput, 1);
+        return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());
+      });
+      server.sendOutputsTo(OUTPUT_CLIENT_ID, out);
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
 }
