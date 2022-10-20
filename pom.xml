@@ -7,7 +7,7 @@
   <artifactId>outsourcing</artifactId>
   <packaging>pom</packaging>
 
-  <version>0.1</version>
+  <version>0.1-SNAPSHOT</version>
   <name>Fresco Outsourcing</name>
   <description>
     A module for FRESCO that deals with outsourcing MPC computation from a group of clients to a

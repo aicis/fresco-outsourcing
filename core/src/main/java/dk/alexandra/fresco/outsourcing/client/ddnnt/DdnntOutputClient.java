@@ -49,20 +49,20 @@ public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
 
     for (int k = 0; k < numOutputs; k++) {
       List<FieldElement> el = IntStream.range(0, 5)
-          .mapToObj(i -> definition.createElement(0))
+          .mapToObj(i -> getDefinition().createElement(0))
           .collect(Collectors.toList());
       outputs.add(el);
     }
 
-    for (Party s : servers) {
-      TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
+    for (Party s : getServers()) {
+      TwoPartyNetwork network = getServerNetworks().get(s.getPartyId());
 
       for (int i = 0; i < numOutputs; i++) {
-        List<FieldElement> tmpList = definition.deserializeList(network.receive());
+        List<FieldElement> tmpList = getDefinition().deserializeList(network.receive());
         outputs.set(i, sumLists(outputs.get(i), tmpList));
       }
 
-      logger.info("C{}: Received output shares from server {}", clientId, s);
+      logger.info("C{}: Received output shares from server {}", getClientId(), s);
     }
 
     for (List<FieldElement> e : outputs) {
@@ -78,7 +78,7 @@ public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
         logger.debug("v * r was {} but should be {}", v.multiply(r), u);
         throw new MaliciousException("Authentication did not pass check");
       } else {
-        finalResult.add(definition.convertToUnsigned(y));
+        finalResult.add(getDefinition().convertToUnsigned(y));
       }
     }
     return finalResult;
@@ -88,8 +88,8 @@ public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
    * Receives number of outputs from all servers and verifies that info is consistent.
    */
   private int receiveNumOutputs() {
-    int numOutputs = getNumOutputsFrom(servers.get(0).getPartyId());
-    for (Party s : servers.subList(1, servers.size())) {
+    int numOutputs = getNumOutputsFrom(getServers().get(0).getPartyId());
+    for (Party s : getServers().subList(1, getServers().size())) {
       int newNumOutputs = getNumOutputsFrom(s.getPartyId());
       if (newNumOutputs != numOutputs) {
         throw new MaliciousException("Received incorrect number of outputs for servers");
@@ -102,7 +102,7 @@ public class DdnntOutputClient extends DdnntClientBase implements OutputClient {
    * Receives number of outputs from given party.
    */
   private int getNumOutputsFrom(int partyId) {
-    TwoPartyNetwork network = serverNetworks.get(partyId);
+    TwoPartyNetwork network = getServerNetworks().get(partyId);
     return GenericUtils.intFromBytes(network.receive());
   }
 

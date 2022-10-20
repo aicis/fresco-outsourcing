@@ -34,7 +34,7 @@ public class JnoCommonClient extends AbstractClientBase {
     }
     private List<FieldElement> additivelyShare(FieldElement element, int amount) {
         List<FieldElement> randomSharing = randomSharing(amount-1);
-        FieldElement sum = definition.createElement(0);
+        FieldElement sum = getDefinition().createElement(0);
         for (FieldElement cur : randomSharing) {
             sum = sum.add(cur);
         }
@@ -52,14 +52,14 @@ public class JnoCommonClient extends AbstractClientBase {
 
     FieldElement randomElement() {
         // Amount of bytes is 2*modulus size to ensure that there is no bias for any statistical sec par up to the size of the modulus.
-        int bytesToSample = 1+((2*definition.getBitLength()) / Byte.SIZE);
+        int bytesToSample = 1+((2* getDefinition().getBitLength()) / Byte.SIZE);
         byte[] bytes = new byte[bytesToSample];
         drbg.nextBytes(bytes);
-        return definition.createElement(new BigInteger(1, bytes));
+        return getDefinition().createElement(new BigInteger(1, bytes));
     }
 
     private FieldElement computeTag(List<FieldElement> inputs, FieldElement key, FieldElement randomness) {
-        FieldElement tag = definition.createElement(0);
+        FieldElement tag = getDefinition().createElement(0);
         FieldElement currentKeyPower = key;
         for (FieldElement current : inputs) {
             tag = tag.add(current.multiply(currentKeyPower));
@@ -73,23 +73,23 @@ public class JnoCommonClient extends AbstractClientBase {
         if (inputs.size() != amount) {
             throw new IllegalArgumentException("Number of inputs does match");
         }
-        List<FieldElement> inputsInField = inputs.stream().map(cur -> definition.createElement(cur)).collect(Collectors.toList());
+        List<FieldElement> inputsInField = inputs.stream().map(cur -> getDefinition().createElement(cur)).collect(Collectors.toList());
         List<List<FieldElement>> sharedInputs = GenericUtils.transpose(inputsInField.stream()
-                .map(input -> additivelyShare(input, servers.size()))
+                .map(input -> additivelyShare(input, getServers().size()))
                 .collect(Collectors.toList()));
         FieldElement key = randomElement();
-        List<FieldElement> sharedKey = additivelyShare(key, servers.size());
+        List<FieldElement> sharedKey = additivelyShare(key, getServers().size());
         FieldElement randomness = randomElement();
-        List<FieldElement> sharedRandomness = additivelyShare(randomness, servers.size());
+        List<FieldElement> sharedRandomness = additivelyShare(randomness, getServers().size());
         FieldElement tag = computeTag(inputsInField, key, randomness);
-        List<FieldElement> sharedTag = additivelyShare(tag, servers.size());
-        for (int i = 0; i < servers.size(); i++) {
-            TwoPartyNetwork network = serverNetworks.get(servers.get(i).getPartyId());
-            network.send(definition.serialize(sharedTag.get(i)));
-            network.send(definition.serialize(sharedKey.get(i)));
-            network.send(definition.serialize(sharedRandomness.get(i)));
-            network.send(definition.serialize(sharedInputs.get(i)));
-            logger.info("C{}: Send shared and tagged input to {}", clientId, servers.get(i));
+        List<FieldElement> sharedTag = additivelyShare(tag, getServers().size());
+        for (int i = 0; i < getServers().size(); i++) {
+            TwoPartyNetwork network = getServerNetworks().get(getServers().get(i).getPartyId());
+            network.send(getDefinition().serialize(sharedTag.get(i)));
+            network.send(getDefinition().serialize(sharedKey.get(i)));
+            network.send(getDefinition().serialize(sharedRandomness.get(i)));
+            network.send(getDefinition().serialize(sharedInputs.get(i)));
+            logger.info("C{}: Send shared and tagged input to {}", getClientId(), getServers().get(i));
         }
     }
 

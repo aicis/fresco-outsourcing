@@ -43,8 +43,8 @@ public abstract class DdnntClientBase extends AbstractClientBase {
    */
   final boolean productCheck(FieldElement a, FieldElement b, FieldElement c) {
     FieldElement actualProd = a.multiply(b);
-    BigInteger actualProdConverted = definition.convertToUnsigned(actualProd);
-    BigInteger expected = definition.convertToUnsigned(c);
+    BigInteger actualProdConverted = getDefinition().convertToUnsigned(actualProd);
+    BigInteger expected = getDefinition().convertToUnsigned(c);
     return actualProdConverted.equals(expected);
   }
 
