@@ -17,7 +17,7 @@ public interface TwoPartyNetwork extends Closeable {
 
   /**
    * Receives a message from an opposing party.
-   * @return
+   * @return received date
    */
   byte[] receive();
 

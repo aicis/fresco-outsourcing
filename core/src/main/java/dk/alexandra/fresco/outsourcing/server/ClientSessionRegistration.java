@@ -3,7 +3,7 @@ package dk.alexandra.fresco.outsourcing.server;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
 
 /**
- * Handles new client session requests for {@link SessionT} type.
+ * Handles new client session requests for {@code SessionT} type.
  *
  * @param <SessionT> the session type (input or output) this handler can process
  */

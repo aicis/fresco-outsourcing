@@ -6,11 +6,11 @@
   <parent>
     <groupId>dk.alexandra.fresco.outsourcing</groupId>
     <artifactId>outsourcing</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1</version>
   </parent>
 
   <artifactId>outsourcing-demo</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1</version>
 
   <name>Fresco Outsourcing Demo</name>
   <description>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>dk.alexandra.fresco.outsourcing</groupId>
       <artifactId>outsourcing-core</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.1</version>
     </dependency>
   </dependencies>
 

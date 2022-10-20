@@ -8,7 +8,7 @@ package dk.alexandra.fresco.outsourcing.server;
 public interface ClientSessionProducer<SessionT extends ClientSession> {
 
   /**
-   * Gets the next fresh {@link SessionT} produced by this producer.
+   * Gets the next fresh {@code SessionT} produced by this producer.
    *
    * <p>
    * This should block until a new session is available.
@@ -19,7 +19,7 @@ public interface ClientSessionProducer<SessionT extends ClientSession> {
   SessionT next();
 
   /**
-   * Tells if there producers will produce more sessions or if all expected sessions have been
+   * Tells if the producers will produce more sessions or if all expected sessions have been
    * handed off.
    *
    * @return true if there are more sessions waiting, false otherwise.
