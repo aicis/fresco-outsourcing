@@ -23,10 +23,18 @@ import java.util.concurrent.FutureTask;
 
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> extends JnoCommonServer implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
+  private final Future<Map<Integer, List<SInt>>> clientInputs;
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   public JnoInputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                         ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
+    serverInputSession = getServerSessionProducer().next();
+    FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputProtocol);
+    this.clientInputs = ft;
+    Thread t = new Thread(ft);
+    t.setName("JNO input Server");
+    t.start();
   }
 
   /**
@@ -51,11 +59,12 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSes
   }
   @Override
   public Future<Map<Integer, List<SInt>>> getClientInputs() {
-    FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputProtocol);
-    Thread t = new Thread(ft);
-    t.setName("JNO input Server");
-    t.start();
-    return ft;
+    return clientInputs;
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
   private static class ReconstructClientInputApp implements

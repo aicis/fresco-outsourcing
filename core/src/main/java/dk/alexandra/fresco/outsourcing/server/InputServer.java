@@ -1,5 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server;
 
+import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.value.SInt;
 import java.util.List;
 import java.util.Map;
@@ -17,5 +18,7 @@ public interface InputServer {
    * @return a map from client id's to provided inputs
    */
   Future<Map<Integer, List<SInt>>> getClientInputs();
+
+  <ResourcePoolT extends NumericResourcePool> ServerSession<ResourcePoolT> getSession();
 
 }

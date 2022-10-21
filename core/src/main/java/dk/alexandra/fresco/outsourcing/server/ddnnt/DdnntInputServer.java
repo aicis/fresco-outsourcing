@@ -40,6 +40,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private final Future<Map<Integer, List<SInt>>> clientInputs;
   private final ClientSessionProducer<DdnntClientInputSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   /**
    * Creates a new server to handle an input session.
@@ -57,6 +58,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
                           ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
+    serverInputSession = serverSessionProducer.next();
     FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputSession);
     this.clientInputs = ft;
     Thread t = new Thread(ft);
@@ -77,7 +79,6 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private Map<Integer, List<SInt>> runInputSession() throws Exception {
     logger.info("Running input session");
     SortedMap<Integer, Pair<List<SInt>, byte[]>> maskPairs = getMaskPairs();
-    ServerSession<ResourcePoolT> serverInputSession = serverSessionProducer.next();
     Network network = serverInputSession.getNetwork();
     broadcastMaskedInput(maskPairs, network);
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
@@ -220,6 +221,11 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   @Override
   public Future<Map<Integer, List<SInt>>> getClientInputs() {
     return clientInputs;
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
 }
