@@ -6,6 +6,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -83,6 +84,8 @@ public abstract class GenericOutputServerTest {
 
   @Test
   public void testManyServers() throws Exception {
+    Assume.assumeTrue("Too many threads running, skipping", java.lang.Thread.activeCount() < 1000);
+
     setTestRunner(10, 3, 10);
     testClientOutput();
   }

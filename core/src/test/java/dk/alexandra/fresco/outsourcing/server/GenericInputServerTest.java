@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -70,12 +71,14 @@ public abstract class GenericInputServerTest {
 
   @Test
   public void testManyClients() throws Exception {
+    Assume.assumeTrue("Too many threads running, skipping", java.lang.Thread.activeCount() < 1000);
     setTestRunner(10, 20, 3);
     testInputsOnly();
   }
 
   @Test
   public void testManyServers() throws Exception {
+    Assume.assumeTrue("Too many threads running, skipping", java.lang.Thread.activeCount() < 1000);
     setTestRunner(10, 10, 9);
     testInputsOnly();
   }
