@@ -70,15 +70,15 @@ public abstract class GenericInputServerTest {
   }
 
   @Test
+  @Ignore // Can't run in the suite since too many threads open up
   public void testManyClients() throws Exception {
-    Assume.assumeTrue("Too many threads running, skipping", java.lang.Thread.activeCount() < 1000);
     setTestRunner(10, 20, 3);
     testInputsOnly();
   }
 
   @Test
+  @Ignore // Can't run in the suite since too many threads open up
   public void testManyServers() throws Exception {
-    Assume.assumeTrue("Too many threads running, skipping", java.lang.Thread.activeCount() < 1000);
     setTestRunner(10, 10, 9);
     testInputsOnly();
   }
