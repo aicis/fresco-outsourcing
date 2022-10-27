@@ -7,7 +7,7 @@ import org.junit.Test;
 
 public class ApplicationTests extends AbstractDummyArithmeticTest {
 
-  private static TestParameters params = new TestParameters().
+  private static final TestParameters params = new TestParameters().
       numParties(3).
       maxBitLength(96).
       evaluationStrategy(SEQUENTIAL_BATCHED).

@@ -27,8 +27,8 @@ public class DemoServerSessionProducer implements ServerSessionProducer<SpdzReso
 
   public static final int DEFAULT_BATCH_SIZE = 10000;
   private final int batchSize;
-  private SpdzResourcePool resourcePool;
-  private NetworkConfiguration conf;
+  private final SpdzResourcePool resourcePool;
+  private final NetworkConfiguration conf;
 
   /**
    * Creates a new server session producer with a given batch size, resource pool and network

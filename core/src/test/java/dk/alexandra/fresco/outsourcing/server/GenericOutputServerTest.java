@@ -6,6 +6,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
