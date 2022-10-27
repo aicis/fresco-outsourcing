@@ -1,6 +1,7 @@
 package dk.alexandra.fresco.outsourcing.utils;
 
 import dk.alexandra.fresco.framework.Party;
+import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
@@ -13,16 +14,22 @@ import dk.alexandra.fresco.framework.sce.SecureComputationEngine;
 import dk.alexandra.fresco.framework.sce.SecureComputationEngineImpl;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedStrategy;
-import dk.alexandra.fresco.framework.util.*;
+import dk.alexandra.fresco.framework.util.AesCtrDrbg;
+import dk.alexandra.fresco.framework.util.AesCtrDrbgFactory;
+import dk.alexandra.fresco.framework.util.Drbg;
+import dk.alexandra.fresco.framework.util.ModulusFinder;
+import dk.alexandra.fresco.framework.util.OpenedValueStoreImpl;
+import dk.alexandra.fresco.framework.util.Pair;
+import dk.alexandra.fresco.outsourcing.client.AbstractSessionEndPoint;
 import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.GenericClientSessionEndpoint;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSessionEndpoint;
-import dk.alexandra.fresco.outsourcing.server.*;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
-import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionRequestHandler;
+import dk.alexandra.fresco.outsourcing.server.DemoClientSessionRequestHandler;
+import dk.alexandra.fresco.outsourcing.server.InputServer;
+import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.ddnnt.DemoServerSessionProducer;
-import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
-import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
@@ -33,10 +40,13 @@ import dk.alexandra.fresco.suite.spdz.storage.SpdzMascotDataSupplier;
 import dk.alexandra.fresco.tools.ot.base.DummyOt;
 import dk.alexandra.fresco.tools.ot.base.Ot;
 import dk.alexandra.fresco.tools.ot.otextension.RotList;
-
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 public class SpdzSetupUtils {
   public static final int DEFAULT_BITLENGTH = 64;
@@ -157,16 +167,12 @@ public class SpdzSetupUtils {
     return new SpdzSetup(netConf, rp, sce);
   }
 
-  // TODO probably needs the real IPs
+  // TODO currently we cannot make this generic due to the custom ddnt client input session
+  //  endpoint, it could be given as optional arugment though
   public static Pair<InputServer, OutputServer> initDdnntIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> partiesToPorts) {
-    return initDdnntIOServers(spdzSetup, inputClientIds, outputClientIds, partiesToPorts, getLocalhostMap(partiesToPorts));
-  }
-
-  public static Pair<InputServer, OutputServer> initDdnntIOServers(SpdzSetup spdzSetup,
-      List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp,
+      InputServerProducer inputServerProducer, OutputServerProducer outputServerProducer) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
@@ -195,19 +201,19 @@ public class SpdzSetupUtils {
               spdzSetup.getRp().getFieldDefinition(),
               inputClientIds.size());
       handler.setInputRegistrationHandler(inputSessionEndpoint);
-      inputServer = new DdnntInputServer<>(
+      inputServer = inputServerProducer.apply(
           inputSessionEndpoint,
           serverSessionProducer
       );
     }
 
     if (!outputClientIds.isEmpty()) {
-      ClientSessionHandler<GenericClientSession> outputSessionEndpoint = new GenericClientSessionEndpoint(
+      GenericClientSessionEndpoint outputSessionEndpoint = new GenericClientSessionEndpoint(
               spdzSetup.getRp(),
               spdzSetup.getRp().getFieldDefinition(),
               outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
-      outputServer = new DdnntOutputServer<>(
+      outputServer = outputServerProducer.apply(
           outputSessionEndpoint,
           serverSessionProducer
       );
@@ -217,9 +223,10 @@ public class SpdzSetupUtils {
     return new Pair<>(inputServer, outputServer);
   }
 
-  public static Pair<InputServer, OutputServer> initJnoIOServers(SpdzSetup spdzSetup,
+  public static Pair<InputServer, OutputServer> initIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
-      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp) {
+      Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp,
+      InputServerProducer inputServerProducer, OutputServerProducer outputServerProducer) {
 
     final ServerSessionProducer<SpdzResourcePool> serverSessionProducer = new DemoServerSessionProducer(
         spdzSetup.getRp(),
@@ -248,7 +255,7 @@ public class SpdzSetupUtils {
                       spdzSetup.getRp().getFieldDefinition(),
                       inputClientIds.size());
       handler.setInputRegistrationHandler(inputSessionEndpoint);
-      inputServer = new JnoInputServer<>(
+      inputServer = inputServerProducer.apply(
               inputSessionEndpoint,
               serverSessionProducer
       );
@@ -260,10 +267,30 @@ public class SpdzSetupUtils {
               spdzSetup.getRp().getFieldDefinition(),
               outputClientIds.size());
       handler.setOutputRegistrationHandler(outputSessionEndpoint);
-      outputServer = new JnoOutputServer<>(outputSessionEndpoint, serverSessionProducer);
+      outputServer = outputServerProducer.apply(
+          outputSessionEndpoint,
+          serverSessionProducer
+      );
     }
 
     handler.launch();
     return new Pair<>(inputServer, outputServer);
   }
+
+  @FunctionalInterface
+  public interface InputServerProducer<
+      T extends NumericResourcePool,
+      EndPointT extends AbstractSessionEndPoint<GenericClientSession>,
+      SessionT extends ServerSessionProducer<T>> {
+    InputServer apply(EndPointT endpoint, SessionT sessionProducer);
+  }
+
+  @FunctionalInterface
+  public interface OutputServerProducer<
+      T extends NumericResourcePool,
+      EndPointT extends AbstractSessionEndPoint<GenericClientSession>,
+      SessionT extends ServerSessionProducer<T>> {
+    OutputServer apply(EndPointT endpoint, SessionT sessionProducer);
+  }
+
 }

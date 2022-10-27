@@ -2,7 +2,6 @@ package dk.alexandra.fresco.outsourcing.client;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.concurrent.Future;
 
 /**
  * The client side of an output procedure.
@@ -12,7 +11,7 @@ import java.util.concurrent.Future;
  * client application.
  * </p>
  */
-public interface OutputClient {
+public interface OutputClient extends BaseClient{
 
   /**
    * Gets output as a list of BigIntegers.

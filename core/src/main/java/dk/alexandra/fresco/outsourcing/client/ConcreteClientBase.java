@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractClientBase {
-  private static final Logger logger = LoggerFactory.getLogger(AbstractClientBase.class);
+public class ConcreteClientBase implements BaseClient {
+  private static final Logger logger = LoggerFactory.getLogger(ConcreteClientBase.class);
 
   private FieldDefinition definition;
   private List<Party> servers;
@@ -30,12 +30,12 @@ public abstract class AbstractClientBase {
   private int clientId;
 
   /**
-   * Creates new {@link AbstractClientBase}.
+   * Creates new {@link ConcreteClientBase}.
    *
    * @param clientId client ID
    * @param servers  servers to connect to
    */
-  protected AbstractClientBase(int clientId, List<Party> servers) {
+  protected ConcreteClientBase(int clientId, List<Party> servers) {
     if (clientId < 1) {
       throw new IllegalArgumentException("Client ID must be 1 or higher");
     }
@@ -120,18 +120,22 @@ public abstract class AbstractClientBase {
     return msg;
   }
 
+  @Override
   public FieldDefinition getDefinition() {
     return definition;
   }
 
+  @Override
   public List<Party> getServers() {
     return servers;
   }
 
+  @Override
   public Map<Integer, TwoPartyNetwork> getServerNetworks() {
     return serverNetworks;
   }
 
+  @Override
   public int getClientId() {
     return clientId;
   }

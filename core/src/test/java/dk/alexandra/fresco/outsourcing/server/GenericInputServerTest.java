@@ -29,7 +29,7 @@ public abstract class GenericInputServerTest {
 
   protected static GenericTestRunner testRunner;
 
-  private void setTestRunner(int inputsPerClient, int numberOfInputClients, int numberOfServers) {
+  protected void setTestRunner(int inputsPerClient, int numberOfInputClients, int numberOfServers) {
     testRunner = new GenericTestRunner(
             getProtocol(),
             inputsPerClient,

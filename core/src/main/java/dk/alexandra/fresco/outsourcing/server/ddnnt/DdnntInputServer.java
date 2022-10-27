@@ -12,20 +12,32 @@ import dk.alexandra.fresco.framework.network.Network;
 import dk.alexandra.fresco.framework.util.ExceptionConverter;
 import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.outsourcing.client.AbstractSessionEndPoint;
+import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntClientInputSession;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.ClientSessionProducer;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.ServerSession;
 import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.MessageDigest;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 /**
  * Input server using the DDNNT input protocol to provide input.
@@ -38,7 +50,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
   private static final Logger logger = LoggerFactory.getLogger(DdnntInputServer.class);
   private static final String HASH_ALGO = "SHA-256";
   private final Future<Map<Integer, List<SInt>>> clientInputs;
-  private final ClientSessionProducer<DdnntClientInputSession> clientSessionProducer;
+  private final AbstractSessionEndPoint<GenericClientSession> clientSessionProducer;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private ServerSession<ResourcePoolT> serverInputSession;
 
@@ -54,7 +66,7 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
    * @param clientSessionProducer producer of client sessions
    * @param serverSessionProducer producer of server sessions
    */
-  public DdnntInputServer(ClientSessionProducer<DdnntClientInputSession> clientSessionProducer,
+  public DdnntInputServer(AbstractSessionEndPoint<GenericClientSession> clientSessionProducer,
                           ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionProducer = Objects.requireNonNull(clientSessionProducer);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
@@ -108,7 +120,8 @@ public class DdnntInputServer<ResourcePoolT extends NumericResourcePool> impleme
     ExecutorService es = Executors.newCachedThreadPool();
     HashMap<Integer, Future<Pair<List<SInt>, byte[]>>> maskPairsFuture = new HashMap<>();
     while (clientSessionProducer.hasNext()) {
-      DdnntClientInputSession clientSession = clientSessionProducer.next();
+      DdnntClientInputSession clientSession =
+          (DdnntClientInputSession) clientSessionProducer.next();
       logger.info("Running client input session for C{}", clientSession.getClientId());
       Future<Pair<List<SInt>, byte[]>> f = es.submit(new ClientCommunication(clientSession));
       maskPairsFuture.put(clientSession.getClientId(), f);

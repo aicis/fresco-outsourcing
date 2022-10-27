@@ -8,6 +8,10 @@ import dk.alexandra.fresco.framework.util.Pair;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.server.InputServer;
 import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntInputServer;
+import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
+import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +66,10 @@ public class SpdzWithIO {
     // TODO handle non-localhost addresses
     this.applicationPorts = applicationPorts;
     this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts);
-    Pair<InputServer, OutputServer> io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts);
+    Pair<InputServer, OutputServer> io = SpdzSetupUtils.initDdnntIOServers(spdzSetup,
+        inputParties, outputParties, internalPorts, SpdzSetupUtils.getLocalhostMap(internalPorts),
+        ((endpoint, sessionProducer) -> new DdnntInputServer<>(endpoint, sessionProducer)),
+        ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer)));
     this.inputServer = io.getFirst();
     this.outputServer = io.getSecond();
     this.partiesToIps = SpdzSetupUtils.getLocalhostMap(internalPorts);
@@ -91,10 +98,14 @@ public class SpdzWithIO {
     Pair<InputServer, OutputServer> io;
     if (protocol == Protocol.DDNNT) {
       io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps);
+          partiesToIps,
+          ((endpoint, sessionProducer) -> new DdnntInputServer<>(endpoint, sessionProducer)),
+          ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer)));
     } else if (protocol == Protocol.JNO) {
-      io = SpdzSetupUtils.initJnoIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps);
+      io = SpdzSetupUtils.initIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps,
+          ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer)),
+          ((endpoint, sessionProducer) -> new JnoOutputServer(endpoint, sessionProducer)));
     } else {
       throw new IllegalArgumentException("Unimplemented protocol version");
     }

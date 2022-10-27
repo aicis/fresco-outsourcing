@@ -1,13 +1,13 @@
 package dk.alexandra.fresco.outsourcing.server;
 
+import static org.junit.Assert.assertEquals;
+
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
-import org.junit.Test;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
@@ -32,7 +31,8 @@ public abstract class GenericInputOutputTest {
 
     protected abstract SpdzWithIO.Protocol getProtocol();
 
-    private void setTestRunner(int inputsPerClient, int numberOfInputClients, int outputsPerClient, int numberOfOutputClients, int numberOfServers) {
+    protected void setTestRunner(int inputsPerClient, int numberOfInputClients, int outputsPerClient,
+        int numberOfOutputClients, int numberOfServers) {
         testRunner = new GenericTestRunner(
                 getProtocol(),
                 inputsPerClient,
