@@ -34,12 +34,14 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool, Client
   private final ClientSessionHandler<ClientSessionT> clientSessionHandler;
   private final ServerSessionProducer<ResourcePoolT> serverSessionProducer;
   private final Map<Integer, List<SInt>> idToOutputs;
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   public DdnntOutputServer(ClientSessionHandler<ClientSessionT> clientSessionHandler,
                            ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     this.clientSessionHandler = Objects.requireNonNull(clientSessionHandler);
     this.serverSessionProducer = Objects.requireNonNull(serverSessionProducer);
     this.idToOutputs = new HashMap<>();
+    this.serverInputSession = serverSessionProducer.next();
   }
 
   private void runOutputSession() {
@@ -48,7 +50,7 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool, Client
       return;
     }
     logger.info("Running output session");
-    ServerSession<ResourcePoolT> serverOutputSession = serverSessionProducer.next();
+    ServerSession<ResourcePoolT> serverOutputSession = serverInputSession;
     Network network = serverOutputSession.getNetwork();
     ResourcePoolT resourcePool = serverOutputSession.getResourcePool();
 
@@ -62,6 +64,11 @@ public class DdnntOutputServer<ResourcePoolT extends NumericResourcePool, Client
       es.submit(new ClientCommunication(clientSession, result));
     }
     es.shutdown();
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
   private static class AuthenticateOutput

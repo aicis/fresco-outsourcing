@@ -1,5 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server;
 
+import dk.alexandra.fresco.framework.builder.numeric.NumericResourcePool;
 import java.util.List;
 
 /**
@@ -14,6 +15,8 @@ public interface OutputServer<T> {
    * @param outputs the outputs to be reconstructed to the client
    */
   void putClientOutputs(int clientId, List<T> outputs);
+
+  <ResourcePoolT extends NumericResourcePool> ServerSession<ResourcePoolT> getSession();
 
 
 

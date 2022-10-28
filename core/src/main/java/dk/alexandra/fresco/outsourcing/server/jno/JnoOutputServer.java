@@ -29,16 +29,17 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool, ClientSe
 
   private static final Logger logger = LoggerFactory.getLogger(JnoOutputServer.class);
   private final Map<Integer, List<SInt>> idToOutputs = new HashMap<>();
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   public JnoOutputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
+    serverInputSession = getServerSessionProducer().next();
   }
 
   private void runSession() {
     ExceptionConverter.safe(()-> {
       Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
-      ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
       Network network = serverInputSession.getNetwork();
       ResourcePoolT resourcePool = serverInputSession.getResourcePool();
       JnoClientOutputApp app = new JnoClientOutputApp(resourcePool.getMyId(),
@@ -64,6 +65,11 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool, ClientSe
       return;
     }
     runSession();
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
   private static class ClientOutputCommunication implements Runnable {

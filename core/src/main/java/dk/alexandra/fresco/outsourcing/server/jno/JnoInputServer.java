@@ -50,7 +50,6 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSes
   protected Map<Integer, List<SInt>> runInputProtocol() throws Exception {
     logger.info("Running input session");
     Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
-    ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
     Network network = serverInputSession.getNetwork();
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
     ReconstructClientInputApp app = new ReconstructClientInputApp(resourcePool.getMyId(),
