@@ -8,6 +8,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,7 @@ public abstract class GenericInputServerTest {
   protected abstract SpdzWithIO.Protocol getProtocol();
 
   protected abstract InputClient getInputClient(int inputsPerClient, int id, List<Party> servers);
-
+  protected abstract InputServerProducer getInputServerProducer();
   protected static GenericTestRunner testRunner;
 
   protected void setTestRunner(int inputsPerClient, int numberOfInputClients, int numberOfServers) {
@@ -57,7 +58,7 @@ public abstract class GenericInputServerTest {
         e.printStackTrace();
         return null;
       }
-    });
+    }, getInputServerProducer(), null);
   }
 
   @Test

@@ -5,6 +5,7 @@ import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.ddnnt.DdnntOutputClient;
 import dk.alexandra.fresco.outsourcing.server.GenericOutputServerTest;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
 
 public class DdnntOutputServerTest extends GenericOutputServerTest {
@@ -16,5 +17,9 @@ public class DdnntOutputServerTest extends GenericOutputServerTest {
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
         return new DdnntOutputClient(id, servers);
+    }
+    @Override
+    protected OutputServerProducer getOutputServerProducer() {
+        return ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer));
     }
 }

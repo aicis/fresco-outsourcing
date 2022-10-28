@@ -168,7 +168,8 @@ public class SpdzSetupUtils {
   }
 
   // TODO currently we cannot make this generic due to the custom ddnt client input session
-  //  endpoint, it could be given as optional argument though
+  //  endpoint, it could be given as optional argument though. The reason it is needed is that
+  //  DDNNT is NOT black box in the underlying scheme
   public static Pair<InputServer, OutputServer> initDdnntIOServers(SpdzSetup spdzSetup,
       List<Integer> inputClientIds, List<Integer> outputClientIds,
       Map<Integer, Integer> partiesToPorts, Map<Integer, String> partiesToIp,

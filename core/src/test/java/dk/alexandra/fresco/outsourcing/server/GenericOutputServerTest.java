@@ -8,6 +8,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public abstract class GenericOutputServerTest {
   protected abstract SpdzWithIO.Protocol getProtocol();
 
   protected abstract OutputClient getOutputClient(int id, List<Party> servers);
-
+  protected abstract OutputServerProducer getOutputServerProducer();
   protected static GenericTestRunner testRunner;
 
   protected void setTestRunner(int outputsPerClient, int numberOfOutputClients, int numberOfServers) {
@@ -58,7 +59,7 @@ public abstract class GenericOutputServerTest {
         e.printStackTrace();
       }
       return null;
-    });
+    }, null,  getOutputServerProducer());
   }
 
   // The output will be the input of the first party

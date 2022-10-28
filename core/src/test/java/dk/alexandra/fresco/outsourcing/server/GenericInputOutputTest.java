@@ -8,6 +8,8 @@ import dk.alexandra.fresco.outsourcing.client.InputClient;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +29,8 @@ public abstract class GenericInputOutputTest {
 
     protected abstract OutputClient getOutputClient(int id, List<Party> servers);
 
+    protected abstract InputServerProducer getInputServerProducer();
+    protected abstract OutputServerProducer getOutputServerProducer();
     protected static GenericTestRunner testRunner;
 
     protected abstract SpdzWithIO.Protocol getProtocol();
@@ -52,10 +56,11 @@ public abstract class GenericInputOutputTest {
                 e.printStackTrace();
             }
             return null;
-        });
+        }, getInputServerProducer(), getOutputServerProducer());
     }
 
-    private Map<Integer, List<SInt>> mapToOutputs(Map<Integer, List<SInt>> clientInput, int numberOfInputClients, int numberOfOutputClients, int outputsPerClient) {
+    protected Map<Integer, List<SInt>> mapToOutputs(Map<Integer, List<SInt>> clientInput,
+        int numberOfInputClients, int numberOfOutputClients, int outputsPerClient) {
         Map<Integer, List<SInt>> clientOutput = new HashMap<>();
         for (int i = numberOfInputClients + 1; i < numberOfInputClients + 1 + numberOfOutputClients; i++) {
             List<SInt> outputs = new ArrayList<>();

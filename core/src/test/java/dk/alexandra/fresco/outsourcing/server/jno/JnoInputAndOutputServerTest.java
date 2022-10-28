@@ -9,7 +9,8 @@ import dk.alexandra.fresco.outsourcing.client.jno.JnoInputClient;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoOutputClient;
 import dk.alexandra.fresco.outsourcing.server.GenericInputOutputTest;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
-
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
 
 public class JnoInputAndOutputServerTest extends GenericInputOutputTest {
@@ -26,6 +27,16 @@ public class JnoInputAndOutputServerTest extends GenericInputOutputTest {
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
         return new JnoOutputClient(id, servers, new AesCtrDrbg(new byte[32]), testRunner.getOutputsPerClient());
+    }
+
+    @Override
+    protected InputServerProducer getInputServerProducer() {
+        return ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer));
+    }
+
+    @Override
+    protected OutputServerProducer getOutputServerProducer() {
+        return ((endpoint, sessionProducer) -> new JnoOutputServer(endpoint, sessionProducer));
     }
 
 }

@@ -13,6 +13,8 @@ import dk.alexandra.fresco.outsourcing.server.ddnnt.DdnntOutputServer;
 import dk.alexandra.fresco.outsourcing.server.jno.JnoInputServer;
 import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,6 +85,8 @@ public class SpdzWithIO {
       List<Integer> inputParties,
       List<Integer> outputParties,
       Map<Integer, String> partiesToIps,
+      InputServerProducer inputServerProducer,
+      OutputServerProducer outputServerProducer,
       int bitLength,
       boolean dummy,
       Protocol protocol) {
@@ -101,13 +105,9 @@ public class SpdzWithIO {
           partiesToIps,
           ((endpoint, sessionProducer) -> new DdnntInputServer<>(endpoint, sessionProducer)),
           ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer)));
-    } else if (protocol == Protocol.JNO) {
-      io = SpdzSetupUtils.initIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps,
-          ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer)),
-          ((endpoint, sessionProducer) -> new JnoOutputServer(endpoint, sessionProducer)));
     } else {
-      throw new IllegalArgumentException("Unimplemented protocol version");
+      io = SpdzSetupUtils.initIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps, inputServerProducer, outputServerProducer);
     }
     this.inputServer = io.getFirst();
     this.outputServer = io.getSecond();
@@ -137,6 +137,8 @@ public class SpdzWithIO {
         inputParties,
         outputParties,
         partiesToIps,
+        ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer)),
+        ((endpoint, sessionProducer) -> new JnoOutputServer<>(endpoint, sessionProducer)),
         bitLength,
         true, Protocol.JNO
     );
@@ -149,6 +151,8 @@ public class SpdzWithIO {
       List<Integer> inputParties,
       List<Integer> outputParties,
       Map<Integer, String> partiesToIps,
+      InputServerProducer inputServerProducer,
+      OutputServerProducer outputServerProducer,
       int bitLength,
       boolean dummy,
       Protocol protocol) {
@@ -159,6 +163,8 @@ public class SpdzWithIO {
         inputParties,
         outputParties,
         partiesToIps,
+        inputServerProducer,
+        outputServerProducer,
         bitLength,
         dummy, protocol
     );

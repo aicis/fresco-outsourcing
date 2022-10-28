@@ -7,6 +7,8 @@ import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,8 +31,15 @@ public class GenericTestRunner {
     private final int numberOfOutputClients;
     private final SpdzWithIO.Protocol protocol;
     private final Function<Future<SpdzWithIO>, Object> serverSideProtocol;
+    private final InputServerProducer inputServerProducer;
+    private final OutputServerProducer outputServerProducer;
 
-    public GenericTestRunner(SpdzWithIO.Protocol protocol, int inputsPerClient, int numberOfInputClients, int outputsPerClient, int numberOfOutputClients, int numberOfServers, Function<Future<SpdzWithIO>, Object> serverSideProtocol) {
+    public GenericTestRunner(SpdzWithIO.Protocol protocol,
+        int inputsPerClient, int numberOfInputClients, int outputsPerClient,
+        int numberOfOutputClients,
+        int numberOfServers, Function<Future<SpdzWithIO>, Object> serverSideProtocol,
+        InputServerProducer inputServerProducer,
+        OutputServerProducer outputServerProducer) {
         this.protocol = protocol;
         this.inputsPerClient = inputsPerClient;
         this.numberOfInputClients = numberOfInputClients;
@@ -38,6 +47,8 @@ public class GenericTestRunner {
         this.numberOfOutputClients = numberOfOutputClients;
         this.numberOfServers = numberOfServers;
         this.serverSideProtocol = serverSideProtocol;
+        this.inputServerProducer = inputServerProducer;
+        this.outputServerProducer = outputServerProducer;
     }
 
     public int getInputsPerClient() {
@@ -136,6 +147,8 @@ public class GenericTestRunner {
                             inputIds,
                             outputIds,
                             SpdzSetupUtils.getLocalhostMap(internalPorts),
+                            inputServerProducer,
+                            outputServerProducer,
                             SpdzSetupUtils.DEFAULT_BITLENGTH, true, protocol));
             spdzServers.put(serverId, spdzServer);
         }
@@ -151,12 +164,12 @@ public class GenericTestRunner {
     }
 
     @FunctionalInterface
-    interface InputClientFunction<inputsPerClient, id, servers> {
-        InputClient apply(int inputsPerClient, int id, List<Party> servers);
+    interface InputClientFunction<InputClientT extends InputClient> {
+        InputClientT apply(int inputsPerClient, int id, List<Party> servers);
     }
 
     @FunctionalInterface
-    interface OutputClientFunction<id, servers> {
-        OutputClient apply(int id, List<Party> servers);
+    interface OutputClientFunction<OutputClientT extends OutputClient> {
+        OutputClientT apply(int id, List<Party> servers);
     }
 }
