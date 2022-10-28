@@ -68,9 +68,9 @@ public abstract class AbstractSessionEndPoint<T extends ClientSession> implement
         // Bytes 0-3: client priority, assigned by server 1 (big endian int)
         // Bytes 4-7: unique id for client (big endian int)
         // Bytes 8-11: number of inputs (big endian int)
-        int priority = intFromBytes(Arrays.copyOfRange(handshakeMessage, 0, Integer.BYTES * 1));
+        int priority = intFromBytes(Arrays.copyOfRange(handshakeMessage, 0, Integer.BYTES));
         int clientId =
-                intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 1, Integer.BYTES * 2));
+                intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES, Integer.BYTES * 2));
         int numInputs =
                 intFromBytes(Arrays.copyOfRange(handshakeMessage, Integer.BYTES * 2, Integer.BYTES * 3));
         return registerNewSessionRequest(priority, clientId, numInputs, network);

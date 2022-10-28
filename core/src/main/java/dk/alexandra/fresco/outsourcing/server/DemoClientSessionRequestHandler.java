@@ -119,7 +119,7 @@ public class DemoClientSessionRequestHandler<T extends ClientSession, K extends 
    * Gets client ID from handshake.
    */
   private int getClientId(byte[] introBytes) {
-    return intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES * 1, Integer.BYTES * 2));
+    return intFromBytes(Arrays.copyOfRange(introBytes, Integer.BYTES, Integer.BYTES * 2));
   }
 
   @Override

@@ -1,10 +1,9 @@
 package dk.alexandra.fresco.outsourcing.server.ddnnt;
 
-import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.suite.spdz.datatypes.SpdzTriple;
-import java.math.BigInteger;
+
 import java.util.Objects;
 
 /**
