@@ -38,11 +38,11 @@ public class SpdzWithIO {
   }
 
 
-  private final Map<Integer, Integer> applicationPorts;
-  private final Map<Integer, String> partiesToIps;
-  private final SpdzSetup spdzSetup;
-  private final InputServer inputServer;
-  private final OutputServer outputServer;
+  protected final Map<Integer, Integer> applicationPorts;
+  protected final Map<Integer, String> partiesToIps;
+  protected final SpdzSetup spdzSetup;
+  protected final InputServer inputServer;
+  protected final OutputServer outputServer;
 
   // TODO clean up all the constructors
   /**
