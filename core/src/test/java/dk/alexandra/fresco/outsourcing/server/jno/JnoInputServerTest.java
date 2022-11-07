@@ -9,6 +9,7 @@ import dk.alexandra.fresco.outsourcing.server.GenericInputServerTest;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 public class JnoInputServerTest extends GenericInputServerTest {
 
@@ -26,4 +27,23 @@ public class JnoInputServerTest extends GenericInputServerTest {
     protected InputServerProducer getInputServerProducer() {
         return ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer));
     }
+
+    @Test
+    public void testManyInputs() throws Exception {
+        setTestRunner(100, 2, 3);
+        testInputsOnly();
+    }
+
+    @Test
+    public void testManyClients() throws Exception {
+        setTestRunner(3, 8, 3);
+        testInputsOnly();
+    }
+
+    @Test
+    public void testManyServers() throws Exception {
+        setTestRunner(10, 2, 10);
+        testInputsOnly();
+    }
+
 }

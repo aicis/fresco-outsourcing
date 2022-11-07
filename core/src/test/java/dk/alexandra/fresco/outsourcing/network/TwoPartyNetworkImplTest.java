@@ -1,6 +1,8 @@
 package dk.alexandra.fresco.outsourcing.network;
 
-import static org.junit.Assert.assertArrayEquals;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import dk.alexandra.fresco.framework.configuration.NetworkConfiguration;
 import dk.alexandra.fresco.framework.configuration.NetworkUtil;
@@ -12,9 +14,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TwoPartyNetworkImplTest {
 
@@ -26,7 +28,7 @@ public class TwoPartyNetworkImplTest {
    *
    * @throws Exception if connecting the network fails.
    */
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     Map<Integer, NetworkConfiguration> conf = NetworkUtil.getNetworkConfigurations(2);
     ExecutorService es = Executors.newFixedThreadPool(2);
@@ -38,21 +40,22 @@ public class TwoPartyNetworkImplTest {
     this.clientNetwork = new TwoPartyNetworkImpl(n2.get(), Parties.CLIENT.id());
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     this.serverNetwork.close();
     this.clientNetwork.close();
   }
 
   @SuppressWarnings("resource")
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testTooManyParties() throws InterruptedException, ExecutionException {
     Map<Integer, NetworkConfiguration> conf = NetworkUtil.getNetworkConfigurations(3);
     ExecutorService es = Executors.newFixedThreadPool(3);
     Future<CloseableNetwork> n1 = es.submit(() -> new SocketNetwork(conf.get(1)));
     es.submit(() -> new SocketNetwork(conf.get(2)));
     es.submit(() -> new SocketNetwork(conf.get(3)));
-    new TwoPartyNetworkImpl(n1.get(), Parties.SERVER.id());
+    assertThrows(IllegalArgumentException.class, ()-> new TwoPartyNetworkImpl(n1.get(),
+        Parties.SERVER.id()));
   }
 
   @Test

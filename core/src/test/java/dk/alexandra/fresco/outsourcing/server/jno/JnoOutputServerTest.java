@@ -8,6 +8,7 @@ import dk.alexandra.fresco.outsourcing.server.GenericOutputServerTest;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 public class JnoOutputServerTest extends GenericOutputServerTest {
 
@@ -24,5 +25,23 @@ public class JnoOutputServerTest extends GenericOutputServerTest {
     @Override
     protected OutputServerProducer getOutputServerProducer() {
         return ((endpoint, sessionProducer) -> new JnoOutputServer(endpoint, sessionProducer));
+    }
+
+    @Test
+    public void testManyInputs() throws Exception {
+        setTestRunner(100, 2, 3);
+        testClientOutput();
+    }
+
+    @Test
+    public void testManyClients() throws Exception {
+        setTestRunner(10, 7, 3);
+        testClientOutput();
+    }
+
+    @Test
+    public void testManyServers() throws Exception {
+        setTestRunner(10, 2, 8);
+        testClientOutput();
     }
 }

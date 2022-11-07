@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import org.junit.Test;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
@@ -39,7 +38,7 @@ public abstract class GenericInputServerTest {
             0,
             numberOfServers, (futureServer) -> {
       try {
-        SpdzWithIO spdz = futureServer.get();
+        SpdzWithIO spdz = ((Future<SpdzWithIO>) futureServer).get();
         Map<Integer, List<SInt>> inputs = spdz.receiveInputs();
         Map<Integer, DRes<List<DRes<BigInteger>>>> wrapped =
                 spdz.run((builder) -> {
@@ -59,24 +58,6 @@ public abstract class GenericInputServerTest {
         return null;
       }
     }, getInputServerProducer(), null);
-  }
-
-  @Test
-  public void testManyInputs() throws Exception {
-    setTestRunner(100, 10, 3);
-    testInputsOnly();
-  }
-
-  @Test
-  public void testManyClients() throws Exception {
-    setTestRunner(10, 20, 3);
-    testInputsOnly();
-  }
-
-  @Test
-  public void testManyServers() throws Exception {
-    setTestRunner(10, 10, 9);
-    testInputsOnly();
   }
 
   public void testInputsOnly() throws InterruptedException, ExecutionException {

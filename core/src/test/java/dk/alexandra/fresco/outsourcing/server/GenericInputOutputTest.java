@@ -1,6 +1,6 @@
 package dk.alexandra.fresco.outsourcing.server;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
-import org.junit.Test;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
@@ -45,7 +44,7 @@ public abstract class GenericInputOutputTest {
                 numberOfOutputClients,
                 numberOfServers, (futureServer) -> {
             try {
-                SpdzWithIO server = futureServer.get();
+                SpdzWithIO server = ((Future<SpdzWithIO>) futureServer).get();
                 Map<Integer, List<SInt>> clientInputs = server.receiveInputs();
                 // Derive the output from the input
                 Map<Integer, List<SInt>> clientOutputs = mapToOutputs(clientInputs, numberOfInputClients, numberOfOutputClients, outputsPerClient);
@@ -71,39 +70,6 @@ public abstract class GenericInputOutputTest {
             clientOutput.put(i, outputs);
         }
         return clientOutput;
-    }
-
-    /**
-     * Test the protocol by simply outputting the inputs
-     */
-    @Test
-    public void testMoreInputClientsThanOutputClients() throws Exception {
-        setTestRunner(10, 10, 10, 8, 3);
-        testInputsAndOutput();
-    }
-
-    @Test
-    public void testMoreOutputClientsThanInputClients() throws Exception {
-        setTestRunner(10, 5, 10, 8, 3);
-        testInputsAndOutput();
-    }
-
-    @Test
-    public void testManyServers() throws Exception {
-        setTestRunner(3, 5, 3, 5, 10);
-        testInputsAndOutput();
-    }
-
-    @Test
-    public void moreOutputsPerClient() throws Exception {
-        setTestRunner(3, 3, 5, 4, 3);
-        testInputsAndOutput();
-    }
-
-    @Test
-    public void moreInputsPerClient() throws Exception {
-        setTestRunner(5, 1, 3, 3, 3);
-        testInputsAndOutput();
     }
 
     public void testInputsAndOutput() throws InterruptedException, ExecutionException {

@@ -72,27 +72,27 @@ public class GenericTestRunner {
     }
 
     // Input is just a list of clientID
-    protected List<BigInteger> computeInputs(int id) {
-        return IntStream.range(0, inputsPerClient)
+    public List<BigInteger> computeInputs(int id) {
+        return IntStream.range(0, getInputsPerClient())
                 .mapToObj(num -> BigInteger.valueOf(id)).collect(Collectors.toList());
     }
 
     // The output is the same as the input of the first party
-    protected List<BigInteger> computeOutputs(int id) {
+    public List<BigInteger> computeOutputs(int id) {
         // The output is the same as the input of the first party, i.e. a list of 1's
-        return IntStream.range(0, outputsPerClient)
+        return IntStream.range(0, getOutputsPerClient())
                 .mapToObj(num -> BigInteger.valueOf(1)).collect(Collectors.toList());
     }
 
-    protected Map<Integer, Future<Object>> runOutputClients(Map<Integer, Integer> clientFacingPorts, OutputClientFunction outputClientFunction) throws InterruptedException {
+    public Map<Integer, Future<Object>> runOutputClients(Map<Integer, Integer> clientFacingPorts, OutputClientFunction outputClientFunction) throws InterruptedException {
         List<Party> servers = new ArrayList<>(clientFacingPorts.size());
         for (int i = 1; i <= clientFacingPorts.size(); i++) {
             servers.add(new Party(i, "localhost", clientFacingPorts.get(i)));
         }
         ExecutorService es = Executors.newFixedThreadPool(8);
         Map<Integer, Future<Object>> assertFutures = new HashMap<>();
-        for (int i = 0; i < numberOfOutputClients; i++) {
-            final int id = i + numberOfInputClients + 1;
+        for (int i = 0; i < getNumberOfOutputClients(); i++) {
+            final int id = i + getNumberOfInputClients() + 1;
             Future<Object> assertFuture = es.submit(() -> {
                 OutputClient client = outputClientFunction.apply(id, servers);
                 List<BigInteger> actual = client.getBigIntegerOutputs();
@@ -105,7 +105,8 @@ public class GenericTestRunner {
         return assertFutures;
     }
 
-    protected void runInputClients(int numClients, Map<Integer, Integer> clientFacingPorts, InputClientFunction inputClientFunction) throws InterruptedException {
+    public void runInputClients(int numClients, Map<Integer, Integer> clientFacingPorts,
+        InputClientFunction inputClientFunction) throws InterruptedException {
         List<Party> servers = new ArrayList<>(clientFacingPorts.size());
         for (int i = 1; i <= clientFacingPorts.size(); i++) {
             servers.add(new Party(i, "localhost", clientFacingPorts.get(i)));
@@ -114,7 +115,7 @@ public class GenericTestRunner {
         for (int i = 0; i < numClients; i++) {
             final int id = i + 1;
             es.submit(() -> {
-                InputClient client = inputClientFunction.apply(inputsPerClient, id, servers);
+                InputClient client = inputClientFunction.apply(getInputsPerClient(), id, servers);
                 List<BigInteger> inputs = computeInputs(id);
                 client.putBigIntegerInputs(inputs);
             });
@@ -123,27 +124,29 @@ public class GenericTestRunner {
         es.awaitTermination(1, TimeUnit.SECONDS);
     }
 
-    protected List<Future<Object>> runServers(List<Integer> freePorts) throws InterruptedException {
+    public List<Future<Object>> runServers(List<Integer> freePorts) throws InterruptedException {
         ExecutorService es = Executors.newCachedThreadPool();
-        List<Integer> serverIds = IntStream.rangeClosed(1, numberOfServers).boxed()
+        List<Integer> serverIds = IntStream.rangeClosed(1, getNumberOfServers()).boxed()
                 .collect(Collectors.toList());
 
-        List<Integer> inputIds = IntStream.rangeClosed(1, numberOfInputClients).boxed()
+        List<Integer> inputIds = IntStream.rangeClosed(1, getNumberOfInputClients()).boxed()
                 .collect(Collectors.toList());
 
         List<Integer> outputIds = IntStream
-                .range(numberOfInputClients + 1, numberOfInputClients + 1 + numberOfOutputClients).boxed()
+                .range(getNumberOfInputClients() + 1,
+                    getNumberOfInputClients() + 1 + getNumberOfOutputClients()).boxed()
                 .collect(Collectors.toList());
 
-        Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(numberOfServers);
-        Map<Integer, Integer> internalPorts = SpdzSetup.getInternalPorts(freePorts, numberOfServers);
+        Map<Integer, Future<SpdzWithIO>> spdzServers = new HashMap<>(getNumberOfServers());
+        Map<Integer, Integer> internalPorts = SpdzSetup.getInternalPorts(freePorts,
+            getNumberOfServers());
         for (int serverId : serverIds) {
             Future<SpdzWithIO> spdzServer = es
                     .submit(() -> new SpdzWithIO(
                             serverId,
-                            SpdzSetup.getClientFacingPorts(freePorts, numberOfServers),
+                            SpdzSetup.getClientFacingPorts(freePorts, getNumberOfServers()),
                             internalPorts,
-                            SpdzSetup.getApplicationPorts(freePorts, numberOfServers),
+                            SpdzSetup.getApplicationPorts(freePorts, getNumberOfServers()),
                             inputIds,
                             outputIds,
                             SpdzSetupUtils.getLocalhostMap(internalPorts),
@@ -164,12 +167,12 @@ public class GenericTestRunner {
     }
 
     @FunctionalInterface
-    interface InputClientFunction<InputClientT extends InputClient> {
+    public interface InputClientFunction<InputClientT extends InputClient> {
         InputClientT apply(int inputsPerClient, int id, List<Party> servers);
     }
 
     @FunctionalInterface
-    interface OutputClientFunction<OutputClientT extends OutputClient> {
+    public interface OutputClientFunction<OutputClientT extends OutputClient> {
         OutputClientT apply(int id, List<Party> servers);
     }
 }

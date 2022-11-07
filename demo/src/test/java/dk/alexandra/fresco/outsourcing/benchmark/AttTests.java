@@ -1,5 +1,9 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.TestThreadRunner.TestThread;
@@ -15,7 +19,6 @@ import dk.alexandra.fresco.outsourcing.benchmark.applications.MacCheck;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Assert;
 
 public class AttTests {
   public static class BasicMacTest<ResourcePoolT extends ResourcePool>
@@ -37,7 +40,7 @@ public class AttTests {
             return () -> openRes.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(new BigInteger("57"), output);
+          assertEquals(new BigInteger("57"), output);
         }
       };
     }
@@ -64,8 +67,8 @@ public class AttTests {
             return () -> new Pair<>(correctRes.out(), wrongRes.out());
           };
           Pair<Boolean, Boolean> output = runApplication(app);
-          Assert.assertTrue(output.getFirst());
-          Assert.assertFalse(output.getSecond());
+          assertTrue(output.getFirst());
+          assertFalse(output.getSecond());
         }
       };
     }
@@ -102,9 +105,9 @@ public class AttTests {
             return () -> Arrays.asList(correctRes.out(), wrongRes1.out(), wrongRes2.out());
           };
           List<Boolean> output = runApplication(app);
-          Assert.assertTrue(output.get(0));
-          Assert.assertFalse(output.get(1));
-          Assert.assertFalse(output.get(2));
+          assertTrue(output.get(0));
+          assertFalse(output.get(1));
+          assertFalse(output.get(2));
         }
       };
     }

@@ -44,6 +44,7 @@ public class SpdzWithIO {
   private final InputServer inputServer;
   private final OutputServer outputServer;
 
+  // TODO clean up all the constructors
   /**
    * Creates new {@link SpdzWithIO}.
    *

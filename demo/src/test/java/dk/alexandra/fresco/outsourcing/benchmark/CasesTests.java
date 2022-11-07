@@ -1,5 +1,7 @@
 package dk.alexandra.fresco.outsourcing.benchmark;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.TestThreadRunner.TestThread;
@@ -15,7 +17,6 @@ import dk.alexandra.fresco.outsourcing.benchmark.applications.SameValue;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Assert;
 
 public class CasesTests {
   public static class SameValueTest<ResourcePoolT extends ResourcePool>
@@ -35,7 +36,7 @@ public class CasesTests {
             return () -> res.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(BigInteger.ONE, output);
+          assertEquals(BigInteger.ONE, output);
         }
       };
     }
@@ -60,7 +61,7 @@ public class CasesTests {
             return () -> res.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(BigInteger.ONE, output);
+          assertEquals(BigInteger.ONE, output);
         }
       };
     }
@@ -86,7 +87,7 @@ public class CasesTests {
             return () -> res.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(BigInteger.ONE, output);
+          assertEquals(BigInteger.ONE, output);
         }
       };
     }
@@ -112,7 +113,7 @@ public class CasesTests {
             return () -> res.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(BigInteger.ONE, output);
+          assertEquals(BigInteger.ONE, output);
         }
       };
     }
@@ -138,7 +139,7 @@ public class CasesTests {
             return () -> res.out();
           };
           BigInteger output = runApplication(app);
-          Assert.assertEquals(BigInteger.valueOf(1234), output);
+          assertEquals(BigInteger.valueOf(1234), output);
         }
       };
     }

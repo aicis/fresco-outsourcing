@@ -10,6 +10,7 @@ import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 public class DdnntInputAndOutputServerTest extends GenericInputOutputTest {
   @Override
@@ -35,5 +36,38 @@ public class DdnntInputAndOutputServerTest extends GenericInputOutputTest {
   @Override
   protected OutputServerProducer getOutputServerProducer() {
     return ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer));
+  }
+
+  /**
+   * Test the protocol by simply outputting the inputs
+   */
+  @Test
+  public void testMoreInputClientsThanOutputClients() throws Exception {
+    setTestRunner(10, 2, 10, 1, 3);
+    testInputsAndOutput();
+  }
+
+  @Test
+  public void testMoreOutputClientsThanInputClients() throws Exception {
+    setTestRunner(10, 1, 10, 2, 3);
+    testInputsAndOutput();
+  }
+
+  @Test
+  public void testManyServers() throws Exception {
+    setTestRunner(3, 1, 3, 1, 10);
+    testInputsAndOutput();
+  }
+
+  @Test
+  public void moreOutputsPerClient() throws Exception {
+    setTestRunner(3, 2, 5, 2, 3);
+    testInputsAndOutput();
+  }
+
+  @Test
+  public void moreInputsPerClient() throws Exception {
+    setTestRunner(5, 1, 3, 2, 3);
+    testInputsAndOutput();
   }
 }
