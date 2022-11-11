@@ -50,13 +50,24 @@ import java.util.Random;
 
 public class SpdzSetupUtils {
   public static final int DEFAULT_BITLENGTH = 64;
+  public static final int DEFAULT_STATPAR = 40;
 
   private SpdzSetupUtils() {
   }
 
   public static FieldDefinition getDefaultFieldDefinition(int bitLength) {
     return new BigIntegerFieldDefinition(
-        ModulusFinder.findSuitableModulus(bitLength+40));
+        ModulusFinder.findSuitableModulus(bitLength+DEFAULT_STATPAR));
+  }
+
+  public static FieldDefinition getDefaultFieldDefinition(BigInteger modulus) {
+    if (!modulus.isProbablePrime(DEFAULT_STATPAR)) {
+      throw new IllegalArgumentException("Modulus is not prime");
+    }
+    if (!modulus.subtract(BigInteger.ONE).gcd(BigInteger.valueOf(3)).equals(BigInteger.ONE)) {
+      throw new IllegalArgumentException("Modulus-1 mod 3 != 1");
+    }
+    return new BigIntegerFieldDefinition(modulus);
   }
 
   public static BigInteger insecureSampleSsk(int partyId, BigInteger modulus) {
@@ -146,9 +157,9 @@ public class SpdzSetupUtils {
   }
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts,
-      Map<Integer, String> partiesToIp, int bitLength) {
+      Map<Integer, String> partiesToIp, BigInteger modulus) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
-    FieldDefinition definition = getDefaultFieldDefinition(bitLength);
+    FieldDefinition definition = getDefaultFieldDefinition(modulus);
 //    BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(serverId, definition.getModulus());
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
@@ -160,11 +171,21 @@ public class SpdzSetupUtils {
     SpdzResourcePool rp = new SpdzResourcePoolImpl(serverId, partiesToPorts.size(),
         new OpenedValueStoreImpl<>(),
         supplier, AesCtrDrbg::new);
-    SpdzProtocolSuite suite = new SpdzProtocolSuite(bitLength);
+    // To ensure comparison protocols work, we have to subtract the statistical sec par to ensure
+    // space enough to work
+    SpdzProtocolSuite suite = new SpdzProtocolSuite(modulus.bitLength()-DEFAULT_STATPAR);
     SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce =
         new SecureComputationEngineImpl<>(suite,
             new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
     return new SpdzSetup(netConf, rp, sce);
+  }
+
+  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts,
+      Map<Integer, String> partiesToIp, int bitLength) {
+    // To ensure comparison protocols work, we have to subtract the statistical sec par to ensure
+    // space enough to work
+    return getSetup(serverId, partiesToPorts, partiesToIp,
+        ModulusFinder.findSuitableModulus(bitLength+DEFAULT_STATPAR));
   }
 
   // TODO currently we cannot make this generic due to the custom ddnt client input session

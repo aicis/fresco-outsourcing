@@ -255,6 +255,14 @@ public class SpdzWithIO {
         .getMyId();
   }
 
+  public InputServer getInputServer() {
+    return inputServer;
+  }
+
+  public OutputServer getOutputServer() {
+    return outputServer;
+  }
+
   private static List<Integer> contiguousPorts(int basePort, int numServers) {
     return IntStream.range(basePort + 1, basePort + 1 + 3 * numServers).boxed()
         .collect(Collectors.toList());

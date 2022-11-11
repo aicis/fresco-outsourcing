@@ -55,7 +55,9 @@ public class JnoCommonClient extends ConcreteClientBase {
         int bytesToSample = 1+((2* getDefinition().getBitLength()) / Byte.SIZE);
         byte[] bytes = new byte[bytesToSample];
         drbg.nextBytes(bytes);
-        return getDefinition().createElement(new BigInteger(1, bytes));
+        // Since the algorithm for creating field elements require the big integer to be less
+        // than modulus^2 in order to work, we need to reduce first
+        return getDefinition().createElement(new BigInteger(1, bytes).mod(getDefinition().getModulus()));
     }
 
     private FieldElement computeTag(List<FieldElement> inputs, FieldElement key, FieldElement randomness) {
