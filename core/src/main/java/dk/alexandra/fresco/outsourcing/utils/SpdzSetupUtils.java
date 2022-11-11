@@ -47,8 +47,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SpdzSetupUtils {
+  private static final Logger logger = LoggerFactory.getLogger(SpdzSetupUtils.class);
   public static final int DEFAULT_BITLENGTH = 64;
   public static final int DEFAULT_STATPAR = 40;
 
@@ -62,10 +65,12 @@ public class SpdzSetupUtils {
 
   public static FieldDefinition getDefaultFieldDefinition(BigInteger modulus) {
     if (!modulus.isProbablePrime(DEFAULT_STATPAR)) {
+      // Very few operations can work in this case
       throw new IllegalArgumentException("Modulus is not prime");
     }
     if (!modulus.subtract(BigInteger.ONE).gcd(BigInteger.valueOf(3)).equals(BigInteger.ONE)) {
-      throw new IllegalArgumentException("Modulus-1 mod 3 != 1");
+      // This can cause issues with some Fresco algorithms, but basic things should still work.
+      logger.error("Modulus-1 mod 3 != 1");
     }
     return new BigIntegerFieldDefinition(modulus);
   }

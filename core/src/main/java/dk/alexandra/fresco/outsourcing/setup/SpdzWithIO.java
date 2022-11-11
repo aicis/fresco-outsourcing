@@ -15,6 +15,7 @@ import dk.alexandra.fresco.outsourcing.server.jno.JnoOutputServer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,6 +78,41 @@ public class SpdzWithIO {
     this.outputServer = io.getSecond();
     this.partiesToIps = SpdzSetupUtils.getLocalhostMap(internalPorts);
   }
+  public SpdzWithIO(
+      int serverId,
+      Map<Integer, Integer> clientFacingPorts,
+      Map<Integer, Integer> internalPorts,
+      Map<Integer, Integer> applicationPorts,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      InputServerProducer inputServerProducer,
+      OutputServerProducer outputServerProducer,
+      BigInteger modulus,
+      boolean dummy,
+      Protocol protocol) {
+    this.partiesToIps = partiesToIps;
+    this.applicationPorts = applicationPorts;
+    if (dummy) {
+      this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps,
+          modulus);
+    } else {
+      this.spdzSetup = SpdzSetupUtils.getMascotSetup(serverId, clientFacingPorts, partiesToIps,
+          modulus.bitLength()-SpdzSetupUtils.DEFAULT_STATPAR);
+    }
+    Pair<InputServer, OutputServer> io;
+    if (protocol == Protocol.DDNNT) {
+      io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps,
+          ((endpoint, sessionProducer) -> new DdnntInputServer<>(endpoint, sessionProducer)),
+          ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer)));
+    } else {
+      io = SpdzSetupUtils.initIOServers(spdzSetup, inputParties, outputParties, internalPorts,
+          partiesToIps, inputServerProducer, outputServerProducer);
+    }
+    this.inputServer = io.getFirst();
+    this.outputServer = io.getSecond();
+  }
 
   public SpdzWithIO(
       int serverId,
@@ -91,27 +127,9 @@ public class SpdzWithIO {
       int bitLength,
       boolean dummy,
       Protocol protocol) {
-    this.partiesToIps = partiesToIps;
-    this.applicationPorts = applicationPorts;
-    if (dummy) {
-      this.spdzSetup = SpdzSetupUtils.getSetup(serverId, clientFacingPorts, partiesToIps,
-          bitLength);
-    } else {
-      this.spdzSetup = SpdzSetupUtils.getMascotSetup(serverId, clientFacingPorts, partiesToIps,
-          bitLength);
-    }
-    Pair<InputServer, OutputServer> io;
-    if (protocol == Protocol.DDNNT) {
-      io = SpdzSetupUtils.initDdnntIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps,
-          ((endpoint, sessionProducer) -> new DdnntInputServer<>(endpoint, sessionProducer)),
-          ((endpoint, sessionProducer) -> new DdnntOutputServer(endpoint, sessionProducer)));
-    } else {
-      io = SpdzSetupUtils.initIOServers(spdzSetup, inputParties, outputParties, internalPorts,
-          partiesToIps, inputServerProducer, outputServerProducer);
-    }
-    this.inputServer = io.getFirst();
-    this.outputServer = io.getSecond();
+  this(serverId, clientFacingPorts, internalPorts, applicationPorts, inputParties, outputParties,
+      partiesToIps, inputServerProducer, outputServerProducer,
+      SpdzSetupUtils.getDefaultFieldDefinition(bitLength).getModulus(), dummy, protocol);
   }
 
   /**
