@@ -24,15 +24,15 @@ import java.util.stream.IntStream;
 
 public class GenericTestRunner {
 
-    private final int inputsPerClient;
-    private final int numberOfServers;
-    private final int numberOfInputClients;
-    private final int outputsPerClient;
-    private final int numberOfOutputClients;
-    private final SpdzWithIO.Protocol protocol;
-    private final Function<Future<SpdzWithIO>, Object> serverSideProtocol;
-    private final InputServerProducer inputServerProducer;
-    private final OutputServerProducer outputServerProducer;
+    protected final int inputsPerClient;
+    protected final int numberOfServers;
+    protected final int numberOfInputClients;
+    protected final int outputsPerClient;
+    protected final int numberOfOutputClients;
+    protected final SpdzWithIO.Protocol protocol;
+    protected final Function<Future<SpdzWithIO>, Object> serverSideProtocol;
+    protected final InputServerProducer inputServerProducer;
+    protected final OutputServerProducer outputServerProducer;
 
     public GenericTestRunner(SpdzWithIO.Protocol protocol,
         int inputsPerClient, int numberOfInputClients, int outputsPerClient,
