@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class ClientSideNetworkFactory {
 
-  public static enum Parties {
+  public enum Parties {
     SERVER(2), CLIENT(1);
 
     private final int id;
@@ -48,8 +48,7 @@ public class ClientSideNetworkFactory {
     NetworkConfiguration conf = new NetworkConfigurationImpl(id, parties);
     NetworkConnector connector = new OutsourcingConnector(conf, Duration.ofDays(1));
     SocketNetwork network = new SocketNetwork(conf, connector.getSocketMap());
-    TwoPartyNetwork networkWrapper = new TwoPartyNetworkImpl(network, conf.getMyId());
-    return networkWrapper;
+    return new TwoPartyNetworkImpl(network, conf.getMyId());
   }
 
 }

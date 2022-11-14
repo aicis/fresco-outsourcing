@@ -82,7 +82,7 @@ public class SameObjectServer extends ServerPPP {
         DRes<SInt> comparisonRes = seq.seq(
             new SameObject(refValues, attributes.subList(0, amountOfElements), bitLength));
         return seq.seq((seq2) -> {
-          if (checkAtt.out() != true) {
+          if (!checkAtt.out()) {
             throw new IllegalArgumentException("Invalid user MAC");
           }
           return seq2.numeric().open(comparisonRes.out());

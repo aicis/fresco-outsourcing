@@ -105,7 +105,7 @@ public class ConcreteClientBase implements BaseClient {
 
       initFieldDefinition(definitionSupplier, masterNetwork);
     } catch (Exception e) {
-      logger.error("Error during handshake", e);
+      logger.error("C{}: Error during handshake", clientId, e);
       e.printStackTrace();
     }
   }

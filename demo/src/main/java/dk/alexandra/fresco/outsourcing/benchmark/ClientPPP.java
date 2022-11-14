@@ -21,9 +21,9 @@ public class ClientPPP extends PPP {
   private int currentBasePort;
 
   private List<Party> servers;
-  private List<BigInteger> clientInputs;
+  private final List<BigInteger> clientInputs;
   private OutputClient outputClient;
-  private int amountOfServers;
+  private final int amountOfServers;
   private final Drbg drbg;
 
   public ClientPPP(Map<Integer, String> serverIdIpMap, int inputs, int bitLength, int basePort) {

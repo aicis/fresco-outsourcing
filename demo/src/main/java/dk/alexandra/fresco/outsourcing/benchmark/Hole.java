@@ -11,6 +11,6 @@ public class Hole {
 
   public void consume(Object x) {
     String something = "something " + x.toString();
-    System.out.println(something.toString());
+    System.out.println(something);
   }
 }

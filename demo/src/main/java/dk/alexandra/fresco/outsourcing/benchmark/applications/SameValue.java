@@ -8,8 +8,8 @@ import dk.alexandra.fresco.lib.common.compare.Comparison;
 
 public class SameValue implements Computation<SInt, ProtocolBuilderNumeric> {
 
-  private DRes<SInt> clientsInput;
-  private DRes<SInt> referenceVal;
+  private final DRes<SInt> clientsInput;
+  private final DRes<SInt> referenceVal;
 
   public SameValue(DRes<SInt> referenceVal, DRes<SInt> clientsInput) {
     this.clientsInput = clientsInput;
