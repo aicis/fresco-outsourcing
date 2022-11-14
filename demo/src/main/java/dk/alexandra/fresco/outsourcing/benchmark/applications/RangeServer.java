@@ -61,7 +61,7 @@ public class RangeServer extends ServerPPP  {
         DRes<SInt> comparisonRes = seq.seq(
             new Range(hiddenLower, hiddenUpper, attributes.get(0), maxBitlength));
         return seq.seq((seq2) -> {
-          if (checkAtt.out() != true) {
+          if (!checkAtt.out()) {
             throw new IllegalArgumentException("Invalid user MAC");
           }
           return seq2.numeric().open(comparisonRes);

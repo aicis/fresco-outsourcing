@@ -141,7 +141,7 @@ public class OutsourcingConnector implements NetworkConnector {
           }
           // A connect exception is expected if the opposing side is not listening for our
           // connection attempt yet. We ignore this and try again.
-          Thread.sleep(1 << ++attempts);
+          Thread.sleep(1L << ++attempts);
         }
       }
     }

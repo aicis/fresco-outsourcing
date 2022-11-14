@@ -26,6 +26,6 @@ public interface TripleDistributor {
    * @param amount the amount of triples in the batch
    * @return a batch of triples.
    */
-  public List<DdnntInputTuple> getTriples(int amount);
+  List<DdnntInputTuple> getTriples(int amount);
 
 }

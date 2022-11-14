@@ -39,12 +39,12 @@ public class ClientPayload<T> {
     return x;
   }
 
-  public static <T> ClientPayload deserialize(ByteSerializer<T> serializer, byte[] t, byte[] k, byte[] r, byte[] xList) {
+  public static <T> ClientPayload<T> deserialize(ByteSerializer<T> serializer, byte[] t, byte[] k, byte[] r, byte[] xList) {
     T deserializedT = serializer.deserialize(t);
     T deserializedK = serializer.deserialize(k);
     T deserializedR = serializer.deserialize(r);
     List<T> deserializedX = serializer.deserializeList(xList);
-    return new ClientPayload(deserializedT, deserializedK, deserializedR, deserializedX);
+    return new ClientPayload<>(deserializedT, deserializedK, deserializedR, deserializedX);
   }
 
 

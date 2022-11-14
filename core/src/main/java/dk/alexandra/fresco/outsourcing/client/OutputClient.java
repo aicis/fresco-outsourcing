@@ -2,7 +2,6 @@ package dk.alexandra.fresco.outsourcing.client;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.concurrent.Future;
 
 /**
  * The client side of an output procedure.

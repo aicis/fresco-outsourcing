@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Interpolate implements Computation<SInt, ProtocolBuilderNumeric> {
 
-  private List<DRes<SInt>> points;
+  private final List<DRes<SInt>> points;
 
   public Interpolate(List<DRes<SInt>> points) {
     this.points = points;

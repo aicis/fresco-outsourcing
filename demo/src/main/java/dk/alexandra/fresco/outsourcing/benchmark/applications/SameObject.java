@@ -11,9 +11,9 @@ import java.util.List;
 
 public class SameObject implements Computation<SInt, ProtocolBuilderNumeric> {
 
-  private List<DRes<SInt>> clientsInputs;
-  private List<DRes<SInt>> referenceVals;
-  private int bitlength;
+  private final List<DRes<SInt>> clientsInputs;
+  private final List<DRes<SInt>> referenceVals;
+  private final int bitlength;
 
   public SameObject(List<DRes<SInt>> referenceVals, List<DRes<SInt>> clientsInputs, int bitlength) {
     this.clientsInputs = clientsInputs;

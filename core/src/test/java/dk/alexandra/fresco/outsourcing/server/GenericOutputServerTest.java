@@ -6,6 +6,7 @@ import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -81,7 +82,9 @@ public abstract class GenericOutputServerTest {
   }
 
   @Test
+  @Ignore // Can't run in the suite since too many threads open up
   public void testManyServers() throws Exception {
+
     setTestRunner(10, 3, 10);
     testClientOutput();
   }
