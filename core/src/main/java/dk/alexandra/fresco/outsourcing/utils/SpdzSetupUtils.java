@@ -69,7 +69,7 @@ public class SpdzSetupUtils {
       throw new IllegalArgumentException("Modulus is not prime");
     }
     if (!modulus.subtract(BigInteger.ONE).gcd(BigInteger.valueOf(3)).equals(BigInteger.ONE)) {
-      // This can cause issues with some Fresco algorithms, but basic things should still work.
+      // This can cause issues with some Fresco algorithms, but basic thing should still work.
       logger.error("Modulus-1 mod 3 != 1");
     }
     return new BigIntegerFieldDefinition(modulus);

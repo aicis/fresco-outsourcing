@@ -32,13 +32,13 @@ public class DdnntOutputServerTest extends GenericOutputServerTest {
 
     @Test
     public void testManyClients() throws Exception {
-        setTestRunner(10, 7, 3);
+        setTestRunner(10, 4, 3);
         testClientOutput();
     }
 
     @Test
     public void testManyServers() throws Exception {
-        setTestRunner(10, 2, 8);
+        setTestRunner(10, 2, 5);
         testClientOutput();
     }
 }

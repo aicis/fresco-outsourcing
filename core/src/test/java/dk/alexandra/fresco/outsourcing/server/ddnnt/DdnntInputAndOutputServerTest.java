@@ -55,7 +55,7 @@ public class DdnntInputAndOutputServerTest extends GenericInputOutputTest {
 
   @Test
   public void testManyServers() throws Exception {
-    setTestRunner(3, 1, 3, 1, 10);
+    setTestRunner(3, 1, 3, 1, 5);
     testInputsAndOutput();
   }
 

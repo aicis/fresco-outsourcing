@@ -37,13 +37,13 @@ public class DdnntInputServerTest extends GenericInputServerTest {
 
   @Test
   public void testManyClients() throws Exception {
-    setTestRunner(3, 8, 3);
+    setTestRunner(3, 4, 3);
     testInputsOnly();
   }
 
   @Test
   public void testManyServers() throws Exception {
-    setTestRunner(10, 2, 10);
+    setTestRunner(10, 2, 5);
     testInputsOnly();
   }
 
