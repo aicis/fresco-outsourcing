@@ -5,17 +5,13 @@ import dk.alexandra.fresco.framework.util.AesCtrDrbg;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.client.jno.JnoOutputClient;
 import dk.alexandra.fresco.outsourcing.server.GenericOutputServerTest;
-import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
+import dk.alexandra.fresco.outsourcing.server.TestDataGenerator;
+import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO.Protocol;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class JnoOutputServerTest extends GenericOutputServerTest {
-
-    @Override
-    protected SpdzWithIO.Protocol getProtocol() {
-        return SpdzWithIO.Protocol.JNO;
-    }
 
     @Override
     protected OutputClient getOutputClient(int id, List<Party> servers) {
@@ -28,20 +24,20 @@ public class JnoOutputServerTest extends GenericOutputServerTest {
     }
 
     @Test
-    public void testManyInputs() throws Exception {
-        setTestRunner(100, 2, 3);
+    public void testManyOutputs() throws Exception {
+        setTestRunner(new TestDataGenerator(Protocol.GENERIC, 0, 0, 100, 2, 3));
         testClientOutput();
     }
 
     @Test
     public void testManyClients() throws Exception {
-        setTestRunner(10, 4, 3);
+        setTestRunner(new TestDataGenerator(Protocol.GENERIC, 0, 0, 10, 5, 3));
         testClientOutput();
     }
 
     @Test
     public void testManyServers() throws Exception {
-        setTestRunner(10, 2, 5);
+        setTestRunner(new TestDataGenerator(Protocol.GENERIC, 0, 0, 3, 2, 5));
         testClientOutput();
     }
 }

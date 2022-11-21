@@ -23,23 +23,18 @@ import java.util.stream.Collectors;
  * clients.
  */
 public abstract class GenericInputServerTest {
-  protected abstract SpdzWithIO.Protocol getProtocol();
 
   protected abstract InputClient getInputClient(int inputsPerClient, int id, List<Party> servers);
   protected abstract InputServerProducer getInputServerProducer();
   protected static GenericTestRunner testRunner;
 
-  protected void setTestRunner(int inputsPerClient, int numberOfInputClients, int numberOfServers) {
-    testRunner = new GenericTestRunner(
-            getProtocol(),
-            inputsPerClient,
-            numberOfInputClients,
-            0,
-            0,
-            numberOfServers, (futureServer) -> {
+  protected void setTestRunner(TestDataGenerator testDataGenerator) {
+    testRunner = new GenericTestRunner(testDataGenerator, (futureServer) -> {
       try {
         SpdzWithIO spdz = ((Future<SpdzWithIO>) futureServer).get();
         Map<Integer, List<SInt>> inputs = spdz.receiveInputs();
+        // Wrapping is used here to make sure we can get the client input back out from the
+        // server computation
         Map<Integer, DRes<List<DRes<BigInteger>>>> wrapped =
                 spdz.run((builder) -> {
                   Map<Integer, DRes<List<DRes<BigInteger>>>> openInputs =
@@ -60,20 +55,31 @@ public abstract class GenericInputServerTest {
     }, getInputServerProducer(), null);
   }
 
+  /**
+   * Run the actual test through futures of the input client and server. Output is not run
+   * through a client but wrapped from the data from the input client
+   * @throws InterruptedException
+   * @throws ExecutionException
+   */
   public void testInputsOnly() throws InterruptedException, ExecutionException {
     List<Integer> freePorts = SpdzSetup.getFreePorts(testRunner.getNumberOfServers() * 3);
-    List<Future<Object>> assertFutures = testRunner.runServers(
-            freePorts);
+    Map<Integer, Future<List<BigInteger>>> assertFutures = testRunner.runServers(
+            freePorts, testRunner.getTestDataGenerator().getModulus());
+    // Future input client code
     GenericTestRunner.InputClientFunction inputClientFunction = (inputsPerClient, id, servers) -> {
-      return getInputClient(inputsPerClient, id, servers);
+      InputClient inputClient =  getInputClient(inputsPerClient, id, servers);
+      List<BigInteger> inputs = testRunner.getTestDataGenerator().computeInputs(id);
+      inputClient.putBigIntegerInputs(inputs);
+      return null;
     };
-    testRunner.runInputClients(testRunner.getNumberOfInputClients(), SpdzSetup.getClientFacingPorts(freePorts, testRunner.getNumberOfServers()), inputClientFunction);
+    testRunner.runInputClients(SpdzSetup.getClientFacingPorts(freePorts, testRunner.getNumberOfServers()), inputClientFunction);
 
-    for (Future<Object> assertFuture : assertFutures) {
+    // Validate the result is consistent with how the test data is generated
+    for (Future<List<BigInteger>> assertFuture : assertFutures.values()) {
       Map<Integer, List<BigInteger>> currentServerRes = (Map<Integer, List<BigInteger>>) assertFuture.get();
       for (int clientId : currentServerRes.keySet()) {
         List<BigInteger> actual = currentServerRes.get(clientId);
-        assertEquals(testRunner.computeInputs(clientId), actual);
+        assertEquals(testRunner.getTestDataGenerator().computeInputs(clientId), actual);
       }
       assertEquals(testRunner.getNumberOfInputClients(), currentServerRes.keySet().size());
     }

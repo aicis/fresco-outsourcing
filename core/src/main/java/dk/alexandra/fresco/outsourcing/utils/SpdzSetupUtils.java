@@ -54,16 +54,18 @@ public class SpdzSetupUtils {
   private static final Logger logger = LoggerFactory.getLogger(SpdzSetupUtils.class);
   public static final int DEFAULT_BITLENGTH = 64;
   public static final int DEFAULT_STATPAR = 40;
+  public static final BigInteger DEFAULT_MPC_MODULUS =
+      ModulusFinder.findSuitableModulus(DEFAULT_BITLENGTH+DEFAULT_STATPAR);
 
   private SpdzSetupUtils() {
   }
 
-  public static FieldDefinition getDefaultFieldDefinition(int bitLength) {
+  public static FieldDefinition getFieldDefinition(int bitLength) {
     return new BigIntegerFieldDefinition(
         ModulusFinder.findSuitableModulus(bitLength+DEFAULT_STATPAR));
   }
 
-  public static FieldDefinition getDefaultFieldDefinition(BigInteger modulus) {
+  public static FieldDefinition getFieldDefinition(BigInteger modulus) {
     if (!modulus.isProbablePrime(DEFAULT_STATPAR)) {
       // Very few operations can work in this case
       throw new IllegalArgumentException("Modulus is not prime");
@@ -110,7 +112,7 @@ public class SpdzSetupUtils {
   }
 
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts) {
-    return getSetup(serverId, partiesToPorts, getLocalhostMap(partiesToPorts), DEFAULT_BITLENGTH);
+    return getSetup(serverId, partiesToPorts, getLocalhostMap(partiesToPorts), DEFAULT_MPC_MODULUS);
   }
 
   static Map<Integer, RotList> getSeedOts(int myId, int parties, int prgSeedLength, Drbg drbg,
@@ -142,7 +144,7 @@ public class SpdzSetupUtils {
   public static SpdzSetup getMascotSetup(int serverId, Map<Integer, Integer> partiesToPorts,
       Map<Integer, String> partiesToIp, int bitLength) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
-    FieldDefinition definition = getDefaultFieldDefinition(bitLength);
+    FieldDefinition definition = getFieldDefinition(bitLength);
     FieldElement ssk = SpdzMascotDataSupplier.createRandomSsk(definition, 32);
     Drbg drbg = getDrbg(serverId, 32);
     Network net = new SocketNetwork(netConf);
@@ -164,7 +166,7 @@ public class SpdzSetupUtils {
   public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts,
       Map<Integer, String> partiesToIp, BigInteger modulus) {
     NetworkConfiguration netConf = getNetConf(serverId, partiesToPorts, partiesToIp);
-    FieldDefinition definition = getDefaultFieldDefinition(modulus);
+    FieldDefinition definition = getFieldDefinition(modulus);
 //    BigInteger ssk = SpdzSetupUtils.insecureSampleSsk(serverId, definition.getModulus());
     SpdzDataSupplier supplier =
         new SpdzDummyDataSupplier(
@@ -183,14 +185,6 @@ public class SpdzSetupUtils {
         new SecureComputationEngineImpl<>(suite,
             new BatchedProtocolEvaluator<>(new BatchedStrategy<>(), suite));
     return new SpdzSetup(netConf, rp, sce);
-  }
-
-  public static SpdzSetup getSetup(int serverId, Map<Integer, Integer> partiesToPorts,
-      Map<Integer, String> partiesToIp, int bitLength) {
-    // To ensure comparison protocols work, we have to subtract the statistical sec par to ensure
-    // space enough to work
-    return getSetup(serverId, partiesToPorts, partiesToIp,
-        ModulusFinder.findSuitableModulus(bitLength+DEFAULT_STATPAR));
   }
 
   // TODO currently we cannot make this generic due to the custom ddnt client input session

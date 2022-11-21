@@ -34,7 +34,7 @@ public class SpdzWithIO {
   private static final int DEFAULT_FRESCO_BASE_PORT = 8042;
 
   public enum Protocol {
-    JNO,
+    GENERIC,
     DDNNT
   }
 
@@ -78,6 +78,24 @@ public class SpdzWithIO {
     this.outputServer = io.getSecond();
     this.partiesToIps = SpdzSetupUtils.getLocalhostMap(internalPorts);
   }
+
+  public SpdzWithIO(
+      int serverId,
+      Map<Integer, Integer> clientFacingPorts,
+      Map<Integer, Integer> internalPorts,
+      Map<Integer, Integer> applicationPorts,
+      List<Integer> inputParties,
+      List<Integer> outputParties,
+      Map<Integer, String> partiesToIps,
+      InputServerProducer inputServerProducer,
+      OutputServerProducer outputServerProducer,
+      BigInteger modulus,
+      boolean dummy) {
+    this(serverId, clientFacingPorts, internalPorts, applicationPorts, inputParties,
+        outputParties, partiesToIps, inputServerProducer, outputServerProducer, modulus, dummy,
+        Protocol.GENERIC);
+  }
+
   public SpdzWithIO(
       int serverId,
       Map<Integer, Integer> clientFacingPorts,
@@ -129,7 +147,7 @@ public class SpdzWithIO {
       Protocol protocol) {
   this(serverId, clientFacingPorts, internalPorts, applicationPorts, inputParties, outputParties,
       partiesToIps, inputServerProducer, outputServerProducer,
-      SpdzSetupUtils.getDefaultFieldDefinition(bitLength).getModulus(), dummy, protocol);
+      SpdzSetupUtils.getFieldDefinition(bitLength).getModulus(), dummy, protocol);
   }
 
   /**
@@ -159,7 +177,7 @@ public class SpdzWithIO {
         ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer)),
         ((endpoint, sessionProducer) -> new JnoOutputServer<>(endpoint, sessionProducer)),
         bitLength,
-        true, Protocol.JNO
+        true, Protocol.GENERIC
     );
   }
 

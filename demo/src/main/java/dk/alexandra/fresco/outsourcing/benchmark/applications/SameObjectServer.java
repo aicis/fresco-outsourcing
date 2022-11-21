@@ -49,7 +49,7 @@ public class SameObjectServer extends ServerPPP {
         ((endpoint, sessionProducer) -> new JnoInputServer<>(endpoint, sessionProducer)),
         ((endpoint, sessionProducer) -> new JnoOutputServer<>(endpoint, sessionProducer)),
         bitLength, true,
-        Protocol.JNO);
+        Protocol.GENERIC);
     clientsInputs = spdz.receiveInputs();
   }
 
