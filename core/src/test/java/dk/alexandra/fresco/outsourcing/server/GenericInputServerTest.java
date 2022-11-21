@@ -26,7 +26,7 @@ public abstract class GenericInputServerTest {
 
   protected abstract InputClient getInputClient(int inputsPerClient, int id, List<Party> servers);
   protected abstract InputServerProducer getInputServerProducer();
-  protected static GenericTestRunner testRunner;
+  protected GenericTestRunner testRunner;
 
   protected void setTestRunner(TestDataGenerator testDataGenerator) {
     testRunner = new GenericTestRunner(testDataGenerator, (futureServer) -> {

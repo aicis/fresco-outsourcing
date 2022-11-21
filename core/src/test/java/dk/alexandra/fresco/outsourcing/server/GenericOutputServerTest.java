@@ -24,7 +24,7 @@ public abstract class GenericOutputServerTest {
 
   protected abstract OutputClient getOutputClient(int id, List<Party> servers);
   protected abstract OutputServerProducer getOutputServerProducer();
-  protected static GenericTestRunner testRunner;
+  protected GenericTestRunner testRunner;
 
   protected void setTestRunner(TestDataGenerator testDataGenerator) {
     testRunner = new GenericTestRunner(testDataGenerator, (futureServer) -> {

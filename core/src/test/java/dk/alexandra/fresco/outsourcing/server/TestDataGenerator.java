@@ -1,9 +1,13 @@
 package dk.alexandra.fresco.outsourcing.server;
 
+import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO.Protocol;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -82,5 +86,25 @@ public class TestDataGenerator {
     return (List)IntStream.range(0, outputsPerClient).mapToObj((num) -> {
       return BigInteger.valueOf(1L);
     }).collect(Collectors.toList());
+  }
+
+
+  /**
+   * Map client secret shared input to secret shared output, by letting the output of each
+   * party being the first input of the first party.
+   * @param clientInput map of the clients; input
+   * @return map of the client ID to output
+   */
+  public Map<Integer, List<SInt>> mapToOutputs(Map<Integer, List<SInt>> clientInput) {
+    Map<Integer, List<SInt>> clientOutput = new HashMap<>();
+    for (int i = numberOfInputClients + 1; i < numberOfInputClients + 1 + numberOfOutputClients; i++) {
+      List<SInt> outputs = new ArrayList<>();
+      for (int j = 0; j < outputsPerClient; j++) {
+        outputs.add(clientInput.get(1).get(0));
+      }
+      // The output is the input of the first party
+      clientOutput.put(i, outputs);
+    }
+    return clientOutput;
   }
 }

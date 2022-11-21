@@ -12,8 +12,6 @@ import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.InputServerProducer;
 import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -31,7 +29,7 @@ public abstract class GenericInputOutputTest {
 
     protected abstract InputServerProducer getInputServerProducer();
     protected abstract OutputServerProducer getOutputServerProducer();
-    protected static GenericTestRunner testRunner;
+    protected GenericTestRunner testRunner;
 
     protected void setTestRunner(TestDataGenerator testDataGenerator) {
         testRunner = new GenericTestRunner(testDataGenerator, (futureServer) -> {
@@ -39,10 +37,7 @@ public abstract class GenericInputOutputTest {
                 SpdzWithIO server = ((Future<SpdzWithIO>) futureServer).get();
                 Map<Integer, List<SInt>> clientInputs = server.receiveInputs();
                 // Derive the output from the input
-                Map<Integer, List<SInt>> clientOutputs = mapToOutputs(clientInputs,
-                    testDataGenerator.getNumberOfInputClients(),
-                    testDataGenerator.getNumberOfOutputClients(),
-                    testDataGenerator.getOutputsPerClient());
+                Map<Integer, List<SInt>> clientOutputs = testDataGenerator.mapToOutputs(clientInputs);
                 IntStream.range(testDataGenerator.getNumberOfInputClients() + 1,
                     testDataGenerator.getNumberOfInputClients() + 1 + testDataGenerator.getNumberOfOutputClients()).forEach(clientId -> {
                     server.sendOutputsTo(clientId, clientOutputs.get(clientId));
@@ -52,28 +47,6 @@ public abstract class GenericInputOutputTest {
             }
             return null;
         }, getInputServerProducer(), getOutputServerProducer());
-    }
-
-    /**
-     * Map client input to oput
-     * @param clientInput
-     * @param numberOfInputClients
-     * @param numberOfOutputClients
-     * @param outputsPerClient
-     * @return
-     */
-    protected Map<Integer, List<SInt>> mapToOutputs(Map<Integer, List<SInt>> clientInput,
-        int numberOfInputClients, int numberOfOutputClients, int outputsPerClient) {
-        Map<Integer, List<SInt>> clientOutput = new HashMap<>();
-        for (int i = numberOfInputClients + 1; i < numberOfInputClients + 1 + numberOfOutputClients; i++) {
-            List<SInt> outputs = new ArrayList<>();
-            for (int j = 0; j < outputsPerClient; j++) {
-                outputs.add(clientInput.get(1).get(0));
-            }
-            // The output is the input of the first party
-            clientOutput.put(i, outputs);
-        }
-        return clientOutput;
     }
 
     /**

@@ -68,11 +68,12 @@ public class SpdzSetupUtils {
   public static FieldDefinition getFieldDefinition(BigInteger modulus) {
     if (!modulus.isProbablePrime(DEFAULT_STATPAR)) {
       // Very few operations can work in this case
+      logger.error("Modulus is not prime");
       throw new IllegalArgumentException("Modulus is not prime");
     }
     if (!modulus.subtract(BigInteger.ONE).gcd(BigInteger.valueOf(3)).equals(BigInteger.ONE)) {
       // This can cause issues with some Fresco algorithms, but basic thing should still work.
-      logger.error("Modulus-1 mod 3 != 1");
+      logger.warn("Modulus-1 mod 3 != 1");
     }
     return new BigIntegerFieldDefinition(modulus);
   }
