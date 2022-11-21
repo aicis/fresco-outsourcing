@@ -15,13 +15,15 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
  * clients.
  */
 public abstract class GenericOutputServerTest {
-
+  private static final Logger logger = LoggerFactory.getLogger(GenericOutputServerTest.class);
   protected abstract OutputClient getOutputClient(int id, List<Party> servers);
   protected abstract OutputServerProducer getOutputServerProducer();
   protected GenericTestRunner testRunner;
@@ -48,6 +50,7 @@ public abstract class GenericOutputServerTest {
           server.sendOutputsTo(clientId, out);
         }
       } catch (InterruptedException | ExecutionException e) {
+        logger.error("Server evaluation failed!", e);
         e.printStackTrace();
       }
       return null;
@@ -58,7 +61,7 @@ public abstract class GenericOutputServerTest {
    * Runs the actual test code through a future output client and check the result.
    * @throws InterruptedException
    */
-  public void testClientOutput() throws InterruptedException {
+  public void testClientOutput() throws Exception {
     List<Integer> freePorts = SpdzSetup.getFreePorts(testRunner.getNumberOfServers() * 3);
     testRunner.runServers(freePorts,testRunner.testDataGenerator.getModulus());
 
@@ -68,9 +71,9 @@ public abstract class GenericOutputServerTest {
       List<BigInteger> results = outputClient.getBigIntegerOutputs();
       return results;
     };
-    Map<Integer, List<BigInteger>> results = testRunner.runOutputClients(
+    Map<Integer, List<BigInteger>> results = (Map<Integer, List<BigInteger>>) testRunner.runOutputClients(
             SpdzSetup.getClientFacingPorts(freePorts, testRunner.getNumberOfServers()),
-            outputClientFunction);
+            outputClientFunction).get();
     // Validate the data output from the computation against what is expected to be simulated
     for (int clientId : results.keySet()) {
       List<BigInteger> actual = results.get(clientId);

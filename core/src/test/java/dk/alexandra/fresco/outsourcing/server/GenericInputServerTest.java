@@ -17,13 +17,15 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
  * clients.
  */
 public abstract class GenericInputServerTest {
-
+  private static final Logger logger = LoggerFactory.getLogger(GenericInputServerTest.class);
   protected abstract InputClient getInputClient(int inputsPerClient, int id, List<Party> servers);
   protected abstract InputServerProducer getInputServerProducer();
   protected GenericTestRunner testRunner;
@@ -49,6 +51,7 @@ public abstract class GenericInputServerTest {
         return wrapped.entrySet().stream().collect(Collectors.toMap(Entry::getKey,
                 e -> e.getValue().out().stream().map(DRes::out).collect(Collectors.toList())));
       } catch (InterruptedException | ExecutionException e) {
+        logger.error("Server evaluation failed!", e);
         e.printStackTrace();
         return null;
       }
@@ -63,7 +66,7 @@ public abstract class GenericInputServerTest {
    */
   public void testInputsOnly() throws InterruptedException, ExecutionException {
     List<Integer> freePorts = SpdzSetup.getFreePorts(testRunner.getNumberOfServers() * 3);
-    Map<Integer, Future<List<BigInteger>>> assertFutures = testRunner.runServers(
+    Future<Map<Integer, Future<List<BigInteger>>>> assertFutures = testRunner.runServers(
             freePorts, testRunner.getTestDataGenerator().getModulus());
     // Future input client code
     GenericTestRunner.InputClientFunction inputClientFunction = (inputsPerClient, id, servers) -> {
@@ -75,7 +78,7 @@ public abstract class GenericInputServerTest {
     testRunner.runInputClients(SpdzSetup.getClientFacingPorts(freePorts, testRunner.getNumberOfServers()), inputClientFunction);
 
     // Validate the result is consistent with how the test data is generated
-    for (Future<List<BigInteger>> assertFuture : assertFutures.values()) {
+    for (Future<List<BigInteger>> assertFuture : assertFutures.get().values()) {
       Map<Integer, List<BigInteger>> currentServerRes = (Map<Integer, List<BigInteger>>) assertFuture.get();
       for (int clientId : currentServerRes.keySet()) {
         List<BigInteger> actual = currentServerRes.get(clientId);
@@ -83,6 +86,6 @@ public abstract class GenericInputServerTest {
       }
       assertEquals(testRunner.getNumberOfInputClients(), currentServerRes.keySet().size());
     }
-    assertEquals(testRunner.getNumberOfServers(), assertFutures.size());
+    assertEquals(testRunner.getNumberOfServers(), assertFutures.get().size());
   }
 }

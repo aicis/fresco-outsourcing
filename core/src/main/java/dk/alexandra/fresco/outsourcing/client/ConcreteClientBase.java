@@ -7,6 +7,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.FieldDefinition;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ClientSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.utils.GlobalExceptionHandler;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ConcreteClientBase implements BaseClient {
+  // Set an exception handler to make sure all exception in sub-threads get logged
+  static {
+    GlobalExceptionHandler exceptionHandler = new GlobalExceptionHandler();
+    Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
+  }
   private static final Logger logger = LoggerFactory.getLogger(ConcreteClientBase.class);
 
   private FieldDefinition definition;

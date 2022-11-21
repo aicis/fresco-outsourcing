@@ -5,6 +5,7 @@ import static dk.alexandra.fresco.outsourcing.utils.GenericUtils.intFromBytes;
 import dk.alexandra.fresco.framework.util.ByteAndBitConverter;
 import dk.alexandra.fresco.outsourcing.network.ServerSideNetworkFactory;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
+import dk.alexandra.fresco.outsourcing.utils.GlobalExceptionHandler;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;
 import java.util.Arrays;
 import java.util.Objects;
@@ -39,7 +40,11 @@ import org.slf4j.LoggerFactory;
  * </p>
  */
 public class DemoClientSessionRequestHandler<T extends ClientSession, K extends ClientSession> implements ClientSessionRequestHandler<T, K> {
-
+  // Set an exception handler to make sure all exception in sub-threads get logged
+  static {
+    GlobalExceptionHandler exceptionHandler = new GlobalExceptionHandler();
+    Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
+  }
   private static final Logger logger = LoggerFactory
       .getLogger(DemoClientSessionRequestHandler.class);
   private final SpdzResourcePool resourcePool;
