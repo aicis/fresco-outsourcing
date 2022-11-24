@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TestUtil {
-  public static final int TIMEOUT_IN_SEC = 5;
+  public static final int TIMEOUT_IN_SEC = 500;
   private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
 
   public static <T> T blockingEvaluation(Callable<T> callable) {
