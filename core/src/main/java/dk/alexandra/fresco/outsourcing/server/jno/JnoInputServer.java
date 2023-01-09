@@ -23,10 +23,18 @@ import java.util.concurrent.FutureTask;
 
 public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> extends JnoCommonServer implements InputServer {
   private static final Logger logger = LoggerFactory.getLogger(JnoInputServer.class);
+  private final Future<Map<Integer, List<SInt>>> clientInputs;
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   public JnoInputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                         ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
+    serverInputSession = getServerSessionProducer().next();
+    FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputProtocol);
+    this.clientInputs = ft;
+    Thread t = new Thread(ft);
+    t.setName("JNO input Server");
+    t.start();
   }
 
   /**
@@ -42,7 +50,6 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSes
   protected Map<Integer, List<SInt>> runInputProtocol() throws Exception {
     logger.info("Running input session");
     Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
-    ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
     Network network = serverInputSession.getNetwork();
     ResourcePoolT resourcePool = serverInputSession.getResourcePool();
     ReconstructClientInputApp app = new ReconstructClientInputApp(resourcePool.getMyId(),
@@ -51,11 +58,12 @@ public class JnoInputServer<ResourcePoolT extends NumericResourcePool, ClientSes
   }
   @Override
   public Future<Map<Integer, List<SInt>>> getClientInputs() {
-    FutureTask<Map<Integer, List<SInt>>> ft = new FutureTask<>(this::runInputProtocol);
-    Thread t = new Thread(ft);
-    t.setName("JNO input Server");
-    t.start();
-    return ft;
+    return clientInputs;
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
   private static class ReconstructClientInputApp implements

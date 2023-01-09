@@ -2,7 +2,7 @@ package dk.alexandra.fresco.outsourcing.client.ddnnt;
 
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.builder.numeric.field.FieldElement;
-import dk.alexandra.fresco.outsourcing.client.AbstractClientBase;
+import dk.alexandra.fresco.outsourcing.client.ConcreteClientBase;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -11,10 +11,10 @@ import java.util.List;
 /**
  * Forms base for {@link DdnntInputClient} and {@link DdnntOutputClient}.
  */
-public abstract class DdnntClientBase extends AbstractClientBase {
+public abstract class DdnntClientBase extends ConcreteClientBase {
 
   /**
-   * Creates new {@link AbstractClientBase}.
+   * Creates new {@link ConcreteClientBase}.
    *
    * @param clientId client ID
    * @param servers  servers to connect to
@@ -43,8 +43,8 @@ public abstract class DdnntClientBase extends AbstractClientBase {
    */
   final boolean productCheck(FieldElement a, FieldElement b, FieldElement c) {
     FieldElement actualProd = a.multiply(b);
-    BigInteger actualProdConverted = definition.convertToUnsigned(actualProd);
-    BigInteger expected = definition.convertToUnsigned(c);
+    BigInteger actualProdConverted = getDefinition().convertToUnsigned(actualProd);
+    BigInteger expected = getDefinition().convertToUnsigned(c);
     return actualProdConverted.equals(expected);
   }
 

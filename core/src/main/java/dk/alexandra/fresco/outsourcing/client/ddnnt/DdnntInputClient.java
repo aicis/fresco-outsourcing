@@ -73,27 +73,27 @@ public class DdnntInputClient extends DdnntClientBase implements InputClient {
       throw new IllegalArgumentException("Number of inputs does match");
     }
     List<FieldElement> accA =
-        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+        IntStream.range(0, numInputs).mapToObj(i -> getDefinition().createElement(0))
             .collect(Collectors.toList());
     List<FieldElement> accB =
-        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+        IntStream.range(0, numInputs).mapToObj(i -> getDefinition().createElement(0))
             .collect(Collectors.toList());
     List<FieldElement> accC =
-        IntStream.range(0, numInputs).mapToObj(i -> definition.createElement(0))
+        IntStream.range(0, numInputs).mapToObj(i -> getDefinition().createElement(0))
             .collect(Collectors.toList());
-    for (Party s : servers) {
-      TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
-      List<FieldElement> tmpA = definition.deserializeList(network.receive());
+    for (Party s : getServers()) {
+      TwoPartyNetwork network = getServerNetworks().get(s.getPartyId());
+      List<FieldElement> tmpA = getDefinition().deserializeList(network.receive());
       accA = sumLists(accA, tmpA);
-      List<FieldElement> tmpB = definition.deserializeList(network.receive());
+      List<FieldElement> tmpB = getDefinition().deserializeList(network.receive());
       accB = sumLists(accB, tmpB);
-      List<FieldElement> tmpC = definition.deserializeList(network.receive());
+      List<FieldElement> tmpC = getDefinition().deserializeList(network.receive());
       accC = sumLists(accC, tmpC);
       if (!(tmpA.size() == numInputs && tmpB.size() == numInputs && tmpC.size() == numInputs)) {
         throw new MaliciousException(
             "Number of input tuple shares received not matching the number of inputs");
       }
-      logger.info("C{}: Received input tuples from server {}", clientId, s);
+      logger.info("C{}: Received input tuples from server {}", getClientId(), s);
     }
     for (int i = 0; i < accA.size(); i++) {
       FieldElement a = accA.get(i);
@@ -106,12 +106,12 @@ public class DdnntInputClient extends DdnntClientBase implements InputClient {
     }
     List<FieldElement> maskedInputs = new ArrayList<>(numInputs);
     for (int i = 0; i < inputs.size(); i++) {
-      maskedInputs.add(definition.createElement(inputs.get(i)).subtract(accA.get(i)));
+      maskedInputs.add(getDefinition().createElement(inputs.get(i)).subtract(accA.get(i)));
     }
-    for (Party s : servers) {
-      TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
-      network.send(definition.serialize(maskedInputs));
-      logger.info("C{}: Send masked input to {}", clientId, s);
+    for (Party s : getServers()) {
+      TwoPartyNetwork network = getServerNetworks().get(s.getPartyId());
+      network.send(getDefinition().serialize(maskedInputs));
+      logger.info("C{}: Send masked input to {}", getClientId(), s);
     }
   }
 

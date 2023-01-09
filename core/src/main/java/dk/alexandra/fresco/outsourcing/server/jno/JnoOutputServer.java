@@ -14,31 +14,39 @@ import dk.alexandra.fresco.outsourcing.client.GenericClientSession;
 import dk.alexandra.fresco.outsourcing.client.jno.ClientPayload;
 import dk.alexandra.fresco.outsourcing.client.jno.ReconstructClientInput;
 import dk.alexandra.fresco.outsourcing.network.TwoPartyNetwork;
-import dk.alexandra.fresco.outsourcing.server.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import dk.alexandra.fresco.outsourcing.server.ClientSession;
+import dk.alexandra.fresco.outsourcing.server.ClientSessionHandler;
+import dk.alexandra.fresco.outsourcing.server.OutputServer;
+import dk.alexandra.fresco.outsourcing.server.ServerSession;
+import dk.alexandra.fresco.outsourcing.server.ServerSessionProducer;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JnoOutputServer<ResourcePoolT extends NumericResourcePool, ClientSessionT extends ClientSession> extends JnoCommonServer implements
         OutputServer<SInt> {
 
   private static final Logger logger = LoggerFactory.getLogger(JnoOutputServer.class);
   private final Map<Integer, List<SInt>> idToOutputs = new HashMap<>();
+  private ServerSession<ResourcePoolT> serverInputSession;
 
   public JnoOutputServer(ClientSessionHandler<ClientSessionT> clientSessionProducer,
                          ServerSessionProducer<ResourcePoolT> serverSessionProducer) {
     super(clientSessionProducer, serverSessionProducer);
+    serverInputSession = getServerSessionProducer().next();
   }
 
   private void runSession() {
     ExceptionConverter.safe(()-> {
       Pair<SortedMap<Integer, ClientPayload<FieldElement>>, List<GenericClientSession>> clientPayload = getClientPayload();
-      ServerSession<ResourcePoolT> serverInputSession = getServerSessionProducer().next();
       Network network = serverInputSession.getNetwork();
       ResourcePoolT resourcePool = serverInputSession.getResourcePool();
       JnoClientOutputApp app = new JnoClientOutputApp(resourcePool.getMyId(),
@@ -64,6 +72,11 @@ public class JnoOutputServer<ResourcePoolT extends NumericResourcePool, ClientSe
       return;
     }
     runSession();
+  }
+
+  @Override
+  public ServerSession<ResourcePoolT> getSession() {
+    return serverInputSession;
   }
 
   private static class ClientOutputCommunication implements Runnable {

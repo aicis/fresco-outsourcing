@@ -40,20 +40,20 @@ public class JnoOutputClient extends JnoCommonClient implements OutputClient {
     constructAndSendInputs(randomPaddings);
 
     List<BigInteger> defaultReply = null;
-    for (Party s : servers) {
-      TwoPartyNetwork network = serverNetworks.get(s.getPartyId());
+    for (Party s : getServers()) {
+      TwoPartyNetwork network = getServerNetworks().get(s.getPartyId());
       if (defaultReply == null) {
-        defaultReply = definition.deserializeList(network.receive()).stream().map(cur -> cur.toBigInteger()).collect(Collectors.toList());
+        defaultReply = getDefinition().deserializeList(network.receive()).stream().map(cur -> cur.toBigInteger()).collect(Collectors.toList());
       } else {
         // check consistency of server replies
-        List<BigInteger> current = definition.deserializeList(network.receive()).stream().map(cur -> cur.toBigInteger()).collect(Collectors.toList());
+        List<BigInteger> current = getDefinition().deserializeList(network.receive()).stream().map(cur -> cur.toBigInteger()).collect(Collectors.toList());
         for (int i = 0; i < current.size(); i++) {
           if (!current.get(i).equals(defaultReply.get(i))) {
             throw new MaliciousException("The server output is not consistent");
           }
         }
       }
-      logger.info("C{}: Received output shares from server {}", clientId, s);
+      logger.info("C{}: Received output shares from server {}", getClientId(), s);
     }
     List<BigInteger> results = new ArrayList<>();
     for (int i = 0; i < getAmount(); i++) {

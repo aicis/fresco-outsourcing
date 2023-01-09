@@ -10,7 +10,7 @@ import java.util.List;
 * Performs the protocol for delivering input to the servers from the client application.
 * </p>
 */
-public interface InputClient {
+public interface InputClient extends BaseClient {
   /**
    * Inputs a list of values given as BigIntegers.
    *

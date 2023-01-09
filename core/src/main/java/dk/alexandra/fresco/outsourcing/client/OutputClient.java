@@ -11,7 +11,7 @@ import java.util.List;
  * client application.
  * </p>
  */
-public interface OutputClient {
+public interface OutputClient extends BaseClient{
 
   /**
    * Gets output as a list of BigIntegers.

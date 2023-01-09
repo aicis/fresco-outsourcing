@@ -1,108 +1,85 @@
 package dk.alexandra.fresco.outsourcing.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.Party;
 import dk.alexandra.fresco.framework.value.SInt;
 import dk.alexandra.fresco.outsourcing.client.OutputClient;
 import dk.alexandra.fresco.outsourcing.setup.SpdzSetup;
 import dk.alexandra.fresco.outsourcing.setup.SpdzWithIO;
-import org.junit.Ignore;
-import org.junit.Test;
-
+import dk.alexandra.fresco.outsourcing.utils.SpdzSetupUtils.OutputServerProducer;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A full functional test, that will set up a number of servers to accept inputs from some number of
  * clients.
  */
 public abstract class GenericOutputServerTest {
-
-  protected abstract SpdzWithIO.Protocol getProtocol();
-
+  private static final Logger logger = LoggerFactory.getLogger(GenericOutputServerTest.class);
   protected abstract OutputClient getOutputClient(int id, List<Party> servers);
+  protected abstract OutputServerProducer getOutputServerProducer();
+  protected GenericTestRunner testRunner;
 
-  protected static GenericTestRunner testRunner;
-
-  private void setTestRunner(int outputsPerClient, int numberOfOutputClients, int numberOfServers) {
-    testRunner = new GenericTestRunner(
-            getProtocol(),
-            0,
-            0,
-            outputsPerClient,
-            numberOfOutputClients,
-            numberOfServers, (futureServer) -> {
+  protected void setTestRunner(TestDataGenerator testDataGenerator) {
+    testRunner = new GenericTestRunner(testDataGenerator, (futureServer) -> {
       try {
-        SpdzWithIO server = futureServer.get();
-        for (int clientId = 1; clientId < 1 + numberOfOutputClients; clientId++) {
+        SpdzWithIO server = ((Future<SpdzWithIO>) futureServer).get();
+        // Emulate the protocol by simply giving the data that should be output, as input into an
+        // MPC computation
+        for (int clientId = 1; clientId < 1 + testDataGenerator.getNumberOfOutputClients(); clientId++) {
           int finalClientId = clientId;
           List<SInt> out = server.run((builder) -> {
             DRes<List<DRes<SInt>>> secretShares;
             if (server.getServerId() == 1) {
               secretShares = dk.alexandra.fresco.lib.common.collections.Collections.using(builder)
-                      .closeList(computeOutputs(finalClientId, outputsPerClient), server.getServerId());
+                      .closeList(testRunner.getTestDataGenerator().computeOutputs(finalClientId), server.getServerId());
             } else {
               secretShares = dk.alexandra.fresco.lib.common.collections.Collections.using(builder)
-                      .closeList(computeOutputs(finalClientId, outputsPerClient).size(), 1);
+                      .closeList(testRunner.getTestDataGenerator().computeOutputs(finalClientId).size(), 1);
             }
             return () -> secretShares.out().stream().map(DRes::out).collect(Collectors.toList());
           });
           server.sendOutputsTo(clientId, out);
         }
       } catch (InterruptedException | ExecutionException e) {
+        logger.error("Server evaluation failed!", e);
         e.printStackTrace();
       }
       return null;
-    });
+    }, null,  getOutputServerProducer());
   }
 
-  // The output will be the input of the first party
-  private List<BigInteger> computeOutputs(int id, int numberOfOutputs) {
-    return IntStream.range(0, numberOfOutputs)
-            .mapToObj(num -> BigInteger.valueOf(1)).collect(Collectors.toList());
-  }
-
-  @Test
-  public void testManyInputs() throws Exception {
-    setTestRunner(100, 3, 3);
-    testClientOutput();
-  }
-
-  @Test
-  public void testManyClients() throws Exception {
-    setTestRunner(10, 7, 3);
-    testClientOutput();
-  }
-
-  @Test
-  @Ignore // Can't run in the suite since too many threads open up
-  public void testManyServers() throws Exception {
-
-    setTestRunner(10, 3, 10);
-    testClientOutput();
-  }
-
-  public void testClientOutput() throws InterruptedException, ExecutionException {
+  /**
+   * Runs the actual test code through a future output client and check the result.
+   * @throws InterruptedException
+   */
+  public void testClientOutput() throws Exception {
     List<Integer> freePorts = SpdzSetup.getFreePorts(testRunner.getNumberOfServers() * 3);
-    testRunner.runServers(freePorts);
+    testRunner.runServers(freePorts,testRunner.testDataGenerator.getModulus());
 
+    // The future running the output client code
     GenericTestRunner.OutputClientFunction outputClientFunction = (id, servers) -> {
-      return getOutputClient(id, servers);
+      OutputClient outputClient = getOutputClient(id, servers);
+      List<BigInteger> results = outputClient.getBigIntegerOutputs();
+      return results;
     };
-    Map<Integer, Future<Object>> assertFutures = testRunner.runOutputClients(
+    Map<Integer, List<BigInteger>> results = (Map<Integer, List<BigInteger>>) testRunner.runOutputClients(
             SpdzSetup.getClientFacingPorts(freePorts, testRunner.getNumberOfServers()),
-            outputClientFunction);
-    for (int clientId : assertFutures.keySet()) {
-      List<BigInteger> actual = (List<BigInteger>) assertFutures.get(clientId).get();
-      assertEquals(testRunner.computeOutputs(clientId), actual);
+            outputClientFunction).get();
+    // Validate the data output from the computation against what is expected to be simulated
+    for (int clientId : results.keySet()) {
+      List<BigInteger> actual = results.get(clientId);
+      assertEquals(testRunner.getTestDataGenerator().computeOutputs(clientId), actual);
     }
-    assertEquals(testRunner.getNumberOfOutputClients(), assertFutures.size());
+    assertEquals(testRunner.getNumberOfOutputClients(), results.size());
   }
+
 }
