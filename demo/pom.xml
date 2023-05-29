@@ -31,7 +31,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.6.0</version>
         <configuration>
           <finalName>demo</finalName>
           <archive>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>dk.alexandra.fresco.outsourcing</groupId>
       <artifactId>outsourcing-core</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>dk.alexandra.fresco</groupId>

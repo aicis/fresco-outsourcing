@@ -1,21 +1,42 @@
-# Fresco Outsourcing
-Tools to work with FRESCO in the outsourced MPC setting. I.e., the MPC setting where not all parties actually run the MPC protocol. Instead, only a limited number of parties, called *servers* will run the MPC protocol, while a larger number of parties called *clients* will supply the inputs and receive outputs from the computation performed by the servers. This should be done so that the in/outputs of the clients should be protected similarly to if they where directly participating in the MPC protocol. Such a setup is often more scalable than having all parties participate directly in the computation when a large number of parties are involved.
+# MPC programs for "Attribute-based Single Sign-On: Secure, Private, and Efficient"
+This repository is a fork of FRESCO-outsourcing, a general MPC framework for outsourced secure computation, I.e., the MPC setting where not all parties actually run the MPC protocol. Instead, only a limited number of parties, called *servers* will run the MPC protocol, while a larger number of parties called *clients* will supply the inputs and receive outputs from the computation performed by the servers. This should be done so that the in/outputs of the clients should be protected similarly to if they where directly participating in the MPC protocol. Such a setup is often more scalable than having all parties participate directly in the computation when a large number of parties are involved. 
+This specific branch contains the test applications used to benchmark the paper "Attribute-based Single Sign-On: Secure, Private, and Efficient".
 
-This repo aims to 
+## Environment
+The code is exclusively written in Java and requires Java 11 and Maven to build.
 
-- Provide general reuseable tools for FRESCO based applications in this setting. 
+## Building
+Java building is done by running `mvn compile`, followed by testing with `mvn test`.
 
-- Provide a general framework for implementing the required in/output protocols and functionality, to facilitate experimentation with various methods.
+## Running a benchmark
+To run a server or client, simply run `java -jar demo/target/demo.jar <type> <ID> <IP1> ... <IPn>` after building.
+Type is either "c" or "s" depending on a client or serve role, ID is the ID of the party, which MUST start with 1 and monotonically increase.  <IP1> is the IP address of the server with ID 1 and IPn is the ID of the nth server.
+To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the following, with each command in a different command line, in case of a local test:
+- For the client `java -jar target/demo.jar c 1 localhost localhost`
+- For server 1 `java -jar target/demo.jar c 1 localhost localhost`
+- For server 2 `java -jar target/demo.jar s 2 localhost localhost`
 
-## Protocols
+### Results
+Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of <type of test>, <time in milliseconds>, <standard deviation> 
 
-Initially, here are two protocols for in/output between clients and servers that we want to implement and experiment with in this repo. 
+# License
+MIT License
+Copyright (c) 2023 Security Lab // Alexandra Institute
 
-The protocol of [Damgård et al](https://eprint.iacr.org/2015/1006), which we denote the *DDNNT* protocol, is rather simple, does not require the clients to hold state and does not require communication between the servers for input and output. The protocol does however require some coordination between the servers in order to synchronize the use of preprocessed material, which can be a bit tricky. The protocol also has a considerable communication overhead; in order to input a single field element we must communicate around three field elements per server. 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The protocol of [Jakobsen et al](https://eprint.iacr.org/2016/037), which we will denote the *JNO* protocol, is a little more complex, it does require the client to have some state and the servers need to do some (small) extra MPC work to validate the input from clients. However, the protocol is more general, and using pseudo random secret sharing it should be possible to make very communication efficient (for the client/server interaction), requiring essentially just a single field element communicated for each input element (independent of the number of servers).
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-
-## Current State
-
-Currently, the repo only holds an implementation of the input protocol for DDNNT. But the goal would be to implement both protocols and experiment with the trade-offs in some realistic deployment (such as the Federated Learning setting explored in [fresco-ml](https://github.com/aicis/fresco-ml).
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

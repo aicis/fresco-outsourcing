@@ -31,17 +31,11 @@ import sweis.threshsig.Dealer;
 import sweis.threshsig.KeyShare;
 import sweis.threshsig.ThreshUtil;
 
-// Code from https://developpaper.com/how-to-benchmark-using-jmh-in-java/
+// Code inspired by https://developpaper.com/how-to-benchmark-using-jmh-in-java/
 public class Main {
   //Generated file path: {project root} / {reportfiledir} / {XXX. Class. Getsimplename()}. JSON
   // e.g. jmh-reports/EmptyMethod.json
   private static final String reportFileDir = "jmh-reports/";
-
-  /*
-   * ============================== HOW TO RUN THIS TEST: ====================================
-   *1. Modify class < integersumtests > targetclazz = integersumtests.class// Classes that need to run jmh tests
-   *2. Run the main method in the IDE
-   */
 
   // Arguments; c/s for client/ server, followed by id, then all IPs
   public static void main(String[] args) throws Exception {
@@ -118,9 +112,6 @@ public class Main {
             bitLength, basePort)); // 1 input and 2 MACs
         basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
       } else if (mode.equals("s")) {
-//        currentList.add(new MascotServer(myId, currentMap, bitLength, basePort, shares[myId-1]));
-//        basePort += currentMap.size()*3*(Benchmark.WARMUP+Benchmark.ITERATIONS);
-
         currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 1, shares[myId-1]));
         basePort += currentMap.size() * 3 * (Benchmark.WARMUP + Benchmark.ITERATIONS);
         currentList.add(new SameObjectServer(myId, currentMap, bitLength, basePort, 4, shares[myId-1]));
@@ -196,33 +187,4 @@ public class Main {
     }
     buffer.close();
   }
-
-
-//  /**
-//   *A standard configuration, which configures parameters such as preheating and iteration according to actual needs
-//   *
-//   *@ param targetclazz class to run jmh test
-//   * @throws RunnerException See:{@link RunnerException}
-//   */
-//  private static String setupStandardOptions(Class<?> targetClazz) throws RunnerException {
-//    String reportFilePath = resolvePath(targetClazz);
-//    ChainedOptionsBuilder optionsBuilder =
-//        new OptionsBuilder()
-//            . include(targetClazz.getSimpleName())
-//            . mode (Mode.AverageTime) // mode - throughput annotation method @ benchmarkmode
-//            . forks (1) // number of forks @ fork
-//            . warmupIterations (WARMUP) // number of preheating rounds ｜ annotation method @ warmup
-//            . measurementIterations (ITERATIONS) // measurement rounds ｜ annotation method @ measurement
-//            . timeUnit (TimeUnit.MILLISECONDS) // the time unit used in the result | annotation method @ outputtimeunit
-//            . shouldFailOnError(true)
-////            . jvmArgs("Xms512m", "Xmx512m", "Xnoclassgc", "Xint")
-//            . result (reportFilePath) // output path of the result report file
-//            . resultFormat(ResultFormatType.JSON);// Result report file output format JSON
-//    new Runner(optionsBuilder.build()).run();
-//    return reportFilePath;
-//  }
-//
-//  private static String resolvePath(Class<?> targetClazz) {
-//    return reportFileDir + targetClazz.getSimpleName() + ".json";
-//  }
 }
