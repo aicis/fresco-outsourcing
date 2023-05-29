@@ -3,10 +3,10 @@ This repository is a fork of FRESCO-outsourcing, a general MPC framework for out
 This specific branch contains the test applications used to benchmark the paper "Attribute-based Single Sign-On: Secure, Private, and Efficient".
 
 ## Environment
-The code is exclusively written in Java and requires Java 11 and Maven to build.
+The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven to build.
 
 ## Building
-Java building is done by running `mvn compile`, followed by testing with `mvn test`.
+Building and testing is done by running `mvn package`.
 
 ## Running a benchmark
 To run a server or client, simply run `java -jar demo/target/demo.jar <type> <ID> <IP1> ... <IPn>` after building.
@@ -18,6 +18,9 @@ To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the 
 
 ### Results
 Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of <type of test>, <time in milliseconds>, <standard deviation> 
+
+## Docker build
+To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-java-jar:latest demo/target/demo.jar <type> <ID> <IP1> ... <IPn>`
 
 # License
 MIT License
