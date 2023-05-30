@@ -20,9 +20,11 @@ To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the 
 Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of <type of test>, <time in milliseconds>, <standard deviation> 
 
 ## Docker build
-To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-java-jar:latest demo/target/demo.jar <type> <ID> <IP1> ... <IPn>`
+To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-demo-jar:latest demo/target/demo.jar <type> <ID> <IP1> ... <IPn>`
 
 # License
+All code with the exception of the package ["sweis.threshsig"](https://github.com/sweis/threshsig) is under the following license. The rights of the content in package "sweis.threshsig" belong to the original author and is used here with explicitly granted permission.
+
 MIT License
 Copyright (c) 2023 Security Lab // Alexandra Institute
 
