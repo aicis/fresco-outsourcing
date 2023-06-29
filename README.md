@@ -3,7 +3,7 @@ This repository is a fork of FRESCO-outsourcing, a general MPC framework for out
 This specific branch contains the test applications used to benchmark the paper "Attribute-based Single Sign-On: Secure, Private, and Efficient".
 
 ## Environment
-The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven to build.
+The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven version at least 3.9.1 to build.
 
 ## Building
 Building and testing is done by running `mvn package`.
@@ -12,15 +12,16 @@ Building and testing is done by running `mvn package`.
 To run a server or client, simply run `java -jar demo/target/demo.jar <type> <ID> <IP1> ... <IPn>` after building.
 Type is either "c" or "s" depending on a client or serve role, ID is the ID of the party, which MUST start with 1 and monotonically increase.  <IP1> is the IP address of the server with ID 1 and IPn is the ID of the nth server.
 To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the following, with each command in a different command line, in case of a local test:
-- For the client `java -jar target/demo.jar c 1 localhost localhost`
-- For server 1 `java -jar target/demo.jar c 1 localhost localhost`
-- For server 2 `java -jar target/demo.jar s 2 localhost localhost`
+- For the client `java -jar demo/target/demo.jar c 1 localhost localhost`
+- For server 1 `java -jar demo/target/demo.jar s 1 localhost localhost`
+- For server 2 `java -jar demo/target/demo.jar s 2 localhost localhost`
 
 ### Results
-Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of <type of test>, <time in milliseconds>, <standard deviation> 
+Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of `<type of test>, <time in milliseconds>, <standard deviation>` 
 
 ## Docker build
-To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-demo-jar:latest demo/target/demo.jar <type> <ID> <IP1> ... <IPn>`
+Please ensure you have Docker version at least 4.20.1 installed and running in the background.
+To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-demo-jar:latest <type> <ID> <IP1> ... <IPn>`.
 
 # License
 All code with the exception of the package ["sweis.threshsig"](https://github.com/sweis/threshsig) is under the following license. The rights of the content in package "sweis.threshsig" belong to the original author and is used here with explicitly granted permission.
