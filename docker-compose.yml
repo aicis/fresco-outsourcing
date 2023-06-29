@@ -1,3 +1,0 @@
-services:
-  app01:
-    image: docker-demo-jar

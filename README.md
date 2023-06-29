@@ -17,11 +17,7 @@ To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the 
 - For server 2 `java -jar demo/target/demo.jar s 2 localhost localhost`
 
 ### Results
-Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of `<type of test>, <time in milliseconds>, <standard deviation>` 
-
-## Docker build
-Please ensure you have Docker version at least 4.20.1 installed and running in the background.
-To make a Docker container run `docker image build -t docker-demo-jar:latest .` and to run the app through Docker run `docker run docker-demo-jar:latest <type> <ID> <IP1> ... <IPn>`.
+Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of `<type of test>, <time in milliseconds>, <standard deviation>`
 
 # License
 All code with the exception of the package ["sweis.threshsig"](https://github.com/sweis/threshsig) is under the following license. The rights of the content in package "sweis.threshsig" belong to the original author and is used here with explicitly granted permission.
