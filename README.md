@@ -2,6 +2,8 @@
 This repository is a fork of FRESCO-outsourcing, a general MPC framework for outsourced secure computation, I.e., the MPC setting where not all parties actually run the MPC protocol. Instead, only a limited number of parties, called *servers* will run the MPC protocol, while a larger number of parties called *clients* will supply the inputs and receive outputs from the computation performed by the servers. This should be done so that the in/outputs of the clients should be protected similarly to if they where directly participating in the MPC protocol. Such a setup is often more scalable than having all parties participate directly in the computation when a large number of parties are involved. 
 This specific branch contains the test applications used to benchmark the paper "Attribute-based Single Sign-On: Secure, Private, and Efficient".
 
+Please be aware that the this benchmark setup is NOT on the main branch of this project, but in a separate branch, "macro-bench", made specifically for the benchmarking associated with this paper. 
+
 ## Environment
 The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven version at least 3.9.1 to build.
 
