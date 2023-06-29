@@ -5,7 +5,7 @@ This specific branch contains the test applications used to benchmark the paper 
 Please be aware that the this benchmark setup is NOT on the main branch of this project, but in a separate branch, "macro-bench", made specifically for the benchmarking associated with this paper. 
 
 ## Environment
-The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven version at least 3.9.1 to build.
+The code is exclusively written in Java and requires a JDK with support for Java 11 and Maven version at least 3.8.1 to build.
 
 ## Building
 Building and testing is done by running `mvn package`.
@@ -17,6 +17,22 @@ To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the 
 - For the client `java -jar demo/target/demo.jar c 1 localhost localhost`
 - For server 1 `java -jar demo/target/demo.jar s 1 localhost localhost`
 - For server 2 `java -jar demo/target/demo.jar s 2 localhost localhost`
+
+## Docker
+It is also possible to setup the benchmarking tests in a Docker instance.
+Make sure you have an updated version fo Docker installed and running in the background and execute
+```
+docker build -t fresco-outsourcing .
+```
+in order to build a docker image.
+Afterwards you can access the image through
+```
+docker run --rm -i -t fresco-outsourcing bash
+```
+Then it is possible to run the benchmark test within the image with the following command:
+```
+java -jar demo/target/demo.jar c 1 localhost localhost & java -jar demo/target/demo.jar s 1 localhost localhost & java -jar demo/target/demo.jar s 2 localhost localhost
+```
 
 ### Results
 Test results will be stored as an CSV in `demo/jmh-reports/<type>/<id>` with the format of `<type of test>, <time in milliseconds>, <standard deviation>`
