@@ -20,7 +20,7 @@ To run the benchmark you need 1 client and at LEAST 2 servers. E.g. running the 
 
 ## Docker
 It is also possible to setup the benchmarking tests in a Docker instance.
-Make sure you have an updated version fo Docker installed and running in the background and execute
+Make sure you have an updated version of Docker installed and running in the background and execute
 ```
 docker build -t fresco-outsourcing .
 ```
